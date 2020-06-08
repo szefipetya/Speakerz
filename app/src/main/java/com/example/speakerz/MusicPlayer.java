@@ -7,30 +7,18 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
-public class Join extends AppCompatActivity {
+public class MusicPlayer extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_join);
-
+        setContentView(R.layout.activity_music_player);
 
 
         Button buttonBack = (Button) findViewById(R.id.back);
         buttonBack.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
                 Intent Act2 = new Intent(getApplicationContext(),MainActivity.class);
-                Act2.putExtra("Hello","Hello World");
-                startActivity(Act2);
-
-            }
-
-        });
-
-        Button buttonMusicPlayer = (Button) findViewById(R.id.Musicplayer);
-        buttonMusicPlayer.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View view){
-                Intent Act2 = new Intent(getApplicationContext(),MusicPlayer.class);
                 Act2.putExtra("Hello","Hello World");
                 startActivity(Act2);
 

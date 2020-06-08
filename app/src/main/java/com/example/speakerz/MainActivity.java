@@ -27,10 +27,22 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
+        Button buttonCreate = (Button) findViewById(R.id.create);
+        buttonCreate.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View view){
+                Intent Act2 = new Intent(getApplicationContext(),Create.class);
+                Act2.putExtra("Hello","Hello World");
+                startActivity(Act2);
+
+            }
+
+        });
+
+
         Button buttonOptions = (Button) findViewById(R.id.options);
         buttonOptions.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-                Intent Act2 = new Intent(getApplicationContext(),Join.class);
+                Intent Act2 = new Intent(getApplicationContext(),Options.class);
                 Act2.putExtra("Hello","Hello World");
                 startActivity(Act2);
 
