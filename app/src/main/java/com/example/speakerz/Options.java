@@ -7,14 +7,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
-public class Join extends AppCompatActivity {
+public class Options extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_join);
-
-
+        setContentView(R.layout.activity_options);
 
         Button buttonBack = (Button) findViewById(R.id.back);
         buttonBack.setOnClickListener(new View.OnClickListener(){
@@ -26,8 +24,5 @@ public class Join extends AppCompatActivity {
             }
 
         });
-
-
-
     }
 }
