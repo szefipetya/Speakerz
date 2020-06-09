@@ -59,14 +59,14 @@ public class MainActivity extends AppCompatActivity {
     }
     BaseModel model;
     void initModelWithHostConfig(){
-        model=new HostModel(this);
-        model.init();
-        model.start();
+      //  model=new HostModel(this);
+       // model.init();
+       // model.start();
     }
     void initModelWithDeviceConfig(){
-        model=new DeviceModel(this);
-        model.init();
-        model.start();
+      //  model=new DeviceModel(this);
+       // model.init();
+       // model.start();
     }
 
 
