@@ -1,4 +1,4 @@
-package com.example.speakerz;
+package com.app.speakerz;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -7,7 +7,13 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import com.app.speakerz.model.BaseModel;
+import com.app.speakerz.model.DeviceModel;
+import com.app.speakerz.model.HostModel;
+import com.example.speakerz.R;
+
 public class MainActivity extends AppCompatActivity {
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent Act2 = new Intent(getApplicationContext(),Join.class);
                 Act2.putExtra("Hello","Hello World");
                 startActivity(Act2);
-
+                initModelWithDeviceConfig();
             }
 
         });
@@ -33,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent Act2 = new Intent(getApplicationContext(),Create.class);
                 Act2.putExtra("Hello","Hello World");
                 startActivity(Act2);
-
+                initModelWithHostConfig();
             }
 
         });
@@ -50,14 +56,18 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
-
-
-
-
-
-
     }
-
+    BaseModel model;
+    void initModelWithHostConfig(){
+        model=new HostModel(this);
+        model.init();
+        model.start();
+    }
+    void initModelWithDeviceConfig(){
+        model=new DeviceModel(this);
+        model.init();
+        model.start();
+    }
 
 
 

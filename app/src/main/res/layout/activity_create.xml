@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Create">
+    tools:context="com.app.speakerz.Create">
 
     <TextView
         android:id="@+id/textView4"
@@ -35,4 +35,16 @@
         app:layout_constraintHorizontal_bias="0.457"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/back" />
+
+    <ListView
+        android:layout_width="409dp"
+        android:layout_height="385dp"
+        tools:layout_editor_absoluteX="1dp"
+        tools:layout_editor_absoluteY="345dp" >
+
+        <ListView
+            android:id="@+id/devices"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </ListView>
 </androidx.constraintlayout.widget.ConstraintLayout>

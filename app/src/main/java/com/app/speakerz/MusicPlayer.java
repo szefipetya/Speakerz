@@ -1,4 +1,4 @@
-package com.example.speakerz;
+package com.app.speakerz;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -7,12 +7,15 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
-public class Options extends AppCompatActivity {
+import com.example.speakerz.R;
+
+public class MusicPlayer extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_options);
+        setContentView(R.layout.activity_music_player);
+
 
         Button buttonBack = (Button) findViewById(R.id.back);
         buttonBack.setOnClickListener(new View.OnClickListener(){
@@ -24,5 +27,8 @@ public class Options extends AppCompatActivity {
             }
 
         });
+
+
+
     }
 }
