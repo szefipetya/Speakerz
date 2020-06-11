@@ -7,12 +7,12 @@ import com.google.android.gms.nearby.connection.AdvertisingOptions;
 import com.google.android.gms.nearby.connection.Strategy;
 
 public class HostModel extends BaseModel {
-    @Override
+@Override
     public void init(){
-        STRATEGY = Strategy.P2P_STAR;
-        network.setStrategy(STRATEGY);
-        network.init();
+        network=new HostNetwork();
+        network.init(this);
     }
+
 
     @Override
     public void start() {
@@ -23,12 +23,6 @@ public class HostModel extends BaseModel {
     public HostModel(){
         super();
     }
-public HostModel(AppCompatActivity a){
-    super(a);
-
-   network=new HostNetwork(a);
-
-}
 
 
 

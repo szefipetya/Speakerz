@@ -7,10 +7,15 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import com.app.speakerz.model.BaseModel;
+import com.app.speakerz.model.HostModel;
 import com.example.speakerz.R;
 
 public class Options extends AppCompatActivity {
-
+    BaseModel model;
+    public void setModel(BaseModel m){
+        model=m;
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -7,9 +7,21 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import com.app.speakerz.model.DeviceModel;
+import com.app.speakerz.model.HostModel;
+import com.app.speakerz.model.event.CommonViewEventHandler;
 import com.example.speakerz.R;
 
 public class Create extends AppCompatActivity {
+    //REQUIRED_BEG MODEL
+    HostModel model;
+    CommonViewEventHandler viewEventHandler;
+    public void setModel(HostModel m){
+        model=m;
+        viewEventHandler=new CommonViewEventHandler(this);
+        model.addUpdateEventListener(viewEventHandler);
+    }
+    //REQUIRED_END MODEL
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
