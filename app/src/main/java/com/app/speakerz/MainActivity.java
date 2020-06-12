@@ -8,7 +8,11 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.app.speakerz.App.App;
+import com.app.speakerz.debug.D;
 import com.app.speakerz.model.BaseModel;
 import com.app.speakerz.model.DeviceModel;
 import com.app.speakerz.model.HostModel;
@@ -17,48 +21,56 @@ import com.example.speakerz.R;
 //REQUIRED means: it needs to be in every Activity.
 public class MainActivity extends AppCompatActivity{
     //REQUIRED_BEG MODEL
-    CommonViewEventHandler viewEventhandler;
-    BaseModel model;
-    void initModel(boolean isHost) {
-        if (isHost){
-            model=new HostModel();
-        }else {
-            model = new DeviceModel();
+    CommonViewEventHandler viewEventHandler;
+    private void onCreateInit(){
+        //TODO: EZ ÍGY NAGYON CSÚNYA
+        setTextValuesFromStorage();
+        App.setWifiManager(((WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE)));
+
+        if(!App.getWifiManager().isWifiEnabled()){
+            ((TextView)findViewById(R.id.wifi_status)).setText("Wifi is off");
+        }else{
+            ((TextView)findViewById(R.id.wifi_status)).setText("Wifi is on");
         }
-        model.init();
-        if(viewEventhandler!=null)
-        model.addUpdateEventListener(viewEventhandler);
-        else{
-            initEventListener();
-            viewEventhandler.toast("Main : viewEventHandler was null");
-            model.addUpdateEventListener(viewEventhandler);
-        }
-        model.setWifiManager((WifiManager)this.getApplicationContext().getSystemService(Context.WIFI_SERVICE));
-        model.start();
     }
 
-    //REQUIRED
-    void initEventListener(){
-        viewEventhandler=new CommonViewEventHandler(this);
+    private void initModelAfterDecision(){
+        initEventListener();
+        App.addUpdateEventListener(viewEventHandler);
+        App.setWifiManager((WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE));
     }
+    void initEventListener() {
+        viewEventHandler = new CommonViewEventHandler(this);
+    }
+    void setTextValuesFromStorage(){
+      //  ((TextView)findViewById(R.id.wifi_status)).setText(new String(App.getTextFromStorage(R.id.wifi_status)));
+        App.autoConfigureTexts(this);
+    }
+    //REQUIRED_END MODEL
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         //set the viewEventhandler to handle events from model
-        initEventListener();
+
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
 
+        //REQUIRED_BEGIN MODEL
+        onCreateInit();
+        //REQUIRED_END MODEL
+
+        Toast.makeText(this,"oncreate- main",Toast.LENGTH_LONG).show();
+        D.log("oncreate_main");
+
         Button buttonJoin = (Button) findViewById(R.id.join);
         buttonJoin.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-                    initModel(false);
-
+                App.initModel(false);
+                initModelAfterDecision();
                 Intent Act2 = new Intent(getApplicationContext(),Join.class);
                 //TODO: Set model for activity Join
-              //  Act2.putExtra()
                 Act2.putExtra("Hello","Hello World");
                 startActivity(Act2);
 
@@ -70,9 +82,11 @@ public class MainActivity extends AppCompatActivity{
         Button buttonCreate = (Button) findViewById(R.id.create);
         buttonCreate.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-                initModel(true);
+                App.initModel(false);
+                initModelAfterDecision();
                 Intent Act2 = new Intent(getApplicationContext(),Create.class);
                 //TODO: Set model for activity Create
+
                 Act2.putExtra("Hello","Hello World");
                 startActivity(Act2);
 

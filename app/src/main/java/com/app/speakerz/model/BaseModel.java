@@ -1,5 +1,6 @@
 package com.app.speakerz.model;
 
+import android.app.Application;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
@@ -11,6 +12,7 @@ import com.app.speakerz.model.event.UpdateEventManager;
 import com.app.speakerz.model.event.ViewEventHandler;
 import com.app.speakerz.model.event.ViewUpdateEventManager;
 import com.app.speakerz.model.network.BaseNetwork;
+import com.app.speakerz.viewModel.TextValueStorage;
 import com.example.speakerz.R;
 
 
@@ -50,8 +52,14 @@ public abstract class BaseModel implements EventHandler {
             wifiManager.setWifiEnabled(true);
             viewUpdateEventManager.toast("Turning on your Wifi...");
             viewUpdateEventManager.setText(R.id.wifi_status,"Wifi is on");
+        }else{
+            //ha már be van kapcsolva
+            viewUpdateEventManager.setText(R.id.wifi_status,"Wifi is on");
+
         }
     }
-
+    public void setTextValueStorageForViewUpdateEventManager(TextValueStorage storage){
+        viewUpdateEventManager.setValueStorage(storage);
+    }
 
 }

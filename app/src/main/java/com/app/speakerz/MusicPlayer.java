@@ -20,10 +20,10 @@ public class MusicPlayer extends AppCompatActivity {
         Button buttonBack = (Button) findViewById(R.id.back);
         buttonBack.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-                Intent Act2 = new Intent(getApplicationContext(),MainActivity.class);
-                Act2.putExtra("Hello","Hello World");
-                startActivity(Act2);
-
+             //   Intent Act2 = new Intent(getApplicationContext(),MainActivity.class);
+              //  Act2.putExtra("Hello","Hello World");
+             //   startActivity(Act2);
+                finish();
             }
 
         });

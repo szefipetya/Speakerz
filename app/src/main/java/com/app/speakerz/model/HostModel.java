@@ -6,6 +6,8 @@ import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.connection.AdvertisingOptions;
 import com.google.android.gms.nearby.connection.Strategy;
 
+import java.io.Serializable;
+
 public class HostModel extends BaseModel {
 @Override
     public void init(){

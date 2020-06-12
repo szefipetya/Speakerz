@@ -10,6 +10,8 @@ import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.connection.ConnectionsClient;
 import com.google.android.gms.nearby.connection.Strategy;
 
+import java.io.Serializable;
+
 public class DeviceModel extends BaseModel {
 @Override
     public void init(){
