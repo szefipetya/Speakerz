@@ -1,6 +1,7 @@
 package com.app.speakerz.model.event;
 
 import com.app.speakerz.debug.D;
+import com.app.speakerz.model.enums.EVT;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,24 +14,33 @@ public class UpdateEventManager {
         listeners.add(toAdd);
     }
 
-    public void invokeAll() {
-        System.out.println("Hello!");
 
+
+    public void updateAll(EVT evt, Object o) {
         // Notify everybody that may be interested.
         for (EventHandler hl : listeners){
-            hl.onInvoke(null);
-            D.log("event occured");
+            hl.onUpdate(evt,o);
         }
 
     }
-
-    public void invokeAll(Object o) {
-        System.out.println("Hello!");
-
+    public void updateAll(EVT evt, Object o,Object o2) {
         // Notify everybody that may be interested.
         for (EventHandler hl : listeners){
-            hl.onInvoke(o);
-            D.log("event occured o"+o.toString());
+            hl.onUpdate(evt,o,o2);
+        }
+
+    }
+    public void updateAll(EVT evt, Object o,Object o2,Object o3) {
+        // Notify everybody that may be interested.
+        for (EventHandler hl : listeners){
+            hl.onUpdate(evt,o,o2,o3);
+        }
+
+    }
+    public void updateAll(EVT evt, Object o,Object o2,Object o3,Object o4) {
+        // Notify everybody that may be interested.
+        for (EventHandler hl : listeners){
+            hl.onUpdate(evt,o,o2,o3,o4);
         }
 
     }

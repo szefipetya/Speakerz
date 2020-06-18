@@ -29,8 +29,8 @@ public class TextValueStorage implements Serializable {
     //sajnos a lambdát nem támogatja a version
     public void autoConfigureTexts(AppCompatActivity act) {
         for (Map.Entry<Integer,String> entry : valueMap.entrySet())
-            ((TextView)act.findViewById(entry.getKey())).setText(entry.getValue());
-
+           if(act.findViewById(entry.getKey())!=null)
+                ((TextView)act.findViewById(entry.getKey())).setText(entry.getValue());
     }
 }
 

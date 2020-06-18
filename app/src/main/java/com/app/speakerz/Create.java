@@ -9,32 +9,48 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.app.speakerz.App.App;
-import com.app.speakerz.model.DeviceModel;
-import com.app.speakerz.model.HostModel;
-import com.app.speakerz.model.event.CommonViewEventHandler;
+import com.app.speakerz.model.event.CommonModel_ViewEventHandler;
 import com.example.speakerz.R;
 
 public class Create extends AppCompatActivity {
     //REQUIRED_BEG MODEL_Declare
-    CommonViewEventHandler viewEventHandler;
+    CommonModel_ViewEventHandler viewEventHandler;
     void initEventListener(){
-        viewEventHandler=new CommonViewEventHandler(this);
+        viewEventHandler=new CommonModel_ViewEventHandler(this);
     }
-    void setTextValuesFromStorage(){
-        ((TextView)findViewById(R.id.wifi_status)).setText(new String(App.getTextFromStorage(R.id.wifi_status)));
+
+
+
+    private void initAndStart(){
+        initEventListener();
+        viewEventHandler=new CommonModel_ViewEventHandler(this);
+        App.initModel(true);
+        App.addUpdateEventListener(viewEventHandler);
+        App.autoConfigureTexts(this);
+        App.startModel();
     }
     //REQUIRED_END MODEL_Declare
 
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        App.autoConfigureTexts(this);
+        registerReceiver(App.getWifiBroadcastReciever(),App.getIntentFilter());
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(App.getWifiBroadcastReciever());
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create);
         //REQUIRED_BEG MODEL
-        initEventListener();
-        viewEventHandler.toast("onCreate_Create");
-        App.addUpdateEventListener(viewEventHandler);
-        setTextValuesFromStorage();
+        initAndStart();
         //REQUIRED_END MODEL
 
         Button buttonBack = (Button) findViewById(R.id.back);
@@ -60,7 +76,14 @@ public class Create extends AppCompatActivity {
 
         });
 
+        Button startSession = (Button) findViewById(R.id.btn_start_session);
+        startSession.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View view){
+                App.hStartAdvertising();
 
+            }
+
+        });
 
     }
 }

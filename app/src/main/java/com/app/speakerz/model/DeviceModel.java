@@ -1,26 +1,25 @@
 package com.app.speakerz.model;
 
+import android.content.IntentFilter;
+import android.net.wifi.WifiManager;
+import android.net.wifi.p2p.WifiP2pManager;
+import android.widget.ListView;
+
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.app.speakerz.debug.D;
-import com.app.speakerz.model.network.BaseNetwork;
 import com.app.speakerz.model.network.DeviceNetwork;
-import com.app.speakerz.model.network.HostNetwork;
-import com.google.android.gms.nearby.Nearby;
-import com.google.android.gms.nearby.connection.ConnectionsClient;
-import com.google.android.gms.nearby.connection.Strategy;
-
-import java.io.Serializable;
+import com.app.speakerz.model.network.WifiBroadcastReciever;
 
 public class DeviceModel extends BaseModel {
+    DeviceNetwork network;
+
 @Override
     public void init(){
         network=new DeviceNetwork();
         network.init();
         network.addUpdateEventListener(this);
+
     }
-
-
 
     @Override
     public void start() {
@@ -32,4 +31,42 @@ public class DeviceModel extends BaseModel {
         super();
     }
 
+    @Override
+    public void setWifiManager(WifiManager manager) {
+        network.setWifiManager(manager);
+        network.initWifiManager();
+    }
+
+    @Override
+    public void setWifiP2pManager(WifiP2pManager manager) {
+        network.setWifiP2pManager(manager);
+        network.initP2pWifiManager();
+    }
+
+    @Override
+    public void setWifiP2pChannel(WifiP2pManager.Channel wifiP2pChannel) {
+        network.setWifiP2pChannel(wifiP2pChannel);
+    }
+
+    @Override
+    public void setIntentFilter(IntentFilter intentFilter) {
+        network.setIntentFilter(intentFilter);
+    }
+
+
+
+
+    @Override
+    public void setWifiBroadcastReciever(WifiBroadcastReciever reciever) {
+        network.setWifiBroadcastReciever(reciever);
+
+    }
+
+    public void discoverPeers(AppCompatActivity activity, ListView lvPeersList) {
+        network.discoverPeers(activity,lvPeersList);
+    }
+
+    public String[] getDeviceNames() {
+        return network.getDeviceNames();
+    }
 }

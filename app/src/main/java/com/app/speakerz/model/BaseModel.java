@@ -1,17 +1,16 @@
 package com.app.speakerz.model;
 
-import android.app.Application;
+import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
-import android.util.Log;
-
-import androidx.appcompat.app.AppCompatActivity;
+import android.net.wifi.p2p.WifiP2pManager;
 
 import com.app.speakerz.debug.D;
+import com.app.speakerz.model.enums.EVT;
 import com.app.speakerz.model.event.EventHandler;
-import com.app.speakerz.model.event.UpdateEventManager;
-import com.app.speakerz.model.event.ViewEventHandler;
-import com.app.speakerz.model.event.ViewUpdateEventManager;
+import com.app.speakerz.model.event.Model_ViewEventHandler;
+import com.app.speakerz.model.event.Model_ViewUpdateEventManager;
 import com.app.speakerz.model.network.BaseNetwork;
+import com.app.speakerz.model.network.WifiBroadcastReciever;
 import com.app.speakerz.viewModel.TextValueStorage;
 import com.example.speakerz.R;
 
@@ -19,47 +18,62 @@ import com.example.speakerz.R;
 public abstract class BaseModel implements EventHandler {
 
 
-    BaseNetwork network=null;
-    WifiManager wifiManager;
-    ViewUpdateEventManager viewUpdateEventManager;
-    EventHandler eventHandlerFromNetwork ;
+    private BaseNetwork network;
+    private WifiManager wifiManager;
+    private WifiP2pManager wifiP2pManager;
+    private Model_ViewUpdateEventManager viewUpdateEventManager;
+
     public abstract void start();
     public abstract void init();
     public BaseModel(){
         initSelf();
 
         }
+
+    /** onUpdate with 1 Object parameters*/
     @Override
-    public void onInvoke(Object o) {
-        D.log("from basemodel: "+ o.toString());
-       // viewUpdateEventManager.invokeAll(o);
-    }
-    private void initSelf(){
-        viewUpdateEventManager =new ViewUpdateEventManager();
+    public void onUpdate(EVT evt, Object o) {
 
     }
-    public void addUpdateEventListener(ViewEventHandler event){
+    /** onUpdate with 2 Object parameters*/
+    @Override
+    public void onUpdate(EVT evt, Object o, Object o2) {
+
+        if(evt==EVT.updateText ){
+            viewUpdateEventManager.setText((Integer)o,(String)o2);
+        }
+    }
+    /** onUpdate with 3 Object parameters*/
+    @Override
+    public void onUpdate(EVT evt, Object o,Object o2,Object o3) {
+
+    }
+    /** onUpdate with 4 Object parameters*/
+    @Override
+    public void onUpdate(EVT evt, Object o,Object o2,Object o3,Object o4) {
+
+    }
+    private void initSelf(){
+        viewUpdateEventManager =new Model_ViewUpdateEventManager();
+
+    }
+    public void addUpdateEventListener(Model_ViewEventHandler event){
         viewUpdateEventManager.addListener(event);
     }
 
-   public void setWifiManager(WifiManager manager){
-        wifiManager=manager;
-        initWifiManager();
-    }
+    abstract public  void setWifiManager(WifiManager manager);
+    abstract public void setWifiP2pManager(WifiP2pManager manager);
 
-    private void initWifiManager() {
-        if(!wifiManager.isWifiEnabled()){
-            wifiManager.setWifiEnabled(true);
-            viewUpdateEventManager.toast("Turning on your Wifi...");
-            viewUpdateEventManager.setText(R.id.wifi_status,"Wifi is on");
-        }else{
-            //ha már be van kapcsolva
-            viewUpdateEventManager.setText(R.id.wifi_status,"Wifi is on");
 
-        }
-    }
     public void setTextValueStorageForViewUpdateEventManager(TextValueStorage storage){
         viewUpdateEventManager.setValueStorage(storage);
     }
 
+   abstract public void setWifiP2pChannel(WifiP2pManager.Channel wifiP2pChannel) ;
+
+    public abstract void setIntentFilter(IntentFilter intentFilter);
+
+
+
+    public abstract void setWifiBroadcastReciever(WifiBroadcastReciever reciever);
 }
