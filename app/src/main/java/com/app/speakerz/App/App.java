@@ -19,8 +19,8 @@ import com.app.speakerz.model.network.WifiBroadcastReciever;
 import com.app.speakerz.viewModel.TextValueStorage;
 
 public class App extends Application {
-   private static BaseModel model;
-   private static final TextValueStorage textValueStorage = new TextValueStorage();
+    private static BaseModel model;
+    private static final TextValueStorage textValueStorage = new TextValueStorage();
     private static WifiManager wifiManager;
     private static WifiP2pManager wifiP2pManager;
     private static WifiP2pManager.Channel wifiP2pChannel;

@@ -8,11 +8,12 @@ import com.app.speakerz.model.network.*;
 
 public class HostModel extends BaseModel {
     @Override
-    public void init(){
-        network=new HostNetwork();
+    public void init() {
+        network = new HostNetwork();
         network.init(this);
         network.addUpdateEventListener(this);
     }
+
     @Override
     public void setWifiManager(WifiManager manager) {
         network.setWifiManager(manager);
@@ -39,13 +40,15 @@ public class HostModel extends BaseModel {
     public void setWifiBroadcastReciever(WifiBroadcastReciever reciever) {
         network.setWifiBroadcastReciever(reciever);
     }
+
     @Override
     public void start() {
-    network.start();
+        network.start();
     }
 
     HostNetwork network;
-    public HostModel(){
+
+    public HostModel() {
         super();
     }
 
