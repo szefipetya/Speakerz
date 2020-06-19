@@ -65,6 +65,7 @@ public abstract class BaseNetwork implements EventHandler {
     /**
      * initializes the wifiManager and turns on the wifi adapter.
      * Sends a signal to the view trough the model according to its status.
+     *
      */
     public void initWifiManager() {
         if (!getWifiManager().isWifiEnabled()) {
