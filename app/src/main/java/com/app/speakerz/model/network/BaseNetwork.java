@@ -57,6 +57,9 @@ public abstract class BaseNetwork implements EventHandler {
 
     public BaseNetwork() {
 
+
+
+
     }
 
     public void initP2pWifiManager() {
