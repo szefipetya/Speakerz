@@ -52,6 +52,7 @@ public abstract class BaseNetwork implements EventHandler {
 
     public void start() {
 
+
         D.log("network sent msg");
     }
 
