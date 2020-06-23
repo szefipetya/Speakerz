@@ -15,15 +15,15 @@ import com.example.speakerz.R;
 public class Create extends AppCompatActivity {
     //REQUIRED_BEG MODEL_Declare
     CommonModel_ViewEventHandler viewEventHandler;
-    void initEventListener(){
-        viewEventHandler=new CommonModel_ViewEventHandler(this);
+
+    void initEventListener() {
+        viewEventHandler = new CommonModel_ViewEventHandler(this);
     }
 
 
-
-    private void initAndStart(){
+    private void initAndStart() {
         initEventListener();
-        viewEventHandler=new CommonModel_ViewEventHandler(this);
+        viewEventHandler = new CommonModel_ViewEventHandler(this);
         App.initModel(true);
         App.addUpdateEventListener(viewEventHandler);
         App.autoConfigureTexts(this);
@@ -36,7 +36,7 @@ public class Create extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         App.autoConfigureTexts(this);
-        registerReceiver(App.getWifiBroadcastReciever(),App.getIntentFilter());
+        registerReceiver(App.getWifiBroadcastReciever(), App.getIntentFilter());
     }
 
     @Override
@@ -44,6 +44,7 @@ public class Create extends AppCompatActivity {
         super.onPause();
         unregisterReceiver(App.getWifiBroadcastReciever());
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -54,11 +55,11 @@ public class Create extends AppCompatActivity {
         //REQUIRED_END MODEL
 
         Button buttonBack = (Button) findViewById(R.id.back);
-        buttonBack.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View view){
-               // Intent Act2 = new Intent(getApplicationContext(),MainActivity.class);
-              //  Act2.putExtra("Hello","Hello World");
-              //  startActivity(Act2);
+        buttonBack.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                // Intent Act2 = new Intent(getApplicationContext(),MainActivity.class);
+                //  Act2.putExtra("Hello","Hello World");
+                //  startActivity(Act2);
                 finish();
 
             }
@@ -66,10 +67,10 @@ public class Create extends AppCompatActivity {
         });
 
         Button buttonMusicPlayer = (Button) findViewById(R.id.Musicplayer);
-        buttonMusicPlayer.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View view){
-                Intent Act2 = new Intent(getApplicationContext(),MusicPlayer.class);
-                Act2.putExtra("Hello","Hello World");
+        buttonMusicPlayer.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                Intent Act2 = new Intent(getApplicationContext(), MusicPlayer.class);
+                Act2.putExtra("Hello", "Hello World");
                 startActivity(Act2);
 
             }
@@ -77,8 +78,8 @@ public class Create extends AppCompatActivity {
         });
 
         Button startSession = (Button) findViewById(R.id.btn_start_session);
-        startSession.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View view){
+        startSession.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
                 App.hStartAdvertising();
 
             }
