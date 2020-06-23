@@ -7,11 +7,11 @@ import android.net.wifi.p2p.WifiP2pManager;
 import com.speakerz.model.network.*;
 
 public class HostModel extends BaseModel {
-    @Override
-    public void init() {
-        network = new HostNetwork();
-        network.init(this);
-        network.addUpdateEventListener(this);
+    HostNetwork network;
+
+    public HostModel(WifiBroadcastReciever reciever) {
+        super(reciever);
+        network = new HostNetwork(reciever);
     }
 
     @Override
@@ -20,16 +20,6 @@ public class HostModel extends BaseModel {
         network.initWifiManager();
     }
 
-    @Override
-    public void setWifiP2pManager(WifiP2pManager manager) {
-        network.setWifiP2pManager(manager);
-        network.initP2pWifiManager();
-    }
-
-    @Override
-    public void setWifiP2pChannel(WifiP2pManager.Channel wifiP2pChannel) {
-        network.setWifiP2pChannel(wifiP2pChannel);
-    }
 
     @Override
     public void setIntentFilter(IntentFilter intentFilter) {
@@ -37,21 +27,14 @@ public class HostModel extends BaseModel {
     }
 
     @Override
-    public void setWifiBroadcastReciever(WifiBroadcastReciever reciever) {
-        network.setWifiBroadcastReciever(reciever);
-    }
-
-    @Override
     public void start() {
         network.start();
     }
 
-    HostNetwork network;
-
-    public HostModel() {
-        super();
+    @Override
+    public BaseNetwork getNetwork() {
+        return network;
     }
-
 
     public void startAdvertising() {
         network.startAdvertising();

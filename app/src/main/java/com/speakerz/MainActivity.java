@@ -44,7 +44,6 @@ public class MainActivity extends Activity {
 
     private void initModelAfterDecision(){
         initEventListener();
-        App.addUpdateEventListener(viewEventHandler);
     }
     void initEventListener() {
         viewEventHandler = new CommonModel_ViewEventHandler(this);

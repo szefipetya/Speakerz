@@ -24,7 +24,7 @@ public class TextValueStorage implements Serializable {
         return "missing key: "+id.toString();
     }
     public void setTextValue(Integer id, String text){
-            valueMap.put(id,text);
+        valueMap.put(id,text);
     }
     //sajnos a lambdát nem támogatja a version
     public void autoConfigureTexts(Activity act) {

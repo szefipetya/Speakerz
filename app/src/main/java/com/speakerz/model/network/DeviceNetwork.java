@@ -22,21 +22,20 @@ import java.util.List;
 public class DeviceNetwork extends BaseNetwork {
 
 
-    public DeviceNetwork(){
-
+    public DeviceNetwork(WifiBroadcastReciever reciever){
+        super(reciever);
     }
 
     public void discoverPeers(final Activity activity, final ListView lvPeersList) {
-        getWifiP2pManager().discoverPeers(wifiP2pChannel,new WifiP2pManager.ActionListener() {
+        reciever.discoverPeers(new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                updateEventManagerToModel.updateAll(EVT.updateText, R.id.discover_status,"Discovering...");
+                TextChanged.invoke(new TextChangedEventArgs(this, "Discovering..."));
             }
 
             @Override
             public void onFailure(int i) {
-                updateEventManagerToModel.updateAll(EVT.updateText, R.id.discover_status,"Discovery failed...");
-
+                TextChanged.invoke(new TextChangedEventArgs(this, "Discovering init failed..."));
             }
         });
 
@@ -78,34 +77,4 @@ public class DeviceNetwork extends BaseNetwork {
         return deviceNames;
     }
 
-    //SETTERS
-    @Override
-    public void setWifiP2pChannel(WifiP2pManager.Channel wifiP2pChannel) {
-        this.wifiP2pChannel=wifiP2pChannel;
-    }
-    @Override
-    public void setIntentFilter(IntentFilter intentFilter) {
-        this.intentFilter=intentFilter;
-
-    }
-    @Override
-    public void setWifiManager(WifiManager wifiManager) {
-        this.wifiManager = wifiManager;
-    }
-    @Override
-    public void setWifiP2pManager(WifiP2pManager wifiP2pManager) {
-        this.wifiP2pManager = wifiP2pManager;
-    }
-    @Override
-    public void setWifiBroadcastReciever(WifiBroadcastReciever reciever) {
-        this.reciever=reciever;
-        reciever.addEventHandlerToUpdateManager(this);
-        if(reciever!=null) {
-            reciever.setPeerListListener(peerListListener);
-            reciever.setChannel(this.wifiP2pChannel);
-            reciever.setWifiP2pManager(wifiP2pManager);
-        }
-        else{
-            D.log("err: reviecer was null.");}
-    }
 }

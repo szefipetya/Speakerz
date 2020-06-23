@@ -1,6 +1,7 @@
 package com.speakerz.App;
 
 import android.app.Application;
+import android.app.Service;
 import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
@@ -42,31 +43,34 @@ public class App extends Application {
         }
     }
 
+    public static TextValueStorage getTextValueStorage() {
+        return textValueStorage;
+    }
 
     public static String[] jGetDeviceNames(){
         return  ((DeviceModel)model).getDeviceNames();
     }
+
+
+    public static Application instance;
     @Override
     public void onCreate() {
         super.onCreate();
+        instance = this;
         // Your methods here...
     }
-    public static void initModel(boolean isHost){
+    public static BaseModel initModel(boolean isHost){
         if (isHost){
-            model=new HostModel();
-            ((HostModel)model).init();
+            model=new HostModel(reciever);
         }else {
-            model = new DeviceModel();
-            ((DeviceModel)model).init();
+            model = new DeviceModel(reciever);
         }
 
         model.setTextValueStorageForViewUpdateEventManager(textValueStorage);
         model.setWifiManager(wifiManager);
-        model.setWifiP2pManager(wifiP2pManager);
-        model.setWifiP2pChannel(wifiP2pChannel);
 
         model.setIntentFilter(intentFilter);
-        model.setWifiBroadcastReciever(reciever);
+        return model;
     }
 
     public static void initIntentFilter(){
@@ -78,7 +82,7 @@ public class App extends Application {
     }
     public static void initWifiBroadCastReciever(){
 
-       reciever=new WifiBroadcastReciever(wifiP2pManager,wifiP2pChannel);
+       reciever = new WifiBroadcastReciever(wifiP2pManager,wifiP2pChannel);
 
     }
 
@@ -88,10 +92,7 @@ public class App extends Application {
     public static void startModel(){
         model.start();
     }
-    public static void addUpdateEventListener(Model_ViewEventHandler handler){
-        model.addUpdateEventListener(handler);
 
-    }
 
     //auto configurates all the textfields if there is any element exists in the storage
     public static void autoConfigureTexts(Activity act){
@@ -118,5 +119,8 @@ public class App extends Application {
     }
     public static IntentFilter getIntentFilter(){
         return intentFilter;
+    }
+    public static  BaseModel getModel(){
+        return  model;
     }
 }

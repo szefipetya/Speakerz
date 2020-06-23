@@ -10,59 +10,47 @@ import com.speakerz.model.enums.EVT;
 import com.speakerz.model.event.EventHandler;
 import com.speakerz.model.event.UpdateEventManager;
 import com.speakerz.R;
+import com.speakerz.util.Event;
 
 import java.util.List;
 
 
-public abstract class BaseNetwork implements EventHandler {
+public abstract class BaseNetwork  {
 
-    protected WifiP2pManager wifiP2pManager;
     protected WifiManager wifiManager;
-    protected WifiP2pManager.Channel wifiP2pChannel;
     protected WifiBroadcastReciever reciever;
     protected IntentFilter intentFilter;
 
+    public Event<TextChangedEventArgs> TextChanged = new Event<>();
 
     List<WifiP2pDevice> peers;
     String[] deviceNames = new String[1];
     WifiP2pDevice[] devices = new WifiP2pDevice[1];
+
+    public WifiBroadcastReciever getReciever() {
+        return reciever;
+    }
+
     WifiP2pManager.PeerListListener peerListListener;
     UpdateEventManager updateEventManagerToModel;
 
-
-    public void init() {
-        updateEventManagerToModel = new UpdateEventManager();
+    public BaseNetwork(WifiBroadcastReciever reciever) {
+        this.reciever = reciever;
+        if(reciever!=null) {
+            reciever.setPeerListListener(peerListListener);
+        }
+        else{
+            D.log("err: reviecer was null.");
+        }
     }
 
-    public void init(EventHandler e) {
-        init();
-        addUpdateEventListener(e);
-
-    }
-
-    /**
-     * api doc holy shit
-     *
-     * @param event event ezt csinálja
-     */
     public void addUpdateEventListener(EventHandler event) {
         updateEventManagerToModel.addListener(event);
         D.log("event added");
     }
 
     public void start() {
-
-
         D.log("network sent msg");
-    }
-
-    public BaseNetwork() {
-
-
-
-
-
-
     }
 
     public void initP2pWifiManager() {
@@ -74,56 +62,23 @@ public abstract class BaseNetwork implements EventHandler {
      *
      */
     public void initWifiManager() {
-        if (!getWifiManager().isWifiEnabled()) {
+        if (!wifiManager.isWifiEnabled()) {
             //bekapcsoljuk a wifit
-            getWifiManager().setWifiEnabled(true);
+            wifiManager.setWifiEnabled(true);
         } else {
 
         }
     }
 
-
-    @Override
-    public void onUpdate(EVT type, Object o) {
-
-    }
-
-    @Override
-    public void onUpdate(EVT evt, Object o, Object o2) {
-        if (evt == EVT.updateText) {
-            updateEventManagerToModel.updateAll(evt, o, o2);
-        }
-    }
-
-    @Override
-    public void onUpdate(EVT type, Object o, Object o2, Object o3) {
-
-    }
-
-    @Override
-    public void onUpdate(EVT type, Object o, Object o2, Object o3, Object o4) {
-
-    }
-
     //SETTERS
-    abstract public void setWifiP2pChannel(WifiP2pManager.Channel wifiP2pChannel);
 
-    abstract public void setIntentFilter(IntentFilter intentFilter);
-
-    abstract public void setWifiManager(WifiManager wifiManager);
-
-    abstract public void setWifiP2pManager(WifiP2pManager wifiP2pManager);
-
-    abstract public void setWifiBroadcastReciever(WifiBroadcastReciever reciever);
-
-    //GETTERS
-    public WifiManager getWifiManager() {
-        return wifiManager;
+    public void setWifiManager(WifiManager wifiManager) {
+        this.wifiManager = wifiManager;
     }
 
-    public WifiP2pManager getWifiP2pManager() {
-        return wifiP2pManager;
-    }
 
+    public void setIntentFilter(IntentFilter intentFilter) {
+        this.intentFilter=intentFilter;
+    }
 
 }
