@@ -51,7 +51,7 @@ public class App extends Application {
         return  ((DeviceModel)model).getDeviceNames();
     }
 
-
+    //instance
     public static Application instance;
     @Override
     public void onCreate() {
