@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.speakerz">
+    package="com.speakerz">
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -15,7 +15,7 @@
     <!-- register singleton App class-->
     <!-- Persistent activities-->
     <application
-        android:name="com.app.speakerz.App.App"
+        android:name="com.speakerz.App.App"
         android:persistent="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -23,11 +23,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="com.app.speakerz.MusicPlayer"></activity>
-        <activity android:name="com.app.speakerz.Create" />
-        <activity android:name="com.app.speakerz.Options" />
-        <activity android:name="com.app.speakerz.Join" />
-        <activity android:name="com.app.speakerz.MainActivity">
+        <activity android:name="com.speakerz.MusicPlayer"></activity>
+        <activity android:name="com.speakerz.Create" />
+        <activity android:name="com.speakerz.Options" />
+        <activity android:name="com.speakerz.Join" />
+        <activity android:name="com.speakerz.MainActivity">
 
 
             <intent-filter>
