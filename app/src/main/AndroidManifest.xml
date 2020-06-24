@@ -23,6 +23,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <service android:name="com.speakerz.SpeakerzService" />
         <activity android:name="com.speakerz.MusicPlayer"></activity>
         <activity android:name="com.speakerz.Create" />
         <activity android:name="com.speakerz.Options" />

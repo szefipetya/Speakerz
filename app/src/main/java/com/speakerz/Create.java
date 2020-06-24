@@ -50,10 +50,13 @@ public class Create extends Activity {
     private void initAndStart() {
         initEventListener();
         viewEventHandler = new CommonModel_ViewEventHandler(this);
-        BaseModel model = App.initModel(true);
+        Intent intent = new Intent(this, SpeakerzService.class);
+        intent.putExtra("isHost", true);
+        startService(intent);
+        /*BaseModel model = App.initModel(true);
         subscribeModel(model);
         App.autoConfigureTexts(this);
-        App.startModel();
+        App.startModel();*/
     }
     //REQUIRED_END MODEL_Declare
 
