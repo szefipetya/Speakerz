@@ -12,10 +12,6 @@ import com.speakerz.util.EventListener;
 
 
 public abstract class BaseModel {
-    private WifiManager wifiManager;
-    private WifiP2pManager wifiP2pManager;
-    private Model_ViewUpdateEventManager viewUpdateEventManager;
-
     public abstract void start();
     public abstract void stop();
 
@@ -27,9 +23,6 @@ public abstract class BaseModel {
         });
     }
 
-    abstract public  void setWifiManager(WifiManager manager);
-
-    public abstract void setIntentFilter(IntentFilter intentFilter);
 
     public abstract BaseNetwork getNetwork();
 }

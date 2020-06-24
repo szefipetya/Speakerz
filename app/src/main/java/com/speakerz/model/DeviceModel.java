@@ -33,18 +33,6 @@ public class DeviceModel extends BaseModel {
     }
 
     @Override
-    public void setWifiManager(WifiManager manager) {
-        network.setWifiManager(manager);
-        network.initWifiManager();
-    }
-
-
-    @Override
-    public void setIntentFilter(IntentFilter intentFilter) {
-        network.setIntentFilter(intentFilter);
-    }
-
-    @Override
     public BaseNetwork getNetwork() {
         return network;
     }
@@ -54,7 +42,4 @@ public class DeviceModel extends BaseModel {
         network.discoverPeers();
     }
 
-    public List<String> getDeviceNames() {
-        return network.getDeviceNames();
-    }
 }

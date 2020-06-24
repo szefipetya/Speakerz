@@ -2,16 +2,20 @@ package com.speakerz;
 
 import android.app.Activity;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 
-import com.speakerz.App.App;
 import com.speakerz.debug.D;
 import com.speakerz.model.BaseModel;
+import com.speakerz.model.DeviceModel;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
 import com.speakerz.model.network.DeviceNetwork;
@@ -24,23 +28,22 @@ import java.util.ArrayList;
 
 public class Join extends Activity{
     //REQUIRED_BEG MODEL
+    SpeakerzService _service;
+    boolean _isBounded;
     ListView lvPeersList;
     CommonModel_ViewEventHandler viewEventHandler;
     ArrayAdapter<String> adapter;
     private void initAndStart(){
-        if(App.getModel()!=null) {
-            BaseModel model = App.getModel();
-            viewEventHandler = new CommonModel_ViewEventHandler(this);
-            subscribeModel(model);
-            App.autoConfigureTexts(this);
+
+            subscribeModel(_service.getModel());
+            _service.getTextValueStorage().autoConfigureTexts(this);
             lvPeersList = (ListView) findViewById(R.id.lv_peers);
-            App.startModel();
-            //adapter for Device list
-            //FIXME elszáll a program
-            adapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) App.getModel().getNetwork()).getDeviceNames()));
+            _service.getModel().start();
+            adapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
             lvPeersList.setAdapter(adapter);
-        }
-        D.log("initAndStart");
+             registerReceiver(_service.getModel().getNetwork().getReciever(),_service.getModel().getNetwork().getIntentFilter());
+
+
     }
     //REQUIRED_END MODEL
     private void subscribeModel(BaseModel model){
@@ -49,8 +52,8 @@ public class Join extends Activity{
         model.getNetwork().getReciever().WirelessStatusChanged.addListener(new EventListener<WirelessStatusChangedEventArgs>() {
             @Override
             public void action(WirelessStatusChangedEventArgs args) {
-                App.getTextValueStorage().setTextValue(R.id.wifi_status, args.status() ? "Wifi is on" : "Wifi is off");
-                App.getTextValueStorage().autoConfigureTexts(selfActivity);
+                _service.getTextValueStorage().setTextValue(R.id.wifi_status, args.status() ? "Wifi is on" : "Wifi is off");
+                _service.getTextValueStorage().autoConfigureTexts(selfActivity);
             }
         });
 
@@ -58,11 +61,11 @@ public class Join extends Activity{
             @Override
             public void action(TextChangedEventArgs args) {
                 if(args.event()== EVT.update_wifi_status){
-                    App.getTextValueStorage().setTextValue(R.id.wifi_status,args.text());
-                    App.getTextValueStorage().autoConfigureTexts(selfActivity);
+                    _service.getTextValueStorage().setTextValue(R.id.wifi_status,args.text());
+                    _service.getTextValueStorage().autoConfigureTexts(selfActivity);
                 }else if(args.event()==EVT.update_discovery_status){
-                     App.getTextValueStorage().setTextValue(R.id.discover_status,args.text());
-                     App.getTextValueStorage().autoConfigureTexts(selfActivity);
+                    _service.getTextValueStorage().setTextValue(R.id.discover_status,args.text());
+                    _service.getTextValueStorage().autoConfigureTexts(selfActivity);
                 }
 
             }
@@ -76,35 +79,70 @@ public class Join extends Activity{
         });
     }
 
+
+
+    Join selfActivity=this;
+    private ServiceConnection connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder binder) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            SpeakerzService.LocalBinder localBinder = (SpeakerzService.LocalBinder) binder;
+            _service =  localBinder.getService();
+            _isBounded = true;
+            selfActivity.initAndStart();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            _isBounded = false;
+        }
+    };
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Bind to LocalService
+        Intent intent = new Intent(this, SpeakerzService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+             unbindService(connection);
+        _isBounded = false;
+    }
+
+
     @Override
     protected void onResume() {
         super.onResume();
-        App.autoConfigureTexts(this);
-        registerReceiver(App.getWifiBroadcastReciever(),App.getIntentFilter());
+        if(_service!=null)
+            _service.getTextValueStorage().autoConfigureTexts(this);
+        //a bánat tudja, hogy ez mit csinál, de kell
+        if(_service!=null)
+            registerReceiver(_service.getModel().getNetwork().getReciever(),_service.getModel().getNetwork().getIntentFilter());
+        D.log("main_onResume");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver(App.getWifiBroadcastReciever());
+        if(_service!=null && _isBounded)
+            unregisterReceiver((_service.getModel().getNetwork().getReciever()));
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_join);
-
-        //import model recieved from main??
-
-        //REQUIRED_BEG MODEL
-        initAndStart();
-        //REQUIRED_END MODEL
-
         Button discover = (Button) findViewById(R.id.discover);
         discover.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
             //everything, that starts with a letter j is attached to only Joiner devices (DeviceModel)
-                App.jStartDiscovering();
+                ((DeviceModel)_service.getModel()).discoverPeers();
 
             }
         });

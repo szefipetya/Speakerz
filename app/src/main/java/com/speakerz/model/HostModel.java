@@ -16,18 +16,6 @@ public class HostModel extends BaseModel {
     }
 
     @Override
-    public void setWifiManager(WifiManager manager) {
-        network.setWifiManager(manager);
-        network.initWifiManager();
-    }
-
-
-    @Override
-    public void setIntentFilter(IntentFilter intentFilter) {
-        network.setIntentFilter(intentFilter);
-    }
-
-    @Override
     public void start() {
         network.start();
         network.startAdvertising();
@@ -43,9 +31,5 @@ public class HostModel extends BaseModel {
     @Override
     public BaseNetwork getNetwork() {
         return network;
-    }
-
-    public void startAdvertising() {
-        network.startAdvertising();
     }
 }

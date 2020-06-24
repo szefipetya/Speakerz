@@ -1,16 +1,13 @@
 package com.speakerz.model.network;
 
-import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.widget.Toast;
 
-import androidx.core.app.ActivityCompat;
-
-import com.speakerz.App.App;
 import com.speakerz.debug.D;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.Event;
@@ -19,22 +16,15 @@ import com.speakerz.util.Event;
 public class WifiBroadcastReciever extends BroadcastReceiver {
     public Event<WirelessStatusChangedEventArgs> WirelessStatusChanged = new Event<>();
 
+
+    private WifiManager wifiManager;
     private WifiP2pManager wifiP2pManager;
     private WifiP2pManager.Channel channel;
 
 
+    @SuppressLint("MissingPermission")
     public void discoverPeers(WifiP2pManager.ActionListener actionListener) {
-        if (ActivityCompat.checkSelfPermission(App.instance, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
 
-            //return;
-        }
         wifiP2pManager.discoverPeers(channel, actionListener);
     }
 
@@ -45,11 +35,13 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
 
     private WifiP2pManager.PeerListListener peerListListener;
 
-    public WifiBroadcastReciever(WifiP2pManager manager, WifiP2pManager.Channel channel){
+    public WifiBroadcastReciever(WifiManager wifiManager, WifiP2pManager manager, WifiP2pManager.Channel channel){
+        this.wifiManager=wifiManager;
         this.wifiP2pManager=manager;
         this.channel=channel;
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onReceive(Context context, Intent intent) {
         String action=intent.getAction();
@@ -77,6 +69,9 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
         else if(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)){
 
         }
+    }
+    public WifiManager getWifiManager() {
+        return wifiManager;
     }
 
 

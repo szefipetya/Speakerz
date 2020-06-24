@@ -19,8 +19,12 @@ import java.util.List;
 
 public abstract class BaseNetwork  {
 
-    protected WifiManager wifiManager;
     protected WifiBroadcastReciever reciever;
+
+    public IntentFilter getIntentFilter() {
+        return intentFilter;
+    }
+
     protected IntentFilter intentFilter;
 
     public Event<TextChangedEventArgs> TextChanged = new Event<>();
@@ -45,6 +49,11 @@ public abstract class BaseNetwork  {
         else{
             D.log("err: reviecer was null.");
         }
+        intentFilter = new IntentFilter();
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
     }
 
     public void addUpdateEventListener(EventHandler event) {
@@ -54,9 +63,7 @@ public abstract class BaseNetwork  {
 
     public void start() {
         D.log("network started");
-    }
-
-    public void initP2pWifiManager() {
+        initWifiManager();
     }
 
     /**
@@ -65,9 +72,9 @@ public abstract class BaseNetwork  {
      *
      */
     public void initWifiManager() {
-        if (!wifiManager.isWifiEnabled()) {
+        if (!reciever.getWifiManager().isWifiEnabled()) {
             //bekapcsoljuk a wifit
-            wifiManager.setWifiEnabled(true);
+            reciever.getWifiManager().setWifiEnabled(true);
             TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_wifi_status,"Turning on wifi..."));
         } else {
 
@@ -75,15 +82,5 @@ public abstract class BaseNetwork  {
     }
 
     //SETTERS
-
-    public void setWifiManager(WifiManager wifiManager) {
-        this.wifiManager = wifiManager;
-    }
-
-
-    public void setIntentFilter(IntentFilter intentFilter) {
-        this.intentFilter=intentFilter;
-    }
-
 
 }

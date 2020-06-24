@@ -60,8 +60,11 @@ public class DeviceNetwork extends BaseNetwork {
                     ListChanged.invoke(new EventArgs(this));
 
                 }
+
                 if(peers.size()==0){
                   TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"No devices found"));
+                }else{
+                    TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Found some devices"));
                 }
             }
         };
@@ -71,5 +74,7 @@ public class DeviceNetwork extends BaseNetwork {
     public List<String> getDeviceNames() {
         return deviceNames;
     }
+
+
 
 }
