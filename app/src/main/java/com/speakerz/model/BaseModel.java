@@ -17,6 +17,7 @@ public abstract class BaseModel {
     private Model_ViewUpdateEventManager viewUpdateEventManager;
 
     public abstract void start();
+    public abstract void stop();
 
     public BaseModel(WifiBroadcastReciever reciever){
         reciever.WirelessStatusChanged.addListener(new EventListener<WirelessStatusChangedEventArgs>() {

@@ -22,6 +22,11 @@ public class DeviceModel extends BaseModel {
         network.start();
     }
 
+    @Override
+    public void stop() {
+
+    }
+
     public DeviceModel(WifiBroadcastReciever reciever){
         super(reciever);
         network=new DeviceNetwork(reciever);
