@@ -20,7 +20,7 @@ import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.viewModel.TextValueStorage;
 
 public class App extends Application {
-    private static BaseModel model;
+    private static BaseModel model=null;
     private static final TextValueStorage textValueStorage = new TextValueStorage();
     private static WifiManager wifiManager;
     private static WifiP2pManager wifiP2pManager;
@@ -32,9 +32,9 @@ public class App extends Application {
         wifiP2pChannel=wifiP2pManager.initialize(mainActivity,mainLooper,cl);
     }
 
-    public static void jStartDiscovering(Activity activity, ListView lvPeersList) {
+    public static void jStartDiscovering() {
         if(model!=null){
-            ((DeviceModel)model).discoverPeers(activity,lvPeersList);
+            ((DeviceModel)model).discoverPeers();
         }
     }
     public static void hStartAdvertising() {
@@ -47,11 +47,7 @@ public class App extends Application {
         return textValueStorage;
     }
 
-    public static String[] jGetDeviceNames(){
-        return  ((DeviceModel)model).getDeviceNames();
-    }
-
-
+    //instance
     public static Application instance;
     @Override
     public void onCreate() {
@@ -66,7 +62,6 @@ public class App extends Application {
             model = new DeviceModel(reciever);
         }
 
-        model.setTextValueStorageForViewUpdateEventManager(textValueStorage);
         model.setWifiManager(wifiManager);
 
         model.setIntentFilter(intentFilter);

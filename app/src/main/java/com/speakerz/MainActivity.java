@@ -22,6 +22,8 @@ import android.widget.Toast;
 
 import com.speakerz.App.App;
 import com.speakerz.debug.D;
+import com.speakerz.model.DeviceModel;
+import com.speakerz.model.HostModel;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
 import com.speakerz.R;
 /**REQUIRED means: it needs to be in every Activity.*/
@@ -29,9 +31,8 @@ public class MainActivity extends Activity {
     //REQUIRED_BEG MODEL
     CommonModel_ViewEventHandler viewEventHandler;
     private void onCreateInit(){
-
         //Read the Textfield values from the Textstorage
-        setTextValuesFromStorage();
+        App.autoConfigureTexts(this);
         App.setWifiManager(((WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE)));
         App.setP2pWifiManager(((WifiP2pManager)getApplicationContext().getSystemService(Context.WIFI_P2P_SERVICE)));
         App.setChannel(this,getMainLooper(),null);
@@ -41,25 +42,13 @@ public class MainActivity extends Activity {
         //Model létrehozás előtt beállítom a a wifistatus szövegét.
 
     }
-
-    private void initModelAfterDecision(){
-        initEventListener();
-    }
-    void initEventListener() {
-        viewEventHandler = new CommonModel_ViewEventHandler(this);
-    }
-    void setTextValuesFromStorage(){
-      //  ((TextView)findViewById(R.id.wifi_status)).setText(new String(App.getTextFromStorage(R.id.wifi_status)));
-        //auto configure textfields (if there is an view component id present from the layout present in the textStorage, the StorageModule automatically sets the fields )
-        App.autoConfigureTexts(this);
-    }
     //REQUIRED_END MODEL
 
 
     @Override
     protected void onResume() {
         super.onResume();
-        setTextValuesFromStorage();
+        App.autoConfigureTexts(this);
         //a bánat tudja, hogy ez mit csinál, de kell
         registerReceiver(App.getWifiBroadcastReciever(),App.getIntentFilter());
         D.log("main_onResume");
@@ -90,10 +79,10 @@ public class MainActivity extends Activity {
         Button buttonJoin = (Button) findViewById(R.id.join);
         buttonJoin.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-               // App.initModel(false);
-               // initModelAfterDecision();
+                if(App.getModel()==null ||!(App.getModel() instanceof DeviceModel))
+                    App.initModel(false);
+
                 Intent Act2 = new Intent(getApplicationContext(),Join.class);
-                //TODO: Set model for activity Join
                 Act2.putExtra("Hello","Hello World");
                 startActivity(Act2);
 
@@ -105,11 +94,9 @@ public class MainActivity extends Activity {
         Button buttonCreate = (Button) findViewById(R.id.create);
         buttonCreate.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-               // App.initModel(false);
-              //  initModelAfterDecision();
+                if(App.getModel()==null ||!(App.getModel() instanceof HostModel))
+                    App.initModel(true);
                 Intent Act2 = new Intent(getApplicationContext(),Create.class);
-                //TODO: Set model for activity Create
-
                 Act2.putExtra("Hello","Hello World");
                 startActivity(Act2);
 

@@ -1,4 +1,4 @@
-package com.speakerz.model.network;
+package com.speakerz.model.network.event;
 
 import com.speakerz.util.EventArgs;
 
