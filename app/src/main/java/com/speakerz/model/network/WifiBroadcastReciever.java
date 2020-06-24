@@ -36,6 +36,7 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
 
+            //return;
         }
         wifiP2pManager.discoverPeers(channel, actionListener);
     }
