@@ -8,16 +8,19 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.speakerz.App.App;
 import com.speakerz.debug.D;
 import com.speakerz.model.BaseModel;
+import com.speakerz.model.enums.EVT;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
-import com.speakerz.R;
-import com.speakerz.model.network.TextChangedEventArgs;
-import com.speakerz.model.network.WirelessStatusChangedEventArgs;
+import com.speakerz.model.network.DeviceNetwork;
+import com.speakerz.model.network.event.TextChangedEventArgs;
+import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
+import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventListener;
+
+import java.util.ArrayList;
 
 public class Join extends Activity{
     //REQUIRED_BEG MODEL
@@ -25,15 +28,19 @@ public class Join extends Activity{
     CommonModel_ViewEventHandler viewEventHandler;
     ArrayAdapter<String> adapter;
     private void initAndStart(){
-        BaseModel model = App.initModel(false);
-        viewEventHandler=new CommonModel_ViewEventHandler(this);
-        subscribeModel(model);
-        App.autoConfigureTexts(this);
-        lvPeersList=(ListView) findViewById(R.id.lv_peers);
-
-
-        App.startModel();
-
+        if(App.getModel()!=null) {
+            BaseModel model = App.getModel();
+            viewEventHandler = new CommonModel_ViewEventHandler(this);
+            subscribeModel(model);
+            App.autoConfigureTexts(this);
+            lvPeersList = (ListView) findViewById(R.id.lv_peers);
+            App.startModel();
+            //adapter for Device list
+            //FIXME elszáll a program
+            adapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) App.getModel().getNetwork()).getDeviceNames()));
+            lvPeersList.setAdapter(adapter);
+        }
+        D.log("initAndStart");
     }
     //REQUIRED_END MODEL
     private void subscribeModel(BaseModel model){
@@ -50,8 +57,21 @@ public class Join extends Activity{
         model.getNetwork().TextChanged.addListener(new EventListener<TextChangedEventArgs>() {
             @Override
             public void action(TextChangedEventArgs args) {
-                App.getTextValueStorage().setTextValue(R.id.discover_status,args.text());
-                App.getTextValueStorage().autoConfigureTexts(selfActivity);
+                if(args.event()== EVT.update_wifi_status){
+                    App.getTextValueStorage().setTextValue(R.id.wifi_status,args.text());
+                    App.getTextValueStorage().autoConfigureTexts(selfActivity);
+                }else if(args.event()==EVT.update_discovery_status){
+                     App.getTextValueStorage().setTextValue(R.id.discover_status,args.text());
+                     App.getTextValueStorage().autoConfigureTexts(selfActivity);
+                }
+
+            }
+        });
+
+        model.getNetwork().ListChanged.addListener(new EventListener<EventArgs>() {
+            @Override
+            public void action(EventArgs args) {
+                    adapter.notifyDataSetChanged();
             }
         });
     }
@@ -84,7 +104,7 @@ public class Join extends Activity{
         discover.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
             //everything, that starts with a letter j is attached to only Joiner devices (DeviceModel)
-                App.jStartDiscovering(Join.this,lvPeersList);
+                App.jStartDiscovering();
 
             }
         });

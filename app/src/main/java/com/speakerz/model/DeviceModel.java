@@ -11,6 +11,8 @@ import com.speakerz.model.network.BaseNetwork;
 import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.WifiBroadcastReciever;
 
+import java.util.List;
+
 public class DeviceModel extends BaseModel {
     DeviceNetwork network;
 
@@ -43,11 +45,11 @@ public class DeviceModel extends BaseModel {
     }
 
 
-    public void discoverPeers(Activity activity, ListView lvPeersList) {
-        network.discoverPeers(activity,lvPeersList);
+    public void discoverPeers() {
+        network.discoverPeers();
     }
 
-    public String[] getDeviceNames() {
+    public List<String> getDeviceNames() {
         return network.getDeviceNames();
     }
 }

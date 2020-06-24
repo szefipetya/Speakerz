@@ -1,20 +1,10 @@
 package com.speakerz.model.network;
 
-import android.content.IntentFilter;
-import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.Toast;
 
-import android.app.Activity;
-
-import com.speakerz.debug.D;
-import com.speakerz.model.enums.EVT;
-import com.speakerz.R;
-import com.speakerz.util.Event;
+import com.speakerz.model.network.event.TextChangedEventArgs;
 
 import java.util.ArrayList;
 

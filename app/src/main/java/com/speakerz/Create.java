@@ -6,26 +6,16 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 import com.speakerz.App.App;
 import com.speakerz.model.BaseModel;
-import com.speakerz.model.enums.EVT;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
-import com.speakerz.R;
-import com.speakerz.model.network.HostNetwork;
-import com.speakerz.model.network.TextChangedEventArgs;
-import com.speakerz.model.network.WirelessStatusChangedEventArgs;
+import com.speakerz.model.network.event.TextChangedEventArgs;
+import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.EventListener;
 
 public class Create extends Activity {
     //REQUIRED_BEG MODEL_Declare
-    CommonModel_ViewEventHandler viewEventHandler;
-
-    void initEventListener() {
-        viewEventHandler = new CommonModel_ViewEventHandler(this);
-    }
-
 
     private void subscribeModel(BaseModel model){
         final Activity selfActivity = this;
@@ -48,9 +38,7 @@ public class Create extends Activity {
     }
 
     private void initAndStart() {
-        initEventListener();
-        viewEventHandler = new CommonModel_ViewEventHandler(this);
-        BaseModel model = App.initModel(true);
+        BaseModel model = App.getModel();
         subscribeModel(model);
         App.autoConfigureTexts(this);
         App.startModel();

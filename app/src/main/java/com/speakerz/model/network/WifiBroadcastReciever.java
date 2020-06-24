@@ -12,10 +12,7 @@ import androidx.core.app.ActivityCompat;
 
 import com.speakerz.App.App;
 import com.speakerz.debug.D;
-import com.speakerz.model.enums.EVT;
-import com.speakerz.model.event.EventHandler;
-import com.speakerz.model.event.UpdateEventManager;
-import com.speakerz.R;
+import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.Event;
 
 

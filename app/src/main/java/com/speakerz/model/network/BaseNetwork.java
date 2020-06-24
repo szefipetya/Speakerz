@@ -9,9 +9,11 @@ import com.speakerz.debug.D;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.event.EventHandler;
 import com.speakerz.model.event.UpdateEventManager;
-import com.speakerz.R;
+import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -22,10 +24,11 @@ public abstract class BaseNetwork  {
     protected IntentFilter intentFilter;
 
     public Event<TextChangedEventArgs> TextChanged = new Event<>();
+    public Event<EventArgs> ListChanged = new Event<>();
 
     List<WifiP2pDevice> peers;
-    String[] deviceNames = new String[1];
-    WifiP2pDevice[] devices = new WifiP2pDevice[1];
+    List<String> deviceNames = new ArrayList<>();
+    WifiP2pDevice[] devices = new WifiP2pDevice[0];
 
     public WifiBroadcastReciever getReciever() {
         return reciever;
@@ -50,7 +53,7 @@ public abstract class BaseNetwork  {
     }
 
     public void start() {
-        D.log("network sent msg");
+        D.log("network started");
     }
 
     public void initP2pWifiManager() {
@@ -65,6 +68,7 @@ public abstract class BaseNetwork  {
         if (!wifiManager.isWifiEnabled()) {
             //bekapcsoljuk a wifit
             wifiManager.setWifiEnabled(true);
+            TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_wifi_status,"Turning on wifi..."));
         } else {
 
         }
@@ -80,5 +84,6 @@ public abstract class BaseNetwork  {
     public void setIntentFilter(IntentFilter intentFilter) {
         this.intentFilter=intentFilter;
     }
+
 
 }

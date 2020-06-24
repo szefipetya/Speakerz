@@ -1,20 +1,14 @@
 package com.speakerz.model.network;
 
 
-import android.content.IntentFilter;
-import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.Toast;
-
-import android.app.Activity;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.EVT;
-import com.speakerz.R;
+import com.speakerz.model.network.event.TextChangedEventArgs;
+import com.speakerz.util.EventArgs;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,16 +20,16 @@ public class DeviceNetwork extends BaseNetwork {
         super(reciever);
     }
 
-    public void discoverPeers(final Activity activity, final ListView lvPeersList) {
+    public void discoverPeers() {
         reciever.discoverPeers(new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                TextChanged.invoke(new TextChangedEventArgs(this, "Discovering..."));
+                TextChanged.invoke(new TextChangedEventArgs(this,EVT.update_discovery_status, "Discovering..."));
             }
 
             @Override
             public void onFailure(int i) {
-                TextChanged.invoke(new TextChangedEventArgs(this, "Discovering init failed..."));
+                TextChanged.invoke(new TextChangedEventArgs(this,EVT.update_discovery_status,  "Discovering init failed..."));
             }
         });
 
@@ -52,28 +46,29 @@ public class DeviceNetwork extends BaseNetwork {
                     peers.clear();
                     peers.addAll(peerList.getDeviceList());
 
-                    deviceNames=new String[peerList.getDeviceList().size()];
+                    deviceNames.clear();
                     devices=new WifiP2pDevice[peerList.getDeviceList().size()];
+
                     int index=0;
                     for(WifiP2pDevice device : peerList.getDeviceList()){
-                        deviceNames[index]=device.deviceName;
+                        deviceNames.add(device.deviceName);
                         devices[index]=device;
                         index++;
-                        D.log("device found");
+                        D.log("device found: "+device.deviceName);
                     }
-                    ArrayAdapter<String> adapter=new ArrayAdapter<>(activity.getApplicationContext(),android.R.layout.simple_list_item_1,deviceNames);
-                    lvPeersList.setAdapter(adapter);
+
+                    ListChanged.invoke(new EventArgs(this));
 
                 }
                 if(peers.size()==0){
-                    Toast.makeText(activity.getApplicationContext(),"No Devices found",Toast.LENGTH_SHORT).show();
+                  TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"No devices found"));
                 }
             }
         };
         reciever.setPeerListListener(peerListListener);
     }
 
-    public String[] getDeviceNames() {
+    public List<String> getDeviceNames() {
         return deviceNames;
     }
 

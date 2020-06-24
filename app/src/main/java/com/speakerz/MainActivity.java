@@ -22,6 +22,8 @@ import android.widget.Toast;
 
 import com.speakerz.App.App;
 import com.speakerz.debug.D;
+import com.speakerz.model.DeviceModel;
+import com.speakerz.model.HostModel;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
 import com.speakerz.R;
 /**REQUIRED means: it needs to be in every Activity.*/
@@ -90,8 +92,10 @@ public class MainActivity extends Activity {
         Button buttonJoin = (Button) findViewById(R.id.join);
         buttonJoin.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-               // App.initModel(false);
+                if(App.getModel()==null ||!(App.getModel() instanceof DeviceModel))
+                    App.initModel(false);
                // initModelAfterDecision();
+
                 Intent Act2 = new Intent(getApplicationContext(),Join.class);
                 //TODO: Set model for activity Join
                 Act2.putExtra("Hello","Hello World");
@@ -105,7 +109,8 @@ public class MainActivity extends Activity {
         Button buttonCreate = (Button) findViewById(R.id.create);
         buttonCreate.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-               // App.initModel(false);
+                if(App.getModel()==null ||!(App.getModel() instanceof HostModel))
+                    App.initModel(true);
               //  initModelAfterDecision();
                 Intent Act2 = new Intent(getApplicationContext(),Create.class);
                 //TODO: Set model for activity Create
