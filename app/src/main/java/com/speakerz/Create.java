@@ -2,47 +2,105 @@ package com.speakerz;
 
 import android.app.Activity;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
-import com.speakerz.App.App;
+import com.speakerz.debug.D;
+import com.speakerz.model.BaseModel;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
-import com.speakerz.R;
+import com.speakerz.model.network.event.TextChangedEventArgs;
+import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
+import com.speakerz.util.EventListener;
 
 public class Create extends Activity {
     //REQUIRED_BEG MODEL_Declare
-    CommonModel_ViewEventHandler viewEventHandler;
+    SpeakerzService _service ;
+    boolean _isBounded;
 
-    void initEventListener() {
-        viewEventHandler = new CommonModel_ViewEventHandler(this);
+    private void subscribeModel(BaseModel model){
+        final Activity selfActivity = this;
+        // Wireless changed event
+        model.getNetwork().getReciever().WirelessStatusChanged.addListener(new EventListener<WirelessStatusChangedEventArgs>() {
+            @Override
+            public void action(WirelessStatusChangedEventArgs args) {
+                _service.getTextValueStorage().autoConfigureTexts(selfActivity);
+            }
+        });
+
+        model.getNetwork().TextChanged.addListener(new EventListener<TextChangedEventArgs>() {
+            @Override
+            public void action(TextChangedEventArgs args) {
+                _service.getTextValueStorage().setTextValue(R.id.discover_status,args.text());
+                _service.getTextValueStorage().autoConfigureTexts(selfActivity);
+            }
+        });
     }
 
-
     private void initAndStart() {
-        initEventListener();
-        viewEventHandler = new CommonModel_ViewEventHandler(this);
-        App.initModel(true);
-        App.addUpdateEventListener(viewEventHandler);
-        App.autoConfigureTexts(this);
-        App.startModel();
+        subscribeModel(_service.getModel());
+        _service.getTextValueStorage().autoConfigureTexts(this);
+        _service.getModel().start();
+        registerReceiver(_service.getModel().getNetwork().getReciever(),_service.getModel().getNetwork().getIntentFilter());
     }
     //REQUIRED_END MODEL_Declare
 
+    Create selfActivity=this;
+    private ServiceConnection connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder binder) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            SpeakerzService.LocalBinder localBinder = (SpeakerzService.LocalBinder) binder;
+            _service =  localBinder.getService();
+            _isBounded = true;
+            selfActivity.initAndStart();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            _isBounded = false;
+        }
+    };
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        // Bind to LocalService
+        Intent intent = new Intent(this, SpeakerzService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(connection);
+        _isBounded = false;
+    }
+
+
+   @Override
     protected void onResume() {
         super.onResume();
-        App.autoConfigureTexts(this);
-        registerReceiver(App.getWifiBroadcastReciever(), App.getIntentFilter());
+        if(_service!=null)
+            _service.getTextValueStorage().autoConfigureTexts(this);
+        //a bánat tudja, hogy ez mit csinál, de kell
+       if(_service!=null)
+        registerReceiver(_service.getModel().getNetwork().getReciever(),_service.getModel().getNetwork().getIntentFilter());
+        D.log("main_onResume");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver(App.getWifiBroadcastReciever());
+       if(_service!=null)
+              unregisterReceiver((_service.getModel().getNetwork().getReciever()));
     }
 
     @Override
@@ -50,9 +108,6 @@ public class Create extends Activity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create);
-        //REQUIRED_BEG MODEL
-        initAndStart();
-        //REQUIRED_END MODEL
 
         Button buttonBack = (Button) findViewById(R.id.back);
         buttonBack.setOnClickListener(new View.OnClickListener() {
@@ -80,7 +135,7 @@ public class Create extends Activity {
         Button startSession = (Button) findViewById(R.id.btn_start_session);
         startSession.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                App.hStartAdvertising();
+
 
             }
 

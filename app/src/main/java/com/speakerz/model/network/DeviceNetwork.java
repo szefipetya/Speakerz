@@ -1,20 +1,14 @@
 package com.speakerz.model.network;
 
 
-import android.content.IntentFilter;
-import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.Toast;
-
-import android.app.Activity;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.EVT;
-import com.speakerz.R;
+import com.speakerz.model.network.event.TextChangedEventArgs;
+import com.speakerz.util.EventArgs;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,21 +16,20 @@ import java.util.List;
 public class DeviceNetwork extends BaseNetwork {
 
 
-    public DeviceNetwork(){
-
+    public DeviceNetwork(WifiBroadcastReciever reciever){
+        super(reciever);
     }
 
-    public void discoverPeers(final Activity activity, final ListView lvPeersList) {
-        getWifiP2pManager().discoverPeers(wifiP2pChannel,new WifiP2pManager.ActionListener() {
+    public void discoverPeers() {
+        reciever.discoverPeers(new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                updateEventManagerToModel.updateAll(EVT.updateText, R.id.discover_status,"Discovering...");
+                TextChanged.invoke(new TextChangedEventArgs(this,EVT.update_discovery_status, "Discovering..."));
             }
 
             @Override
             public void onFailure(int i) {
-                updateEventManagerToModel.updateAll(EVT.updateText, R.id.discover_status,"Discovery failed...");
-
+                TextChanged.invoke(new TextChangedEventArgs(this,EVT.update_discovery_status,  "Discovering init failed..."));
             }
         });
 
@@ -53,59 +46,35 @@ public class DeviceNetwork extends BaseNetwork {
                     peers.clear();
                     peers.addAll(peerList.getDeviceList());
 
-                    deviceNames=new String[peerList.getDeviceList().size()];
+                    deviceNames.clear();
                     devices=new WifiP2pDevice[peerList.getDeviceList().size()];
+
                     int index=0;
                     for(WifiP2pDevice device : peerList.getDeviceList()){
-                        deviceNames[index]=device.deviceName;
+                        deviceNames.add(device.deviceName);
                         devices[index]=device;
                         index++;
-                        D.log("device found");
+                        D.log("device found: "+device.deviceName);
                     }
-                    ArrayAdapter<String> adapter=new ArrayAdapter<>(activity.getApplicationContext(),android.R.layout.simple_list_item_1,deviceNames);
-                    lvPeersList.setAdapter(adapter);
+
+                    ListChanged.invoke(new EventArgs(this));
 
                 }
+
                 if(peers.size()==0){
-                    Toast.makeText(activity.getApplicationContext(),"No Devices found",Toast.LENGTH_SHORT).show();
+                  TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"No devices found"));
+                }else{
+                    TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Found some devices"));
                 }
             }
         };
         reciever.setPeerListListener(peerListListener);
     }
 
-    public String[] getDeviceNames() {
+    public List<String> getDeviceNames() {
         return deviceNames;
     }
 
-    //SETTERS
-    @Override
-    public void setWifiP2pChannel(WifiP2pManager.Channel wifiP2pChannel) {
-        this.wifiP2pChannel=wifiP2pChannel;
-    }
-    @Override
-    public void setIntentFilter(IntentFilter intentFilter) {
-        this.intentFilter=intentFilter;
 
-    }
-    @Override
-    public void setWifiManager(WifiManager wifiManager) {
-        this.wifiManager = wifiManager;
-    }
-    @Override
-    public void setWifiP2pManager(WifiP2pManager wifiP2pManager) {
-        this.wifiP2pManager = wifiP2pManager;
-    }
-    @Override
-    public void setWifiBroadcastReciever(WifiBroadcastReciever reciever) {
-        this.reciever=reciever;
-        reciever.addEventHandlerToUpdateManager(this);
-        if(reciever!=null) {
-            reciever.setPeerListListener(peerListListener);
-            reciever.setChannel(this.wifiP2pChannel);
-            reciever.setWifiP2pManager(wifiP2pManager);
-        }
-        else{
-            D.log("err: reviecer was null.");}
-    }
+
 }

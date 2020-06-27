@@ -4,9 +4,11 @@ import androidx.appcompat.app.AlertDialog;
 import android.app.Activity;
 
 import android.Manifest;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -14,63 +16,89 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.speakerz.App.App;
+
+import com.speakerz.SpeakerzService.LocalBinder;
 import com.speakerz.debug.D;
+import com.speakerz.model.DeviceModel;
+import com.speakerz.model.HostModel;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
 import com.speakerz.R;
 /**REQUIRED means: it needs to be in every Activity.*/
 public class MainActivity extends Activity {
     //REQUIRED_BEG MODEL
+    SpeakerzService _service;
+    boolean _isBounded;
+
     CommonModel_ViewEventHandler viewEventHandler;
-    private void onCreateInit(){
 
-        //Read the Textfield values from the Textstorage
-        setTextValuesFromStorage();
-        App.setWifiManager(((WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE)));
-        App.setP2pWifiManager(((WifiP2pManager)getApplicationContext().getSystemService(Context.WIFI_P2P_SERVICE)));
-        App.setChannel(this,getMainLooper(),null);
-        App.initIntentFilter();
-        //ez előtt a wifip2p és channel init kell
-        App.initWifiBroadCastReciever();
-        //Model létrehozás előtt beállítom a a wifistatus szövegét.
-
-    }
-
-    private void initModelAfterDecision(){
-        initEventListener();
-        App.addUpdateEventListener(viewEventHandler);
-    }
-    void initEventListener() {
-        viewEventHandler = new CommonModel_ViewEventHandler(this);
-    }
-    void setTextValuesFromStorage(){
-      //  ((TextView)findViewById(R.id.wifi_status)).setText(new String(App.getTextFromStorage(R.id.wifi_status)));
-        //auto configure textfields (if there is an view component id present from the layout present in the textStorage, the StorageModule automatically sets the fields )
-        App.autoConfigureTexts(this);
-    }
     //REQUIRED_END MODEL
 
+
+    private ServiceConnection connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder binder) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            LocalBinder localBinder = (LocalBinder) binder;
+            _service =  localBinder.getService();
+            _isBounded = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            _isBounded = false;
+        }
+    };
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Bind to LocalService
+        Intent intent = new Intent(this, SpeakerzService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        if(_service!=null)
+        _service.getTextValueStorage().autoConfigureTexts(this);
+        else{
+            D.log("err: MainActivity : service is null");
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(connection);
+        _isBounded = false;
+    }
 
     @Override
     protected void onResume() {
         super.onResume();
-        setTextValuesFromStorage();
+        if(_service!=null)
+            _service.getTextValueStorage().autoConfigureTexts(this);
         //a bánat tudja, hogy ez mit csinál, de kell
-        registerReceiver(App.getWifiBroadcastReciever(),App.getIntentFilter());
+
         D.log("main_onResume");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver(App.getWifiBroadcastReciever());
+
     }
+    private void initAndStart(boolean isHost) {
+        Intent intent = new Intent(this, SpeakerzService.class);
+        intent.putExtra("isHost",isHost);
+        this.startService(intent);
+
+    }
+
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -81,20 +109,13 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-        //REQUIRED_BEGIN MODEL
-        onCreateInit();
-        //REQUIRED_END MODEL
-
         D.log("oncreate_main");
 
         Button buttonJoin = (Button) findViewById(R.id.join);
         buttonJoin.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-               // App.initModel(false);
-               // initModelAfterDecision();
+                initAndStart(false);
                 Intent Act2 = new Intent(getApplicationContext(),Join.class);
-                //TODO: Set model for activity Join
                 Act2.putExtra("Hello","Hello World");
                 startActivity(Act2);
 
@@ -106,11 +127,8 @@ public class MainActivity extends Activity {
         Button buttonCreate = (Button) findViewById(R.id.create);
         buttonCreate.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-               // App.initModel(false);
-              //  initModelAfterDecision();
+                initAndStart(true);
                 Intent Act2 = new Intent(getApplicationContext(),Create.class);
-                //TODO: Set model for activity Create
-
                 Act2.putExtra("Hello","Hello World");
                 startActivity(Act2);
 
