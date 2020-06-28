@@ -1,17 +1,10 @@
 package com.speakerz.model;
 
-import android.content.IntentFilter;
-import android.net.wifi.WifiManager;
-import android.net.wifi.p2p.WifiP2pManager;
-import android.widget.ListView;
-
-import android.app.Activity;
+import android.net.ConnectivityManager;
 
 import com.speakerz.model.network.BaseNetwork;
 import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.WifiBroadcastReciever;
-
-import java.util.List;
 
 public class DeviceModel extends BaseModel {
     DeviceNetwork network;
@@ -27,9 +20,10 @@ public class DeviceModel extends BaseModel {
 
     }
 
-    public DeviceModel(WifiBroadcastReciever reciever){
+    public DeviceModel(WifiBroadcastReciever reciever, ConnectivityManager connectivityManager){
         super(reciever);
         network=new DeviceNetwork(reciever);
+        network.getReciever().setConnectivityManager(connectivityManager);
     }
 
     @Override

@@ -1,10 +1,5 @@
 package com.speakerz.model;
 
-import android.content.IntentFilter;
-import android.net.wifi.WifiManager;
-import android.net.wifi.p2p.WifiP2pManager;
-
-import com.speakerz.model.event.Model_ViewUpdateEventManager;
 import com.speakerz.model.network.BaseNetwork;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;

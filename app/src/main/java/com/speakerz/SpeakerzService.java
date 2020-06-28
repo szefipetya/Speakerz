@@ -1,9 +1,12 @@
 package com.speakerz;
 
+import android.Manifest;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Binder;
@@ -15,14 +18,19 @@ import android.os.Message;
 import android.os.Process;
 import android.widget.Toast;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.speakerz.debug.D;
 import com.speakerz.model.BaseModel;
 import com.speakerz.model.DeviceModel;
 import com.speakerz.model.HostModel;
+import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.WifiBroadcastReciever;
+import com.speakerz.model.network.event.PermissionCheckEventArgs;
+import com.speakerz.util.Event;
+import com.speakerz.util.EventListener;
 import com.speakerz.viewModel.TextValueStorage;
-
-import java.util.Random;
 
 public class SpeakerzService extends Service {
     private final class ServiceHandler extends Handler {
@@ -30,20 +38,26 @@ public class SpeakerzService extends Service {
         private BaseModel model = null;
         private int startId = -1;
 
+
         public ServiceHandler(Looper looper, SpeakerzService service) {
             super(looper);
             this.service = service;
+            //D.log("servicehandler created");
         }
 
         private void startService(boolean isHost){
-            if(isHost){
-                model = new HostModel(service.receiver);
+
+            if(isHost && (model==null || model instanceof DeviceModel)){
+                model = new HostModel(service.receiver,service.connectivityManager);
+
+                //D.log("hostmodel created");
             }
-            else{
-                model = new DeviceModel(service.receiver);
+            else if(model==null || model instanceof HostModel){
+                model = new DeviceModel(service.receiver,service.connectivityManager);
+                //D.log("devicemodel created");
             }
             model.start();
-
+            this.subscribeEvents();
         }
 
         public void stopService(){
@@ -52,7 +66,7 @@ public class SpeakerzService extends Service {
             model.stop();
             stopSelf(startId);
             startId = -1;
-            model = null;
+            //model = null;
         }
 
         @Override
@@ -62,6 +76,19 @@ public class SpeakerzService extends Service {
             }
             startId = msg.arg1;
             startService(msg.arg2 == 1);
+        }
+
+        private void subscribeEvents(){
+            model.getNetwork().PermissionCheckEvent.addListener(new EventListener<PermissionCheckEventArgs>() {
+                @Override
+                public void action(PermissionCheckEventArgs args) {
+                    //pass the permission sh*t to one of the views
+                    PermissionCheckEvent.invoke(args);
+
+                }
+
+            });
+
         }
         public BaseModel getModel(){
             return model;
@@ -76,9 +103,11 @@ public class SpeakerzService extends Service {
     private WifiP2pManager wifiP2pManager;
     private WifiP2pManager.Channel wifiP2pChannel;
     private WifiBroadcastReciever receiver;
+    private ConnectivityManager connectivityManager;
     //from App
     private IntentFilter intentFilterForNetwork;
 
+    public Event<PermissionCheckEventArgs> PermissionCheckEvent = new Event<>();
 
 
     private TextValueStorage textValueStorage ;
@@ -91,7 +120,7 @@ public class SpeakerzService extends Service {
         wifiP2pManager = (WifiP2pManager)getApplicationContext().getSystemService(Context.WIFI_P2P_SERVICE);
         wifiP2pChannel = wifiP2pManager.initialize(this, getMainLooper(), null);
         receiver = new WifiBroadcastReciever(wifiManager,wifiP2pManager,wifiP2pChannel);
-
+        connectivityManager=(ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         // Start up the thread running the service. Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block. We also make it
@@ -155,4 +184,11 @@ public class SpeakerzService extends Service {
     public BaseModel getModel(){
         return serviceHandler.getModel();
     }
+
+    //ask the user for permission
+
+
+//permissions
+    public final int ACCESS_FINE_LOCATION_CODE = 100;
+    public final int STORAGE_PERMISSION_CODE = 101;
 }

@@ -66,7 +66,7 @@ public class MainActivity extends Activity {
         if(_service!=null)
         _service.getTextValueStorage().autoConfigureTexts(this);
         else{
-            D.log("err: MainActivity : service is null");
+            //D.log("err: MainActivity : service is null");
         }
     }
 
@@ -84,7 +84,7 @@ public class MainActivity extends Activity {
             _service.getTextValueStorage().autoConfigureTexts(this);
         //a bánat tudja, hogy ez mit csinál, de kell
 
-        D.log("main_onResume");
+        //D.log("main_onResume");
     }
 
     @Override
@@ -109,7 +109,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        D.log("oncreate_main");
+        //D.log("oncreate_main");
 
         Button buttonJoin = (Button) findViewById(R.id.join);
         buttonJoin.setOnClickListener(new View.OnClickListener(){
