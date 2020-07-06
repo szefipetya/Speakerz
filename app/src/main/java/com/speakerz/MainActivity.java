@@ -96,7 +96,6 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(this, SpeakerzService.class);
         intent.putExtra("isHost",isHost);
         this.startService(intent);
-
     }
 
 

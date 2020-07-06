@@ -7,6 +7,17 @@
     tools:context="com.speakerz.Join">
 
     <Button
+        android:id="@+id/btn_swapVIew_test_list"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:text="Test List"
+        app:layout_constraintBottom_toTopOf="@+id/Musicplayer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
         android:id="@+id/Musicplayer"
         android:layout_width="wrap_content"
         android:layout_height="51dp"
@@ -32,10 +43,10 @@
         android:text="Discover"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.527"
+        app:layout_constraintHorizontal_bias="0.131"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.385" />
+        app:layout_constraintVertical_bias="0.393" />
 
     <Button
         android:id="@+id/back"
@@ -74,14 +85,28 @@
 
     <ListView
         android:id="@+id/lv_peers"
-        android:layout_width="259dp"
-        android:layout_height="207dp"
+        android:layout_width="171dp"
+        android:layout_height="176dp"
         android:background="@android:color/darker_gray"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.066"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/back"
-        app:layout_constraintVertical_bias="0.753" />
+        app:layout_constraintVertical_bias="0.656" />
+
+
+    <ListView
+        android:id="@+id/lv_song_list_test"
+        android:layout_width="171dp"
+        android:layout_height="176dp"
+        android:background="@android:color/darker_gray"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.858"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/back"
+        app:layout_constraintVertical_bias="0.656" />
 
     <TextView
         android:id="@+id/host_name"
@@ -104,6 +129,18 @@
         app:layout_constraintHorizontal_bias="0.041"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btn_add_song"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="52dp"
+        android:layout_marginBottom="48dp"
+        android:text="Add song"
+        app:layout_constraintBottom_toTopOf="@+id/lv_song_list_test"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.67"
+        app:layout_constraintStart_toEndOf="@+id/discover" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -16,6 +16,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
+import android.view.Display;
 import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
@@ -27,8 +28,10 @@ import com.speakerz.model.DeviceModel;
 import com.speakerz.model.HostModel;
 import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.WifiBroadcastReciever;
+import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventListener;
 import com.speakerz.viewModel.TextValueStorage;
 
@@ -47,17 +50,37 @@ public class SpeakerzService extends Service {
 
         private void startService(boolean isHost){
 
+            if(model!=null){model.stop();}
+
+          /*  if(isHost) {
+                D.log("hostmodel created");
+                model = new HostModel(service.receiver, service.connectivityManager);
+            }
+            else {
+                D.log("devicemodel created");
+                model=new DeviceModel(service.receiver, service.connectivityManager);
+            }*/
+
             if(isHost && (model==null || model instanceof DeviceModel)){
                 model = new HostModel(service.receiver,service.connectivityManager);
-
-                //D.log("hostmodel created");
+                model.start();
+                this.subscribeEvents();
+                D.log("hostmodel created");
             }
-            else if(model==null || model instanceof HostModel){
+            else if(!isHost&&(model==null || model instanceof HostModel)){
                 model = new DeviceModel(service.receiver,service.connectivityManager);
-                //D.log("devicemodel created");
+                model.start();
+                this.subscribeEvents();
+                D.log("devicemodel created");
             }
-            model.start();
-            this.subscribeEvents();
+
+
+
+            ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
+
+
+
+
         }
 
         public void stopService(){
@@ -66,7 +89,7 @@ public class SpeakerzService extends Service {
             model.stop();
             stopSelf(startId);
             startId = -1;
-            //model = null;
+            model = null;
         }
 
         @Override
@@ -107,6 +130,7 @@ public class SpeakerzService extends Service {
     //from App
     private IntentFilter intentFilterForNetwork;
 
+    public Event<BooleanEventArgs> ModelReadyEvent=new Event<>();
     public Event<PermissionCheckEventArgs> PermissionCheckEvent = new Event<>();
 
 
@@ -143,7 +167,10 @@ public class SpeakerzService extends Service {
         // Sending a message to ServiceHandler to start a new model in the given mode
         Message msg = serviceHandler.obtainMessage();
         msg.arg1 = startId;
-        msg.arg2 = intent.getBooleanExtra("isHost", true)? 1 : 0;
+        if(intent!=null){
+            msg.arg2 = intent.getBooleanExtra("isHost", true)? 1 : 0;
+        }else
+            msg.arg2=1;
 
         serviceHandler.sendMessage(msg);
 

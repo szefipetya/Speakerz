@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.network.event.BooleanEventArgs;
+import com.speakerz.model.network.event.HostAddressEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.Event;
@@ -31,37 +32,45 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
     public Event<WirelessStatusChangedEventArgs> WirelessStatusChanged = new Event<>();
     public Event<BooleanEventArgs> ConnectionChangedEvent = new Event<>();
     public Event<PermissionCheckEventArgs> PermissionCheckEvent = new Event<>();
+    public Event<HostAddressEventArgs> HostAddressAvailableEvent = new Event<>();
     private WifiBroadcastReciever self = this;
     private WifiManager wifiManager;
     private WifiP2pManager wifiP2pManager;
     private WifiP2pManager.Channel channel;
+
     private ConnectivityManager connectivityManager;
+    private boolean isGrupOwner=true;
+
+    public void setGrupOwner(boolean grupOwner) {
+        isGrupOwner = grupOwner;
+    }
+
     private WifiP2pManager.ConnectionInfoListener connectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
         @Override
-        public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
+        public void onConnectionInfoAvailable(WifiP2pInfo info) {
             //inform the view about the connection changes
 
-            //D.log("p2p_host info sent");
-/*
-            public void onConnectionInfoAvailable(final WifiP2pInfo info) {
-
-                // String from WifiP2pInfo struct
-                String groupOwnerAddress = info.groupOwnerAddress.getHostAddress();
-
-                // After the group negotiation, we can determine the group owner
-                // (server).
-                if (info.groupFormed && info.isGroupOwner) {
-                    // Do whatever tasks are specific to the group owner.
-                    // One common case is creating a group owner thread and accepting
-                    // incoming connections.
-                  //  ConnectionChangedEvent.invoke(new ConnectionChangedEventArgs(self, wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner));
-                } else if (info.groupFormed) {
+         InetAddress hostAddress=info.groupOwnerAddress;
+            D.log("onCOnnectionInfoavailable "+hostAddress);
+            // After the group negotiation, we can determine the group owner
+            // (server).
+            if (info.groupFormed && info.isGroupOwner) {
+                D.log("owner");
+                // Do whatever tasks are specific to the group owner.
+                // One common case is creating a group owner thread and accepting
+                // incoming connections.
+                // ConnectionChangedEvent.invoke(new ConnectionChangedEventArgs(self, wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner));
+                HostAddressAvailableEvent.invoke(new HostAddressEventArgs(self,info.groupOwnerAddress,true));
+            } else if (info.groupFormed) {
+                if (info.groupOwnerAddress != null) {
+                    D.log("client " + info.groupOwnerAddress);
+                    HostAddressAvailableEvent.invoke(new HostAddressEventArgs(self,info.groupOwnerAddress,false));
                     // The other device acts as the peer (client). In this case,
                     // you'll want to create a peer thread that connects
                     // to the group owner.
                 }
-            }*/
 
+            }
         }
     };
 
@@ -83,7 +92,6 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
     public WifiBroadcastReciever(WifiManager wifiManager, WifiP2pManager manager, WifiP2pManager.Channel channel) {
         this.wifiManager = wifiManager;
         this.wifiP2pManager = manager;
-
         this.channel = channel;
         initWifip2pManager();
     }
@@ -137,23 +145,12 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
 
                 // We are connected with the other device, request connection
                 // info to find group owner IP
-
+                D.log("connected ");
                 wifiP2pManager.requestConnectionInfo(channel, connectionInfoListener);
 
             }else{
                 //disconnected
                 D.log("disconnected");
-                ConnectionChangedEvent.invoke(new BooleanEventArgs(self,false));
-            }
-
-
-
-                NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
-            if(activeNetwork != null && activeNetwork.isConnectedOrConnecting()){
-                //connected
-                wifiP2pManager.requestConnectionInfo(channel,connectionInfoListener);
-            }else{
-                //disconnected
                 ConnectionChangedEvent.invoke(new BooleanEventArgs(self,false));
             }
         }
@@ -183,5 +180,12 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
 
     public ConnectivityManager getConnectivityManager() {
         return connectivityManager;
+    }
+
+    public void clearConnections() {
+        wifiP2pManager.clearServiceRequests(channel,null);
+        wifiP2pManager.clearLocalServices(channel,null);
+        wifiP2pManager.cancelConnect(channel,null);
+        wifiP2pManager.removeGroup(channel,null);
     }
 }

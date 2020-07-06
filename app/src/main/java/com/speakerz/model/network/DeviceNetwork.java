@@ -4,6 +4,7 @@ package com.speakerz.model.network;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
+import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
@@ -12,8 +13,11 @@ import android.net.wifi.p2p.WifiP2pManager;
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.enums.PERM;
+import com.speakerz.model.network.event.HostAddressEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
+import com.speakerz.model.network.threads.ClientControllerSocketThread;
+import com.speakerz.model.network.threads.ClientSocketWrapper;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventListener;
 
@@ -22,9 +26,18 @@ import java.util.List;
 
 public class DeviceNetwork extends BaseNetwork {
 
-
+ClientSocketWrapper clientSocketWrapper=new ClientSocketWrapper();
     public DeviceNetwork(WifiBroadcastReciever reciever) {
         super(reciever);
+        reciever.HostAddressAvailableEvent.addListener(new EventListener<HostAddressEventArgs>() {
+            @Override
+            public void action(HostAddressEventArgs args) {
+                if(!args.isHost()) {
+                    clientSocketWrapper.controllerSocket = new ClientControllerSocketThread(args.getAddress());
+                    clientSocketWrapper.controllerSocket.start();
+                }
+            }
+        });
     }
 
     public void discoverPeers() {
@@ -47,7 +60,6 @@ public class DeviceNetwork extends BaseNetwork {
 
                 //D.log("Peers available");
                 //if the saved list is outdated, replace it with the fresh devices
-                if (!peerList.getDeviceList().equals(peers)) {
 
                     //D.log("Peers and not equals" + peerList.getDeviceList().size());
                     peers.clear();
@@ -66,8 +78,6 @@ public class DeviceNetwork extends BaseNetwork {
 
                     ListChanged.invoke(new EventArgs(this));
 
-                }
-
                 if (peers.size() == 0) {
                     TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "No devices found"));
                 } else {
@@ -82,6 +92,10 @@ public class DeviceNetwork extends BaseNetwork {
         return deviceNames;
     }
 
+    public ClientSocketWrapper getClientSocketWrapper() {
+        return clientSocketWrapper;
+    }
+
     private WifiP2pDevice hostDevice = null;
     private WifiP2pConfig hostConnectionConfig = null;
 
@@ -90,12 +104,13 @@ public class DeviceNetwork extends BaseNetwork {
      * We can use that index to find the device in the devices list
      * @param i this param descibed the index of the selected device in the deviceList
      */
-
-
     public void connect(int i) {
         hostDevice = devices[i];
         hostConnectionConfig = new WifiP2pConfig();
         hostConnectionConfig.deviceAddress = hostDevice.deviceAddress;
+        // make sure, this device does not become a groupowner
+        hostConnectionConfig.wps.setup = WpsInfo.PBC;
+        hostConnectionConfig.groupOwnerIntent=0;
 
         //send an invoke to the service, to check the FINE_LOCATION access permission
         PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
@@ -105,11 +120,13 @@ public class DeviceNetwork extends BaseNetwork {
     }
     @SuppressLint("MissingPermission")
     public void connectWithPermissionGranted(){
+        hostConnectionConfig.groupOwnerIntent=0;
         reciever.getWifiP2pManager().connect(reciever.getChannel(), hostConnectionConfig, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
                 TextChanged.invoke(new TextChangedEventArgs(this,EVT.update_host_name,hostDevice.deviceName));
                 //D.log("from deviceNetwork: success,  new host: "+hostDevice.deviceName);
+
             }
 
             @Override

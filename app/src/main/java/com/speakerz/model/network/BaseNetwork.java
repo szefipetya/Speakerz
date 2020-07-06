@@ -31,6 +31,9 @@ public abstract class BaseNetwork  {
     public Event<EventArgs> ListChanged = new Event<>();
     public Event<PermissionCheckEventArgs> PermissionCheckEvent = new Event<>();
 
+    public Event<EventArgs> ControllerSocketEstablishedEvent=new Event<>();
+
+
     List<WifiP2pDevice> peers;
     List<String> deviceNames = new ArrayList<>();
     WifiP2pDevice[] devices = new WifiP2pDevice[0];

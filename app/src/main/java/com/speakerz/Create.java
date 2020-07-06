@@ -9,24 +9,50 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import com.speakerz.debug.D;
 import com.speakerz.model.HostModel;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.network.HostNetwork;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
+import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventListener;
 
 public class Create extends Activity {
     //REQUIRED_BEG MODEL_Declare
     SpeakerzService _service;
     boolean _isBounded;
+    boolean _isRegisterRecieverConnected=false;
+    ListView lvSongsList;
+    ArrayAdapter<String> songListAdapter=null;
+    private void subscribeModel(final HostModel model) {
+        final Create selfActivity = this;
+        songListAdapter=new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1,_service.getModel().getSongList());
+        lvSongsList.setAdapter(songListAdapter);
 
-    private void subscribeModel(HostModel model) {
-        final Activity selfActivity = this;
+        //Basemodel Events
+        _service.getModel().SongListChangedEvent.addListener(new EventListener<EventArgs>() {
+            @Override
+            public void action(EventArgs args) {
+                if(songListAdapter!=null) {
+                    //must run on Ui thread:
+                    selfActivity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            songListAdapter.notifyDataSetChanged();
+                        }
+                    });
+                    D.log("Data recieved.", _service.getModel().getSongList().toString());
+                }
+            }
+        });
+
         // Wireless changed event
         model.getNetwork().getReciever().WirelessStatusChanged.addListener(new EventListener<WirelessStatusChangedEventArgs>() {
             @Override
@@ -34,6 +60,7 @@ public class Create extends Activity {
                 _service.getTextValueStorage().autoConfigureTexts(selfActivity);
             }
         });
+
 
         model.getNetwork().TextChanged.addListener(new EventListener<TextChangedEventArgs>() {
             @Override
@@ -65,10 +92,14 @@ public class Create extends Activity {
     }
 
     private void initAndStart() {
+        lvSongsList=(ListView) findViewById(R.id.lv_song_list_test);
+
         subscribeModel((HostModel) _service.getModel());
         _service.getTextValueStorage().autoConfigureTexts(this);
         _service.getModel().start();
+
         registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
+        _isRegisterRecieverConnected=true;
     }
     //REQUIRED_END MODEL_Declare
 
@@ -81,7 +112,19 @@ public class Create extends Activity {
             SpeakerzService.LocalBinder localBinder = (SpeakerzService.LocalBinder) binder;
             _service = localBinder.getService();
             _isBounded = true;
+
             selfActivity.initAndStart();
+            _service.ModelReadyEvent.addListener(new EventListener<BooleanEventArgs>() {
+                @Override
+                public void action(BooleanEventArgs args) {
+                    D.log("create: initAndStart");
+                    if(args.getValue())
+                    {
+
+                    }
+
+                }
+            });
         }
 
         @Override
@@ -113,16 +156,22 @@ public class Create extends Activity {
         if (_service != null)
             _service.getTextValueStorage().autoConfigureTexts(this);
         //a bánat tudja, hogy ez mit csinál, de kell
-        if (_service != null)
-            registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
+        if (_service != null) {
+            if(!_isRegisterRecieverConnected) {
+                registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
+                _isRegisterRecieverConnected=true;
+            }
+        }
         //D.log("main_onResume");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (_service != null)
-            unregisterReceiver((_service.getModel().getNetwork().getReciever()));
+        if (_service != null){
+                if(_isRegisterRecieverConnected)
+                    unregisterReceiver((_service.getModel().getNetwork().getReciever()));
+        }
     }
 
     @Override

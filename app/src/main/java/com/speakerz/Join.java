@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.net.wifi.p2p.WifiP2pDevice;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.View;
@@ -28,6 +27,7 @@ import com.speakerz.model.DeviceModel;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
 import com.speakerz.model.network.DeviceNetwork;
+import com.speakerz.model.network.Serializable.SongRequestObject;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
@@ -35,31 +35,35 @@ import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventListener;
 
-import java.util.ArrayList;
+import java.io.IOException;
 
 public class Join extends Activity {
     //REQUIRED_BEG MODEL
     SpeakerzService _service;
     boolean _isBounded;
     ListView lvPeersList;
-    CommonModel_ViewEventHandler viewEventHandler;
-    ArrayAdapter<String> adapter;
-    private void cleanTextValues(){
-       // _service.getTextValueStorage().cleanValue(R.id.host_name);
+    ListView lvSongsList;
+    ArrayAdapter<String> peerListAdapter;
+    ArrayAdapter<String> songListAdapter = null;
+
+    boolean _isRegisterRecieverConnected;
+
+    private void cleanTextValues() {
+        // _service.getTextValueStorage().cleanValue(R.id.host_name);
     }
+
     private void initAndStart() {
         cleanTextValues();
         subscribeModel(_service.getModel());
         subscribeServiceEvents();
-
-
+        lvSongsList = (ListView) findViewById(R.id.lv_song_list_test);
         lvPeersList = (ListView) findViewById(R.id.lv_peers);
         _service.getModel().start();
-        adapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
-        lvPeersList.setAdapter(adapter);
-      //  adapter.notifyDataSetChanged();
+        peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
+        lvPeersList.setAdapter(peerListAdapter);
+        //  adapter.notifyDataSetChanged();
         registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
-
+        _isRegisterRecieverConnected=true;
         //set up the listView's onclick, so clients can connect to hosts by klicking on a device in a listview
         lvPeersList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -73,22 +77,22 @@ public class Join extends Activity {
     }
 
     private void setSensitiveTexts() {
-        if(((DeviceNetwork)(_service.getModel().getNetwork())).getHostDevice()!=null)
-        ((TextView)(findViewById(R.id.host_name))).setText("Connected!\nHost:" + ((DeviceNetwork)(_service.getModel().getNetwork())).getHostDevice().deviceName);
+        if (((DeviceNetwork) (_service.getModel().getNetwork())).getHostDevice() != null)
+            ((TextView) (findViewById(R.id.host_name))).setText("Connected!\nHost:" + ((DeviceNetwork) (_service.getModel().getNetwork())).getHostDevice().deviceName);
 
     }
 
-    private void subscribeServiceEvents(){
+    private void subscribeServiceEvents() {
         _service.PermissionCheckEvent.addListener(new EventListener<PermissionCheckEventArgs>() {
             @Override
             public void action(PermissionCheckEventArgs args) {
-                if (ActivityCompat.checkSelfPermission( selfActivity, args.getRequiredPermission()) != args.getSuccessNumber()) {
-                    Toast.makeText(selfActivity,"Failure in connection with host ",Toast.LENGTH_SHORT).show();
+                if (ActivityCompat.checkSelfPermission(selfActivity, args.getRequiredPermission()) != args.getSuccessNumber()) {
+                    Toast.makeText(selfActivity, "Failure in connection with host ", Toast.LENGTH_SHORT).show();
                     //D.log("connection failure: Service");
-                    checkPermission(args.getRequiredPermission(),_service.ACCESS_FINE_LOCATION_CODE);
-                }else if(_service.getModel() instanceof DeviceModel){
+                    checkPermission(args.getRequiredPermission(), _service.ACCESS_FINE_LOCATION_CODE);
+                } else if (_service.getModel() instanceof DeviceModel) {
                     //critical call. Need to make sure the type before casting...
-                    ((DeviceNetwork)(_service.getModel().getNetwork())).connectWithPermissionGranted();
+                    ((DeviceNetwork) (_service.getModel().getNetwork())).connectWithPermissionGranted();
                     //D.log("access granted");
                 }
             }
@@ -98,6 +102,20 @@ public class Join extends Activity {
     //REQUIRED_END MODEL
     private void subscribeModel(BaseModel model) {
         final Activity selfActivity = this;
+
+        //Basemodel events
+        model.SongListChangedEvent.addListener(new EventListener<EventArgs>() {
+            @Override
+            public void action(EventArgs args) {
+                if (songListAdapter == null) {
+                    songListAdapter = new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1, _service.getModel().getSongList());
+                    lvSongsList.setAdapter(songListAdapter);
+                }
+                songListAdapter.notifyDataSetChanged();
+
+            }
+        });
+
         // Wireless changed event
         model.getNetwork().getReciever().WirelessStatusChanged.addListener(new EventListener<WirelessStatusChangedEventArgs>() {
             @Override
@@ -106,6 +124,7 @@ public class Join extends Activity {
                 _service.getTextValueStorage().autoConfigureTexts(selfActivity);
             }
         });
+
 
         model.getNetwork().TextChanged.addListener(new EventListener<TextChangedEventArgs>() {
             @Override
@@ -118,10 +137,10 @@ public class Join extends Activity {
                     _service.getTextValueStorage().autoConfigureTexts(selfActivity);
                 } else if (args.event() == EVT.update_host_name) {
                     //get the deviceName of the new host
-                    _service.getTextValueStorage().setTextValue(R.id.host_name,("Connected!\nHost:" + args.text()));
+                    _service.getTextValueStorage().setTextValue(R.id.host_name, ("Connected!\nHost:" + args.text()));
                     ((TextView) findViewById(R.id.host_name)).setText("Connected!\nHost:" + args.text());
                 } else if (args.event() == EVT.update_host_name_failed) {
-                    _service.getTextValueStorage().setTextValue(R.id.host_name,("Connection failure"));
+                    _service.getTextValueStorage().setTextValue(R.id.host_name, ("Connection failure"));
                     ((TextView) findViewById(R.id.host_name)).setText("Connection failure");
                 }
 
@@ -131,16 +150,16 @@ public class Join extends Activity {
         model.getNetwork().ListChanged.addListener(new EventListener<EventArgs>() {
             @Override
             public void action(EventArgs args) {
-                adapter.notifyDataSetChanged();
+                peerListAdapter.notifyDataSetChanged();
             }
         });
 
         model.getNetwork().getReciever().ConnectionChangedEvent.addListener(new EventListener<BooleanEventArgs>() {
             @Override
             public void action(BooleanEventArgs args) {
-                if(!args.getValue()){
+                if (!args.getValue()) {
                     D.log("recieved disconnect");
-                    _service.getTextValueStorage().setTextValue(R.id.host_name,("Disconnected"));
+                    _service.getTextValueStorage().setTextValue(R.id.host_name, ("Disconnected"));
                     ((TextView) findViewById(R.id.host_name)).setText("Disconnected");
                 }
 
@@ -161,6 +180,14 @@ public class Join extends Activity {
             _service = localBinder.getService();
             _isBounded = true;
             selfActivity.initAndStart();
+            _service.ModelReadyEvent.addListener(new EventListener<BooleanEventArgs>() {
+                @Override
+                public void action(BooleanEventArgs args) {
+                    D.log("join: initAndStart");
+                    if(!args.getValue()){}
+
+                }
+            });
         }
 
         @Override
@@ -192,15 +219,19 @@ public class Join extends Activity {
         if (_service != null)
             _service.getTextValueStorage().autoConfigureTexts(this);
         //a bánat tudja, hogy ez mit csinál, de kell
-        if (_service != null)
+        if (_service != null){
+
             registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
+            _isRegisterRecieverConnected = true;
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (_service != null && _isBounded)
+        if (_service != null && _isBounded && _isRegisterRecieverConnected) {
             unregisterReceiver((_service.getModel().getNetwork().getReciever()));
+        }
     }
 
     @Override
@@ -226,13 +257,35 @@ public class Join extends Activity {
         buttonMusicPlayer.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 Intent Act2 = new Intent(getApplicationContext(), MusicPlayer.class);
-               // Act2.putExtra("Hello", "Hello World");
+                // Act2.putExtra("Hello", "Hello World");
                 startActivity(Act2);
 
             }
 
         });
 
+        ((Button) findViewById(R.id.btn_add_song)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    //song adding succesful (connection exists)
+                    if (((DeviceNetwork) (_service.getModel().getNetwork())).getClientSocketWrapper().controllerSocket != null) {
+                        if (((DeviceNetwork) (_service.getModel().getNetwork())).getClientSocketWrapper().controllerSocket.addNewSong(
+                                new SongRequestObject("test_link", "test_title", "test_sender"))) {
+                            _service.getModel().getSongList().add("Uj song");
+                            Toast.makeText(selfActivity, "Song request sent.", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(selfActivity, "Error: no connections available. ", Toast.LENGTH_SHORT).show();
+
+                        }
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(selfActivity, "Could not add song. reason:\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            }
+        });
 
     }
 
