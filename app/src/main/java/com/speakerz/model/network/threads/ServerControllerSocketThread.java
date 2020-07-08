@@ -3,65 +3,108 @@ package com.speakerz.model.network.threads;
 import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.SongRequestObject;
+import com.speakerz.model.network.Serializable.WelcomeChObject;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.event.channel.MusicPlayerActionEventArgs;
 import com.speakerz.util.Event;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.LinkedList;
 
-public class ServerControllerSocketThread extends Thread{
-    Socket socket;
+public class ServerControllerSocketThread extends Thread implements SocketThread{
+    LinkedList<SocketStruct> socketList=new LinkedList<>();
     ServerSocket serverSocket;
     public Event<MusicPlayerActionEventArgs> MusicPlayerActionEvent =new Event<>();
 
 
     InputStream inputStream;
-    ObjectInputStream objectInputStream;
+
     @Override
     public void run() {
         try{
-            D.log("server running");
             ServerSocket serverSocket = new ServerSocket();
             serverSocket.setReuseAddress(true);
-            serverSocket.bind(new InetSocketAddress(5052));
+            serverSocket.bind(new InetSocketAddress(5048));
             //waiting for someone
-            socket=serverSocket.accept();
-            D.log("client connected: "+socket.getLocalAddress());
+            D.log("server running");
 
-            InputStreamReader in = new InputStreamReader(socket.getInputStream());
-            BufferedReader bf=new BufferedReader(in);
+            while(!serverSocket.isClosed()) {
+                Socket socket = serverSocket.accept();
+                final SocketStruct struct = new SocketStruct();
+                struct.socket = socket;
+                struct.objectInputStream = new ObjectInputStream(socket.getInputStream());
+                struct.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                socketList.add(struct);
+                writeWelcome(struct);
+                D.log("client connected: "+socket.getLocalAddress());
 
-            String str=bf.readLine();
-            D.log("client says: "+ str);
+                //új szálon elindítjuk a socketet, hogy hallgassuk a bejövő adatokat.
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            //az új szál külön hallgatja az objektumot.
+                            listen(struct);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } catch (ClassNotFoundException e) {
+                            e.printStackTrace();
+                            if (e.getMessage() != null) {
+                                D.log(e.getMessage());
+                            } else D.log("[null_message]");
+                        }
+                    }
+                }.start();
+            }
 
-            inputStream= socket.getInputStream();
+
+            //InputStreamReader in = new InputStreamReader(socket.getInputStream());
+            //BufferedReader bf=new BufferedReader(in);
+
+         //   String str=bf.readLine();
+           // D.log("client says: "+ str);
             // create a DataInputStream so we can read data from it.
-             objectInputStream = new ObjectInputStream(inputStream);
 
 
-            listen();
-        }catch (IOException | ClassNotFoundException ex){
+        }catch (IOException ex){
             ex.printStackTrace();
+            if(ex.getMessage()!=null)
             D.log(ex.getMessage());
+            else
+                D.log("null");
         }
     }
 
-    private void listen() throws IOException, ClassNotFoundException {
+    private void writeWelcome(SocketStruct struct) throws IOException {
+        struct.objectOutputStream.writeObject(new WelcomeChObject("The Host","Welcome!","host_addr"));
+        struct.objectOutputStream.flush();
+        D.log("welcome sent");
 
-        // read the list of messages from the socket
-        ChannelObject chObject = (ChannelObject) objectInputStream.readObject();
-        handleIncomingObject(chObject);
-        listen();
     }
 
-    private void handleIncomingObject(ChannelObject chObject) {
+    @Override
+     public void listen(SocketStruct struct) throws IOException, ClassNotFoundException {
+
+        // read the list of messages from the socket
+         while (true) {
+             if(struct.socket.isConnected()&&!struct.socket.isClosed()) {
+                 D.log("listening...");
+                 ChannelObject chObject = (ChannelObject) struct.objectInputStream.readObject();
+                 handleIncomingObject(chObject);
+             }
+         }
+
+    }
+
+
+    @Override
+    public void handleIncomingObject(ChannelObject chObject) {
         D.log("server: got an object: "+chObject.getType());
         if(chObject.getType()== TYPE.MP){
             MusicPlayerActionEvent.invoke(new MusicPlayerActionEventArgs(this,chObject));
@@ -69,19 +112,21 @@ public class ServerControllerSocketThread extends Thread{
             D.log(((SongRequestObject)chObject).toString());
         }
     }
+    @Override
     public void shutdown(){
         try {
-            if(inputStream!=null)
-                inputStream.close();
-            if(objectInputStream!=null)
-            objectInputStream.close();
-            if(serverSocket!=null){
-
-                serverSocket.close();
-
+            for(SocketStruct s: socketList){
+                if(s.objectInputStream!=null)
+                    s.objectInputStream.close();
+                if(s.objectOutputStream!=null)
+                    s.objectOutputStream.close();
+                if(s.socket!=null)
+                    s.socket.close();
             }
-            if(socket!=null)
-            socket.close();
+            if(serverSocket!=null){
+                serverSocket.close();
+            }
+
 
         } catch (IOException e) {
             e.printStackTrace();

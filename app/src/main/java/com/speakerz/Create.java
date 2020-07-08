@@ -17,12 +17,18 @@ import android.widget.TextView;
 import com.speakerz.debug.D;
 import com.speakerz.model.HostModel;
 import com.speakerz.model.enums.EVT;
+import com.speakerz.model.event.SongItemEventArgs;
 import com.speakerz.model.network.HostNetwork;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
+import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventListener;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RunnableFuture;
 
 public class Create extends Activity {
     //REQUIRED_BEG MODEL_Declare
@@ -37,17 +43,29 @@ public class Create extends Activity {
         lvSongsList.setAdapter(songListAdapter);
 
         //Basemodel Events
-        _service.getModel().SongListChangedEvent.addListener(new EventListener<EventArgs>() {
+        _service.getModel().SongListChangedEvent.addListener(new EventListener<SongItemEventArgs>() {
             @Override
-            public void action(EventArgs args) {
+            public void action(final SongItemEventArgs args) {
                 if(songListAdapter!=null) {
                     //must run on Ui thread:
-                    selfActivity.runOnUiThread(new Runnable() {
+                    
+                    Runnable run=new Runnable() {
                         @Override
                         public void run() {
+                            _service.getModel().getSongList().add(args.getSongRequestObject().getTitle()+" "+args.getSongRequestObject().getSender());
                             songListAdapter.notifyDataSetChanged();
+                            D.log("dataset updated.");
+                            D.log("empty?"+_service.getModel().getSongList().isEmpty());
                         }
-                    });
+                    };
+                    RunnableFuture<Void> task = new FutureTask<>(run, null);
+                    selfActivity.runOnUiThread(task);
+                    try {
+                        task.get(); // this will block until Runnable completes
+                    } catch (InterruptedException | ExecutionException e) {
+                        D.log("UiRefresh exception. "+e.getMessage());
+                        // handle exception
+                    }
                     D.log("Data recieved.", _service.getModel().getSongList().toString());
                 }
             }
@@ -169,8 +187,8 @@ public class Create extends Activity {
     protected void onPause() {
         super.onPause();
         if (_service != null){
-                if(_isRegisterRecieverConnected)
-                    unregisterReceiver((_service.getModel().getNetwork().getReciever()));
+                if(_isRegisterRecieverConnected )
+                { unregisterReceiver((_service.getModel().getNetwork().getReciever()));}
         }
     }
 
@@ -206,7 +224,7 @@ public class Create extends Activity {
         Button startSession = (Button) findViewById(R.id.btn_start_session);
         startSession.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                ((HostNetwork) (_service.getModel().getNetwork())).startAdvertising();
+                ((HostModel) (_service.getModel())).startAdvertising();
 
             }
 

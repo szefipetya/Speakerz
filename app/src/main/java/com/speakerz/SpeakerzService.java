@@ -50,7 +50,6 @@ public class SpeakerzService extends Service {
 
         private void startService(boolean isHost){
 
-            if(model!=null){model.stop();}
 
           /*  if(isHost) {
                 D.log("hostmodel created");
@@ -62,12 +61,15 @@ public class SpeakerzService extends Service {
             }*/
 
             if(isHost && (model==null || model instanceof DeviceModel)){
+                if(model!=null){model.stop();}
+
                 model = new HostModel(service.receiver,service.connectivityManager);
                 model.start();
                 this.subscribeEvents();
                 D.log("hostmodel created");
             }
             else if(!isHost&&(model==null || model instanceof HostModel)){
+                if(model!=null){model.stop();}
                 model = new DeviceModel(service.receiver,service.connectivityManager);
                 model.start();
                 this.subscribeEvents();
@@ -83,19 +85,21 @@ public class SpeakerzService extends Service {
 
         }
 
-        public void stopService(){
+        public void stopService(String msg){
             if(model == null) return;
 
             model.stop();
             stopSelf(startId);
             startId = -1;
             model = null;
+            wifiP2pManager.cancelConnect(wifiP2pChannel,null);
+            Toast.makeText(service,"speakerZ service shutdown\nreason: "+msg,Toast.LENGTH_SHORT).show();
         }
 
         @Override
         public void handleMessage(Message msg) {
             if(model != null){
-                stopService();
+                stopService("model already exists");
             }
             startId = msg.arg1;
             startService(msg.arg2 == 1);
@@ -199,10 +203,22 @@ public class SpeakerzService extends Service {
 
     @Override
     public void onDestroy() {
-        serviceHandler.stopService();
+        serviceHandler.stopService("terminated by system");
+        D.log("onDestroy");
         Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
+        super.onDestroy();
     }
 
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        D.log("ontaskRemoved");
+        serviceHandler.stopService("terminated by user");
+       // Toast.makeText(this, "user extit.", Toast.LENGTH_SHORT).show();
+
+        //STOP SERVICE OR WHATEVER YOU WANT
+    }
     //GETTERS
     public TextValueStorage getTextValueStorage() {
         return textValueStorage;

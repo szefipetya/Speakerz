@@ -1,0 +1,8 @@
+A kimenetet nem kell darabolni.
+
+Nem minden eszközön
+- A szerveren van egy tábla, melyik címekre kell küldeni.
+- 
+
+
+startid -  elindítani egy új service-t

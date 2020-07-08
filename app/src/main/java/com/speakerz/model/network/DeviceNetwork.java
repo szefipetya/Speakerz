@@ -16,6 +16,7 @@ import com.speakerz.model.enums.PERM;
 import com.speakerz.model.network.event.HostAddressEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
+import com.speakerz.model.network.event.channel.ConnectionUpdatedEventArgs;
 import com.speakerz.model.network.threads.ClientControllerSocketThread;
 import com.speakerz.model.network.threads.ClientSocketWrapper;
 import com.speakerz.util.EventArgs;
@@ -35,6 +36,13 @@ ClientSocketWrapper clientSocketWrapper=new ClientSocketWrapper();
                 if(!args.isHost()) {
                     clientSocketWrapper.controllerSocket = new ClientControllerSocketThread(args.getAddress());
                     clientSocketWrapper.controllerSocket.start();
+                    clientSocketWrapper.controllerSocket.ConnectionUpdatedEvent.addListener(new EventListener<ConnectionUpdatedEventArgs>() {
+                        @Override
+                        public void action(ConnectionUpdatedEventArgs args) {
+                            //a nézet a network ConnectionEventjére van csak feliratkozva.
+                            ConnectionUpdatedEvent.invoke(args);
+                        }
+                    });
                 }
             }
         });

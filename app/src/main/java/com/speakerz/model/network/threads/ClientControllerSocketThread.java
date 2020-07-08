@@ -1,67 +1,114 @@
 package com.speakerz.model.network.threads;
 
-import android.os.Handler;
-import android.os.Message;
-
-import androidx.annotation.NonNull;
-
 import com.speakerz.debug.D;
+import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.SongRequestObject;
+import com.speakerz.model.network.Serializable.WelcomeChObject;
+import com.speakerz.model.network.Serializable.enums.TYPE;
+import com.speakerz.model.network.event.channel.ConnectionUpdatedEventArgs;
+import com.speakerz.util.Event;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-public class ClientControllerSocketThread extends Thread{
-    Socket socket;
+public class ClientControllerSocketThread extends Thread implements SocketThread{
+    SocketStruct struct;
     String hostAddress;
-    ObjectOutputStream objectOutputStream=null;
 
+   public Event<ConnectionUpdatedEventArgs> ConnectionUpdatedEvent=new Event<>();
     public ClientControllerSocketThread(InetAddress hostAddress){
         this.hostAddress=hostAddress.getHostAddress();
-        socket=new Socket();
+
     }
 
     @Override
     public void run() {
         try {
             D.log("client running");
-            socket.connect(new InetSocketAddress(hostAddress,5052),1000);
+            struct=new SocketStruct();
+            struct.socket=new Socket();
+            struct.socket.setReuseAddress(true);
+            struct.socket.connect(new InetSocketAddress(hostAddress,5048),1000);
 
             D.log("connection succesful to "+ hostAddress);
-            PrintWriter pr=new PrintWriter(socket.getOutputStream());
-            pr.println("Hello, i am a client");
-            pr.flush();
-            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-        } catch (IOException e) {
+            //PrintWriter pr=new PrintWriter(socket.getOutputStream());
+          //  pr.println("Hello, i am a client");
+            //pr.flush();
+            struct.objectOutputStream = new ObjectOutputStream(struct.socket.getOutputStream());
+            struct.objectInputStream = new ObjectInputStream(struct.socket.getInputStream());
+            listen(struct);
+        } catch (IOException  | ClassNotFoundException e) {
             D.log(e.getMessage());
             e.printStackTrace();
+            try {
+
+                struct.socket.close();
+                struct.objectOutputStream.close();
+                struct.objectInputStream.close();
+
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
         }
         //send and recieve
     }
 
-    private void sendObjects() throws IOException {
-        // create an object output stream from the output stream so we can send an object through it
-        D.log("client: msg sent");
+    @Override
+    public void listen(SocketStruct struct) throws IOException, ClassNotFoundException {
+        while(true) {
+            D.log("listening...");
+            // read the list of messages from the socket
+            ChannelObject chObject = (ChannelObject) struct.objectInputStream.readObject();
+            handleIncomingObject(chObject);
+        }
     }
+
+    @Override
+    public void handleIncomingObject(ChannelObject chObject) {
+        D.log("got a ChObj");
+        if(chObject.getType()== TYPE.WELCOME){
+            WelcomeChObject welcomeObj=(WelcomeChObject)chObject.getObj();
+            ConnectionUpdatedEvent.invoke(new ConnectionUpdatedEventArgs(
+                    this
+                    ,welcomeObj.getHostNickName()
+                    ,welcomeObj.getWelcomeMessage()
+                    ,welcomeObj.getHostAddress())
+            );
+        }
+    }
+
+
     //adds a new song to the party. returns true if the connection exists.
     public boolean addNewSong(SongRequestObject obj) throws Exception{
-        if(socket!=null)
+        if(struct.socket!=null)
         {
-            objectOutputStream= new ObjectOutputStream(socket.getOutputStream());
-            objectOutputStream.writeObject(obj);
-            objectOutputStream.flush();
-
+            struct.objectOutputStream.writeObject(obj);
+            struct.objectOutputStream.flush();
             return true;
         }else return false;
     }
+
+    @Override
     public void shutdown(){
         try {
-            objectOutputStream.close();
-            socket.close();
+
+
+            if(struct.objectInputStream!=null){
+
+                struct.objectInputStream.close();
+            }
+            if(struct.objectOutputStream!=null){
+                struct.objectOutputStream.reset();
+                struct.objectOutputStream.flush();
+                struct.objectOutputStream.close();
+            }
+            if(struct.socket!=null)
+                struct. socket.close();
 
         } catch (IOException e) {
             e.printStackTrace();

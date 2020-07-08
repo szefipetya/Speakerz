@@ -40,6 +40,7 @@ public class DeviceModel extends BaseModel {
     public void stop() {
         if(network.getClientSocketWrapper().controllerSocket!=null)
         network.getClientSocketWrapper().controllerSocket.shutdown();
+        network.getReciever().clearConnections();
     }
 
     public DeviceModel(WifiBroadcastReciever reciever, ConnectivityManager connectivityManager){

@@ -26,12 +26,14 @@ import com.speakerz.model.BaseModel;
 import com.speakerz.model.DeviceModel;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
+import com.speakerz.model.event.SongItemEventArgs;
 import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.Serializable.SongRequestObject;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
+import com.speakerz.model.network.event.channel.ConnectionUpdatedEventArgs;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventListener;
 
@@ -73,13 +75,12 @@ public class Join extends Activity {
         });
 
         _service.getTextValueStorage().autoConfigureTexts(this);
-        setSensitiveTexts();
+        //setSensitiveTexts();
     }
 
     private void setSensitiveTexts() {
         if (((DeviceNetwork) (_service.getModel().getNetwork())).getHostDevice() != null)
             ((TextView) (findViewById(R.id.host_name))).setText("Connected!\nHost:" + ((DeviceNetwork) (_service.getModel().getNetwork())).getHostDevice().deviceName);
-
     }
 
     private void subscribeServiceEvents() {
@@ -104,13 +105,14 @@ public class Join extends Activity {
         final Activity selfActivity = this;
 
         //Basemodel events
-        model.SongListChangedEvent.addListener(new EventListener<EventArgs>() {
+        model.SongListChangedEvent.addListener(new EventListener<SongItemEventArgs>() {
             @Override
-            public void action(EventArgs args) {
+            public void action(SongItemEventArgs args) {
                 if (songListAdapter == null) {
                     songListAdapter = new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1, _service.getModel().getSongList());
                     lvSongsList.setAdapter(songListAdapter);
                 }
+
                 songListAdapter.notifyDataSetChanged();
 
             }
@@ -137,8 +139,8 @@ public class Join extends Activity {
                     _service.getTextValueStorage().autoConfigureTexts(selfActivity);
                 } else if (args.event() == EVT.update_host_name) {
                     //get the deviceName of the new host
-                    _service.getTextValueStorage().setTextValue(R.id.host_name, ("Connected!\nHost:" + args.text()));
-                    ((TextView) findViewById(R.id.host_name)).setText("Connected!\nHost:" + args.text());
+                    _service.getTextValueStorage().setTextValue(R.id.host_name, ("Connecting to "+args.text()+" ..."));
+                    ((TextView) findViewById(R.id.host_name)).setText("Connecting to "+args.text()+" ...");
                 } else if (args.event() == EVT.update_host_name_failed) {
                     _service.getTextValueStorage().setTextValue(R.id.host_name, ("Connection failure"));
                     ((TextView) findViewById(R.id.host_name)).setText("Connection failure");
@@ -163,6 +165,21 @@ public class Join extends Activity {
                     ((TextView) findViewById(R.id.host_name)).setText("Disconnected");
                 }
 
+            }
+        });
+
+        model.getNetwork().ConnectionUpdatedEvent.addListener(new EventListener<ConnectionUpdatedEventArgs>() {
+            @Override
+            public void action(ConnectionUpdatedEventArgs argsd) {
+                final ConnectionUpdatedEventArgs args=argsd;
+                selfActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String str="Connected!\nHost: "+args.getHostNickName()+"\n"+args.getMessage();
+                        _service.getTextValueStorage().setTextValue(R.id.host_name, str);
+                        ((TextView) findViewById(R.id.host_name)).setText(str);
+                    }
+                });
             }
         });
 

@@ -10,6 +10,7 @@ import com.speakerz.model.event.EventHandler;
 import com.speakerz.model.event.UpdateEventManager;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
+import com.speakerz.model.network.event.channel.ConnectionUpdatedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 
@@ -32,6 +33,7 @@ public abstract class BaseNetwork  {
     public Event<PermissionCheckEventArgs> PermissionCheckEvent = new Event<>();
 
     public Event<EventArgs> ControllerSocketEstablishedEvent=new Event<>();
+    public Event<ConnectionUpdatedEventArgs> ConnectionUpdatedEvent=new Event<>();
 
 
     List<WifiP2pDevice> peers;

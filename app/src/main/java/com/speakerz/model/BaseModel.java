@@ -1,5 +1,6 @@
 package com.speakerz.model;
 
+import com.speakerz.model.event.SongItemEventArgs;
 import com.speakerz.model.network.BaseNetwork;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
@@ -15,7 +16,7 @@ public abstract class BaseModel {
     public abstract void start();
     public abstract void stop();
 
-    public Event<EventArgs> SongListChangedEvent=new Event<>();
+    public Event<SongItemEventArgs> SongListChangedEvent=new Event<>();
 
 
     public BaseModel(WifiBroadcastReciever reciever){
