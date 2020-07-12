@@ -1,9 +1,12 @@
 package com.speakerz;
 
+import android.Manifest;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Binder;
@@ -13,16 +16,24 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
+import android.view.Display;
 import android.widget.Toast;
+
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.BaseModel;
 import com.speakerz.model.DeviceModel;
 import com.speakerz.model.HostModel;
+import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.WifiBroadcastReciever;
+import com.speakerz.model.network.event.BooleanEventArgs;
+import com.speakerz.model.network.event.PermissionCheckEventArgs;
+import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventListener;
 import com.speakerz.viewModel.TextValueStorage;
-
-import java.util.Random;
 
 public class SpeakerzService extends Service {
     private final class ServiceHandler extends Handler {
@@ -30,38 +41,81 @@ public class SpeakerzService extends Service {
         private BaseModel model = null;
         private int startId = -1;
 
+
         public ServiceHandler(Looper looper, SpeakerzService service) {
             super(looper);
             this.service = service;
+            //D.log("servicehandler created");
         }
 
         private void startService(boolean isHost){
-            if(isHost){
-                model = new HostModel(service.receiver);
+
+
+          /*  if(isHost) {
+                D.log("hostmodel created");
+                model = new HostModel(service.receiver, service.connectivityManager);
             }
-            else{
-                model = new DeviceModel(service.receiver);
+            else {
+                D.log("devicemodel created");
+                model=new DeviceModel(service.receiver, service.connectivityManager);
+            }*/
+
+            if(isHost && (model==null || model instanceof DeviceModel)){
+                if(model!=null){model.stop();}
+
+                model = new HostModel(service.receiver,service.connectivityManager);
+                model.start();
+                this.subscribeEvents();
+                D.log("hostmodel created");
             }
-            model.start();
+            else if(!isHost&&(model==null || model instanceof HostModel)){
+                if(model!=null){model.stop();}
+                model = new DeviceModel(service.receiver,service.connectivityManager);
+                model.start();
+                this.subscribeEvents();
+                D.log("devicemodel created");
+            }
+
+
+
+            ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
+
+
+
 
         }
 
-        public void stopService(){
+        public void stopService(String msg){
             if(model == null) return;
 
             model.stop();
             stopSelf(startId);
             startId = -1;
             model = null;
+            wifiP2pManager.cancelConnect(wifiP2pChannel,null);
+            Toast.makeText(service,"speakerZ service shutdown\nreason: "+msg,Toast.LENGTH_SHORT).show();
         }
 
         @Override
         public void handleMessage(Message msg) {
             if(model != null){
-                stopService();
+                stopService("model already exists");
             }
             startId = msg.arg1;
             startService(msg.arg2 == 1);
+        }
+
+        private void subscribeEvents(){
+            model.getNetwork().PermissionCheckEvent.addListener(new EventListener<PermissionCheckEventArgs>() {
+                @Override
+                public void action(PermissionCheckEventArgs args) {
+                    //pass the permission sh*t to one of the views
+                    PermissionCheckEvent.invoke(args);
+
+                }
+
+            });
+
         }
         public BaseModel getModel(){
             return model;
@@ -76,9 +130,12 @@ public class SpeakerzService extends Service {
     private WifiP2pManager wifiP2pManager;
     private WifiP2pManager.Channel wifiP2pChannel;
     private WifiBroadcastReciever receiver;
+    private ConnectivityManager connectivityManager;
     //from App
     private IntentFilter intentFilterForNetwork;
 
+    public Event<BooleanEventArgs> ModelReadyEvent=new Event<>();
+    public Event<PermissionCheckEventArgs> PermissionCheckEvent = new Event<>();
 
 
     private TextValueStorage textValueStorage ;
@@ -91,7 +148,7 @@ public class SpeakerzService extends Service {
         wifiP2pManager = (WifiP2pManager)getApplicationContext().getSystemService(Context.WIFI_P2P_SERVICE);
         wifiP2pChannel = wifiP2pManager.initialize(this, getMainLooper(), null);
         receiver = new WifiBroadcastReciever(wifiManager,wifiP2pManager,wifiP2pChannel);
-
+        connectivityManager=(ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         // Start up the thread running the service. Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block. We also make it
@@ -114,7 +171,10 @@ public class SpeakerzService extends Service {
         // Sending a message to ServiceHandler to start a new model in the given mode
         Message msg = serviceHandler.obtainMessage();
         msg.arg1 = startId;
-        msg.arg2 = intent.getBooleanExtra("isHost", true)? 1 : 0;
+        if(intent!=null){
+            msg.arg2 = intent.getBooleanExtra("isHost", true)? 1 : 0;
+        }else
+            msg.arg2=1;
 
         serviceHandler.sendMessage(msg);
 
@@ -143,10 +203,22 @@ public class SpeakerzService extends Service {
 
     @Override
     public void onDestroy() {
-        serviceHandler.stopService();
+        serviceHandler.stopService("terminated by system");
+        D.log("onDestroy");
         Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
+        super.onDestroy();
     }
 
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        D.log("ontaskRemoved");
+        serviceHandler.stopService("terminated by user");
+       // Toast.makeText(this, "user extit.", Toast.LENGTH_SHORT).show();
+
+        //STOP SERVICE OR WHATEVER YOU WANT
+    }
     //GETTERS
     public TextValueStorage getTextValueStorage() {
         return textValueStorage;
@@ -155,4 +227,11 @@ public class SpeakerzService extends Service {
     public BaseModel getModel(){
         return serviceHandler.getModel();
     }
+
+    //ask the user for permission
+
+
+//permissions
+    public final int ACCESS_FINE_LOCATION_CODE = 100;
+    public final int STORAGE_PERMISSION_CODE = 101;
 }

@@ -21,7 +21,7 @@ public class CommonModel_ViewEventHandler implements Model_ViewEventHandler {
        if(activity.findViewById(componentId)!=null)
         ((TextView)activity.findViewById(componentId)).setText(text);
        else{
-           D.log(activity.getLocalClassName()+" has no "+componentId + "component");
+           //D.log(activity.getLocalClassName()+" has no "+componentId + "component");
        }
     }
 }
