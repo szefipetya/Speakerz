@@ -2,9 +2,14 @@ package com.speakerz;
 
 import android.app.Activity;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.view.View;
 import android.widget.AdapterView;
@@ -12,6 +17,10 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SeekBar;
+
+import com.speakerz.debug.D;
+import com.speakerz.model.network.event.BooleanEventArgs;
+import com.speakerz.util.EventListener;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -41,9 +50,13 @@ public class MusicPlayer extends Activity {
 
         }
 
+
+        //front
         LA = new ArrayAdapter<String>(this, R.layout.list_item, data);
 
         playListView.setAdapter(LA);
+
+
 
         playListView.setOnItemClickListener( new AdapterView.OnItemClickListener() {
             @Override
@@ -62,6 +75,7 @@ public class MusicPlayer extends Activity {
             }
         });
 
+        //front_end
 
     //others
         play=(Button) findViewById(R.id.play);
@@ -140,6 +154,53 @@ public class MusicPlayer extends Activity {
         }
 
     }
+
+
+    SpeakerzService _service;
+    boolean _isBounded=false;
+    MusicPlayer selfActivity=this;
+
+    public void initAndStart(){
+
+    }
+
+    private ServiceConnection connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder binder) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            SpeakerzService.LocalBinder localBinder = (SpeakerzService.LocalBinder) binder;
+            _service = localBinder.getService();
+            _isBounded = true;
+
+            selfActivity.initAndStart();
+
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            _isBounded = false;
+        }
+    };
+
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Bind to LocalService
+        Intent intent = new Intent(this, SpeakerzService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(connection);
+        _isBounded = false;
+    }
+
 // using relative layout as view but its to complicated for now so i decided that i go for functionality first;
     /*public class ListAdapter extends ArrayAdapter<String>{
         private int layout;

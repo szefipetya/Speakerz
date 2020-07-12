@@ -76,14 +76,9 @@ public class SpeakerzService extends Service {
                 D.log("devicemodel created");
             }
 
-
-
             ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
-
-
-
-
         }
+
 
         public void stopService(String msg){
             if(model == null) return;
