@@ -1,16 +1,17 @@
 package com.speakerz.model;
 
-import android.net.ConnectivityManager;
+import android.content.IntentFilter;
+import android.net.wifi.WifiManager;
+import android.net.wifi.p2p.WifiP2pManager;
+import android.widget.ListView;
 
-import com.speakerz.debug.D;
+import android.app.Activity;
+
 import com.speakerz.model.network.BaseNetwork;
 import com.speakerz.model.network.DeviceNetwork;
-import com.speakerz.model.network.Serializable.SongRequestObject;
-import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
-import com.speakerz.model.network.event.channel.MusicPlayerActionEventArgs;
-import com.speakerz.util.EventArgs;
-import com.speakerz.util.EventListener;
+
+import java.util.List;
 
 public class DeviceModel extends BaseModel {
     DeviceNetwork network;
@@ -19,34 +20,16 @@ public class DeviceModel extends BaseModel {
     @Override
     public void start() {
         network.start();
-        network.getReciever().clearConnections();
-        initNetworkListeners();
     }
-
-
-        private void initNetworkListeners() {
-            //a network jelez, hogy elkézült a ControllerSocket.
-            network.ControllerSocketEstablishedEvent.addListener(new EventListener<EventArgs>() {
-                @Override
-                public void action(EventArgs args) {
-                    //itt a controllersocket MusicplayerActionevent eseményeire feliratkozom, hogy a Musicplayert tudjam vezérelni.
-                    //egyenlőre csak egy testPlayer van.
-                   D.log("DeviceModel: controllerSOcket Is ready");
-                }
-            });
-        }
 
     @Override
     public void stop() {
-        if(network.getClientSocketWrapper().controllerSocket!=null)
-        network.getClientSocketWrapper().controllerSocket.shutdown();
-        network.getReciever().clearConnections();
+
     }
 
-    public DeviceModel(WifiBroadcastReciever reciever, ConnectivityManager connectivityManager){
+    public DeviceModel(WifiBroadcastReciever reciever){
         super(reciever);
         network=new DeviceNetwork(reciever);
-        network.getReciever().setConnectivityManager(connectivityManager);
     }
 
     @Override
