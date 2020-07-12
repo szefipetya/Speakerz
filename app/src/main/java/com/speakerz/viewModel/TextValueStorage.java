@@ -21,6 +21,9 @@ public class TextValueStorage implements Serializable {
         valueMap= new  HashMap<Integer,String>();
         listValueMap=new HashMap<>();
     }
+    public void cleanValue(Integer id){
+        valueMap.put(id," ");
+    }
     public String getTextValue(Integer id){
         if(valueMap.containsKey(id))
             return valueMap.get(id);

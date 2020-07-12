@@ -17,6 +17,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.StrictMode;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
@@ -30,6 +31,9 @@ import com.speakerz.model.DeviceModel;
 import com.speakerz.model.HostModel;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
 import com.speakerz.R;
+
+import org.json.JSONException;
+
 /**REQUIRED means: it needs to be in every Activity.*/
 public class MainActivity extends Activity {
     //REQUIRED_BEG MODEL
@@ -66,7 +70,7 @@ public class MainActivity extends Activity {
         if(_service!=null)
         _service.getTextValueStorage().autoConfigureTexts(this);
         else{
-            D.log("err: MainActivity : service is null");
+            //D.log("err: MainActivity : service is null");
         }
     }
 
@@ -75,6 +79,7 @@ public class MainActivity extends Activity {
         super.onStop();
         unbindService(connection);
         _isBounded = false;
+        D.log("main.onStop");
     }
 
     @Override
@@ -84,7 +89,7 @@ public class MainActivity extends Activity {
             _service.getTextValueStorage().autoConfigureTexts(this);
         //a bánat tudja, hogy ez mit csinál, de kell
 
-        D.log("main_onResume");
+        //D.log("main_onResume");
     }
 
     @Override
@@ -96,20 +101,20 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(this, SpeakerzService.class);
         intent.putExtra("isHost",isHost);
         this.startService(intent);
-
     }
 
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         //set the viewEventhandler to handle events from model
-
-
-
         super.onCreate(savedInstanceState);
+        //need the policy to send data below API 28
+        checkDataSendingPolicy();
+
+
         setContentView(R.layout.activity_main);
 
-        D.log("oncreate_main");
+        //D.log("oncreate_main");
 
         Button buttonJoin = (Button) findViewById(R.id.join);
         buttonJoin.setOnClickListener(new View.OnClickListener(){
@@ -160,6 +165,11 @@ public class MainActivity extends Activity {
             //do something, permission was previously granted; or legacy device
         }
 
+    }
+
+    private void checkDataSendingPolicy() {
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
     }
 
 
