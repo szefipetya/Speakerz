@@ -19,7 +19,7 @@ public class Model_ViewUpdateEventManager implements Model_ViewEventHandler {
     public void toast(String msg){
         for (Model_ViewEventHandler hl : listeners){
             hl.toast(msg);
-            //D.log("toast event occured");
+            D.log("toast event occured");
         }
     }
 
@@ -28,7 +28,7 @@ public class Model_ViewUpdateEventManager implements Model_ViewEventHandler {
         valueStorage.setTextValue(componentId,text);
         for (Model_ViewEventHandler hl : listeners){
             hl.setText(componentId,text);
-            //D.log("toast event occured");
+            D.log("toast event occured");
         }
     }
 

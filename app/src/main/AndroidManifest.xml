@@ -2,16 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.speakerz">
-    <uses-permission android:required="true" android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:required="true" android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:required="true" android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:required="true" android:name="android.permission.CHANGE_NETWORK_STATE"/>
-    <uses-permission android:required="true" android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:required="true" android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:required="true" android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"></uses-permission>
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-
 
     <uses-permission android:name="android.permission.UPDATE_DEVICE_STATS"
         tools:ignore="ProtectedPermissions" />
@@ -28,14 +26,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
-        <service android:name="com.speakerz.SpeakerzService"
-            android:stopWithTask="false"
-            />
+        <service android:name="com.speakerz.SpeakerzService" />
         <activity android:name="com.speakerz.Create" />
         <activity android:name="com.speakerz.Options" />
         <activity android:name="com.speakerz.Join" />
-        <activity android:name="com.speakerz.MusicPlayer"/>
         <activity android:name="com.speakerz.MainActivity">
 
 
