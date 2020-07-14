@@ -129,7 +129,7 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
            if(wifiP2pManager!=null){
                 wifiP2pManager.requestPeers(channel,peerListListener);
            }else {}//D.log("err: wifip2pmanager was null");
-           //D.log("Peers changed action");
+           D.log("new peers available.");
         }
        else if(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)){
            //D.log("connection changed action");

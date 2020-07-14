@@ -1,5 +1,6 @@
 package com.speakerz.model;
 
+import android.annotation.SuppressLint;
 import android.net.ConnectivityManager;
 import android.net.wifi.p2p.WifiP2pManager;
 
@@ -69,8 +70,21 @@ public class HostModel extends BaseModel {
 
 
 
+    @SuppressLint("MissingPermission")
     public void startAdvertising() {
         //stop();
+        network.getReciever().getWifiP2pManager().discoverPeers(network.getReciever().getChannel(), new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                D.log("advertising...");
+            }
+
+            @Override
+            public void onFailure(int i) {
+                D.log("advertising init failed");
+
+            }
+        });
         network.startGroup();
     }
     @Override

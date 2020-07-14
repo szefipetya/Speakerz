@@ -61,12 +61,12 @@ ClientSocketWrapper clientSocketWrapper=new ClientSocketWrapper();
             }
         });
 
-        peers = new ArrayList<WifiP2pDevice>();
+        peers = new ArrayList<>();
         peerListListener = new WifiP2pManager.PeerListListener() {
             @Override
             public void onPeersAvailable(WifiP2pDeviceList peerList) {
 
-                //D.log("Peers available");
+                D.log("Peers available");
                 //if the saved list is outdated, replace it with the fresh devices
 
                     //D.log("Peers and not equals" + peerList.getDeviceList().size());
@@ -81,7 +81,7 @@ ClientSocketWrapper clientSocketWrapper=new ClientSocketWrapper();
                         deviceNames.add(device.deviceName);
                         devices[index] = device;
                         index++;
-                        //D.log("device found: " + device.deviceName);
+                        D.log("device found: " + device.deviceName);
                     }
 
                     ListChanged.invoke(new EventArgs(this));

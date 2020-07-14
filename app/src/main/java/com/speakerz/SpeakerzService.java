@@ -1,6 +1,7 @@
 package com.speakerz;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -36,6 +37,7 @@ import com.speakerz.util.EventListener;
 import com.speakerz.viewModel.TextValueStorage;
 
 public class SpeakerzService extends Service {
+
     private final class ServiceHandler extends Handler {
         private  SpeakerzService service;
         private BaseModel model = null;
@@ -48,6 +50,7 @@ public class SpeakerzService extends Service {
             //D.log("servicehandler created");
         }
 
+        @SuppressLint("MissingPermission")
         private void startService(boolean isHost, int sId){
 
 
@@ -76,6 +79,7 @@ public class SpeakerzService extends Service {
                 if(model!=null){stopService("changing service type");}
 
                 model = new DeviceModel(service.receiver,service.connectivityManager);
+                registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
                 model.start();
                 this.subscribeEvents();
                 startId = sId;
@@ -242,4 +246,6 @@ public class SpeakerzService extends Service {
 //permissions
     public final int ACCESS_FINE_LOCATION_CODE = 100;
     public final int STORAGE_PERMISSION_CODE = 101;
+    public final int PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION = 102;
+
 }

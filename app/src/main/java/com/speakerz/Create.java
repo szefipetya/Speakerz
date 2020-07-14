@@ -13,6 +13,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.HostModel;
@@ -40,6 +41,8 @@ public class Create extends Activity {
     private void subscribeModel(final HostModel model) {
         final Create selfActivity = this;
         songListAdapter=new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1,_service.getModel().getSongList());
+        songListAdapter.setNotifyOnChange(true);
+     //   songListAdapter.notifyDataSetChanged();
         lvSongsList.setAdapter(songListAdapter);
 
         //Basemodel Events
@@ -52,10 +55,20 @@ public class Create extends Activity {
                     Runnable run=new Runnable() {
                         @Override
                         public void run() {
-                            _service.getModel().getSongList().add(args.getSongRequestObject().getTitle()+" "+args.getSongRequestObject().getSender());
-                            songListAdapter.notifyDataSetChanged();
+                           // _service.getModel().getSongList().add(args.getSongRequestObject().getTitle()+" "+args.getSongRequestObject().getSender());
+                            //TEMPORARY FIXME 1 vvv
+                          //  songListAdapter=new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1,_service.getModel().getSongList());
+                            // ^^^ FIXME 1 ^^^
+                            synchronized(songListAdapter){
+                                _service.getModel().getSongList().add(args.getSongRequestObject().getTitle()+" "+args.getSongRequestObject().getSender());
+                                songListAdapter.notifyDataSetChanged();
+                                songListAdapter.notify();
+                            }
+                          //  lvSongsList.setAdapter(songListAdapter);
+                            lvSongsList.invalidateViews();
+                            Toast.makeText(selfActivity, "recieved: "+args.getSongRequestObject().toString(),Toast.LENGTH_SHORT).show();
                             D.log("dataset updated.");
-                            D.log("empty?"+_service.getModel().getSongList().isEmpty());
+                            D.log("size: "+_service.getModel().getSongList().size());
                         }
                     };
                     RunnableFuture<Void> task = new FutureTask<>(run, null);
@@ -130,8 +143,12 @@ public class Create extends Activity {
             SpeakerzService.LocalBinder localBinder = (SpeakerzService.LocalBinder) binder;
             _service = localBinder.getService();
             _isBounded = true;
-
-            selfActivity.initAndStart();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    selfActivity.initAndStart();
+                }
+            });
         }
 
         @Override
@@ -219,5 +236,15 @@ public class Create extends Activity {
 
         });
 
+    }
+    //ITS A FIXME ATTEMT TO FIXME1
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            lvSongsList.onWindowFocusChanged(true);
+            lvSongsList.invalidate();
+            lvSongsList.invalidateViews();
+        }
     }
 }
