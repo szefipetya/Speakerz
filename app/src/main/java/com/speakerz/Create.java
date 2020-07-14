@@ -114,10 +114,10 @@ public class Create extends Activity {
 
         subscribeModel((HostModel) _service.getModel());
         _service.getTextValueStorage().autoConfigureTexts(this);
-        _service.getModel().start();
+        //_service.getModel().start();
 
-        registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
-        _isRegisterRecieverConnected=true;
+        //registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
+        //_isRegisterRecieverConnected=true;
     }
     //REQUIRED_END MODEL_Declare
 
@@ -132,17 +132,6 @@ public class Create extends Activity {
             _isBounded = true;
 
             selfActivity.initAndStart();
-            _service.ModelReadyEvent.addListener(new EventListener<BooleanEventArgs>() {
-                @Override
-                public void action(BooleanEventArgs args) {
-                    D.log("create: initAndStart");
-                    if(args.getValue())
-                    {
-
-                    }
-
-                }
-            });
         }
 
         @Override
@@ -174,22 +163,22 @@ public class Create extends Activity {
         if (_service != null)
             _service.getTextValueStorage().autoConfigureTexts(this);
         //a bánat tudja, hogy ez mit csinál, de kell
-        if (_service != null) {
+        /*if (_service != null) {
             if(!_isRegisterRecieverConnected) {
                 registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
                 _isRegisterRecieverConnected=true;
             }
-        }
+        }*/
         //D.log("main_onResume");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (_service != null){
+        /*if (_service != null){
                 if(_isRegisterRecieverConnected )
                 { unregisterReceiver((_service.getModel().getNetwork().getReciever()));}
-        }
+        }*/
     }
 
     @Override

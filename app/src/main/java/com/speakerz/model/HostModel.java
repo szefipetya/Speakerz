@@ -70,12 +70,12 @@ public class HostModel extends BaseModel {
 
 
     public void startAdvertising() {
-        stop();
+        //stop();
         network.startGroup();
     }
     @Override
     public void stop() {
-        //D.log("Model stopped");
+        D.log("Model stopped");
         if(   network.getServerSocketWrapper().controllerSocket!=null)
         network.getServerSocketWrapper().controllerSocket.shutdown();
         network.getReciever().clearConnections();

@@ -48,7 +48,7 @@ public class SpeakerzService extends Service {
             //D.log("servicehandler created");
         }
 
-        private void startService(boolean isHost){
+        private void startService(boolean isHost, int sId){
 
 
           /*  if(isHost) {
@@ -61,26 +61,40 @@ public class SpeakerzService extends Service {
             }*/
 
             if(isHost && (model==null || model instanceof DeviceModel)){
-                if(model!=null){model.stop();}
+                if(model!=null){stopService("changing service type");}
 
                 model = new HostModel(service.receiver,service.connectivityManager);
                 model.start();
+                registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
+
                 this.subscribeEvents();
+                startId = sId;
+
                 D.log("hostmodel created");
             }
             else if(!isHost&&(model==null || model instanceof HostModel)){
-                if(model!=null){model.stop();}
+                if(model!=null){stopService("changing service type");}
+
                 model = new DeviceModel(service.receiver,service.connectivityManager);
                 model.start();
                 this.subscribeEvents();
+                startId = sId;
+
                 D.log("devicemodel created");
+            }
+            else { // nem kell service csere
+                stopSelf(startId);
+                startId = sId;
             }
 
             ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
+
+
         }
 
 
         public void stopService(String msg){
+            D.log("Stopping service: " + startId);
             if(model == null) return;
 
             model.stop();
@@ -93,11 +107,10 @@ public class SpeakerzService extends Service {
 
         @Override
         public void handleMessage(Message msg) {
-            if(model != null){
+            /*if(model != null){
                 stopService("model already exists");
-            }
-            startId = msg.arg1;
-            startService(msg.arg2 == 1);
+            }*/
+            startService(msg.arg2 == 1, msg.arg1);
         }
 
         private void subscribeEvents(){
