@@ -15,6 +15,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.channels.ServerSocketChannel;
 import java.util.LinkedList;
 
 public class ServerControllerSocketThread extends Thread implements SocketThread{
@@ -28,14 +29,19 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     @Override
     public void run() {
         try{
-            ServerSocket serverSocket = new ServerSocket();
+            serverSocket = new ServerSocket(5048);
             serverSocket.setReuseAddress(true);
-            serverSocket.bind(new InetSocketAddress(5048));
+            //serverSocket.bind(new InetSocketAddress(5048));
             //waiting for someone
             D.log("server running");
 
             while(!serverSocket.isClosed()) {
-                Socket socket = serverSocket.accept();
+                ServerSocketChannel channel =  serverSocket.getChannel();
+                final Socket socket = serverSocket.accept();
+                if(socket == null){
+                    D.log("nonblocking");
+                    continue;
+                }
                 final SocketStruct struct = new SocketStruct();
                 struct.socket = socket;
                 struct.objectInputStream = new ObjectInputStream(socket.getInputStream());
@@ -49,10 +55,27 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                     @Override
                     public void run() {
                         try {
-                            //az új szál külön hallgatja az objektumot.
+                            // az új szál külön hallgatja az objektumot.
                             listen(struct);
                         } catch (IOException e) {
+                            // Váratlan IO hiba a kapcsolat során
+                            // - Socket és streamek lezárása
+                            // - Socket struck eltávolítás
                             e.printStackTrace();
+                            try {
+                                struct.objectInputStream.close();
+                            }
+                            catch (IOException e2) {}
+                            try {
+                                struct.objectOutputStream.close();
+                            }
+                            catch (IOException e2) {}
+                            try {
+                                struct.socket.close();
+                            }
+                            catch (IOException e2) {}
+                            socketList.remove(struct);
+
                         } catch (ClassNotFoundException e) {
                             e.printStackTrace();
                             if (e.getMessage() != null) {
@@ -75,7 +98,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
         }catch (IOException ex){
             ex.printStackTrace();
             if(ex.getMessage()!=null)
-            D.log(ex.getMessage());
+                D.log("Exception message: " + ex.getMessage());
             else
                 D.log("null");
         }
@@ -90,13 +113,15 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
 
     @Override
      public void listen(SocketStruct struct) throws IOException, ClassNotFoundException {
-
         // read the list of messages from the socket
          while (true) {
              if(struct.socket.isConnected()&&!struct.socket.isClosed()) {
                  D.log("listening...");
                  ChannelObject chObject = (ChannelObject) struct.objectInputStream.readObject();
                  handleIncomingObject(chObject);
+             }
+             else{
+                 break;
              }
          }
 
@@ -114,6 +139,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     }
     @Override
     public void shutdown(){
+        D.log("Closing server socket");
         try {
             for(SocketStruct s: socketList){
                 if(s.objectInputStream!=null)
@@ -132,6 +158,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
             e.printStackTrace();
             D.log(e.getMessage());
         }
+        D.log("Server socket closed");
     }
 
 }

@@ -1,5 +1,6 @@
 package com.speakerz;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import android.app.Activity;
 
@@ -11,28 +12,18 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
-import android.net.Uri;
-import android.net.wifi.WifiManager;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.StrictMode;
-import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
 
 
 import com.speakerz.SpeakerzService.LocalBinder;
 import com.speakerz.debug.D;
-import com.speakerz.model.DeviceModel;
-import com.speakerz.model.HostModel;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
-import com.speakerz.R;
 
-import org.json.JSONException;
 
 /**REQUIRED means: it needs to be in every Activity.*/
 public class MainActivity extends Activity {
@@ -153,17 +144,12 @@ public class MainActivity extends Activity {
 
         });
 
-        statusCheck();
-        //ez Android 8.0 felett kell
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                    1001);
-            //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
-
-        }else{
-           // getScanningResults();
-            //do something, permission was previously granted; or legacy device
+        gpsStatusCheck();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            checkCoarseLocationPermission();
         }
+        //ez Android 8.0 felett kell
+
 
     }
 
@@ -174,12 +160,37 @@ public class MainActivity extends Activity {
 
 
     //ujproba
-    public void statusCheck() {
+    public void gpsStatusCheck() {
         final LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             buildAlertMessageNoGps();
 
+        }
+    }
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void checkCoarseLocationPermission(){
+
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                    _service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
+            //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
+
+        }else{
+            //do something, permission was previously granted; or legacy device
+            D.log("ACCESS_COARSE_LOCATION Permission granted originally");
+
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        if (requestCode == _service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            // Do something with granted permission
+            D.log("ACCESS_COARSE_LOCATION Permission granted by request");
         }
     }
 

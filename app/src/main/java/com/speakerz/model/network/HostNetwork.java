@@ -63,39 +63,6 @@ public class HostNetwork extends BaseNetwork {
 
    public Event<BooleanEventArgs> GroupConnectionChangedEvent = new Event<>();
 
-
-
-
-
-   private  void advertiseMySelf(){
-      reciever.discoverPeers(new WifiP2pManager.ActionListener() {
-         //  @SuppressLint("MissingPermission")
-         @SuppressLint("MissingPermission")
-         @Override
-         public void onSuccess() {
-            TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Advertising..."));
-            //this makes sure that ACESS_FINE_LOCATION is enabled
-            PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
-            //create a ServerSide thread
-
-         }
-
-         @Override
-         public void onFailure(int i) {
-            TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Advertising init failed..."));
-         }
-      });
-
-      peers=new ArrayList<WifiP2pDevice>();
-      peerListListener=new WifiP2pManager.PeerListListener() {
-         @Override
-         public void onPeersAvailable(WifiP2pDeviceList peerList) {
-
-         }
-      };
-      reciever.setPeerListListener(peerListListener);
-   }
-
    @SuppressLint("MissingPermission")
    private void createGroup(){
       reciever.getWifiP2pManager().createGroup(reciever.getChannel(), new WifiP2pManager.ActionListener() {
@@ -137,12 +104,11 @@ public class HostNetwork extends BaseNetwork {
 
                           @Override
                           public void onFailure(int reason) {
-                             D.log("group creation failed. reason: " + reason);
+                             D.log("group removing failed. reason: " + reason);
                           }
                        });
                     } else {
                        createGroup();
-
                     }
                  }
               });

@@ -60,12 +60,12 @@ public class Join extends Activity {
         subscribeServiceEvents();
         lvSongsList = (ListView) findViewById(R.id.lv_song_list_test);
         lvPeersList = (ListView) findViewById(R.id.lv_peers);
-        _service.getModel().start();
+        //_service.getModel().start();
         peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
         lvPeersList.setAdapter(peerListAdapter);
         //  adapter.notifyDataSetChanged();
-        registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
-        _isRegisterRecieverConnected=true;
+        /*registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
+        _isRegisterRecieverConnected=true;*/
         //set up the listView's onclick, so clients can connect to hosts by klicking on a device in a listview
         lvPeersList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -197,14 +197,6 @@ public class Join extends Activity {
             _service = localBinder.getService();
             _isBounded = true;
             selfActivity.initAndStart();
-            _service.ModelReadyEvent.addListener(new EventListener<BooleanEventArgs>() {
-                @Override
-                public void action(BooleanEventArgs args) {
-                    D.log("join: initAndStart");
-                    if(!args.getValue()){}
-
-                }
-            });
         }
 
         @Override
@@ -236,19 +228,19 @@ public class Join extends Activity {
         if (_service != null)
             _service.getTextValueStorage().autoConfigureTexts(this);
         //a bánat tudja, hogy ez mit csinál, de kell
-        if (_service != null){
+        /*if (_service != null){
 
             registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
             _isRegisterRecieverConnected = true;
-        }
+        }*/
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (_service != null && _isBounded && _isRegisterRecieverConnected) {
+        /*if (_service != null && _isBounded && _isRegisterRecieverConnected) {
             unregisterReceiver((_service.getModel().getNetwork().getReciever()));
-        }
+        }*/
     }
 
     @Override
