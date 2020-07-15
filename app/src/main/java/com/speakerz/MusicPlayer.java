@@ -6,7 +6,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -18,22 +17,20 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SeekBar;
 
-import com.speakerz.debug.D;
-import com.speakerz.model.network.event.BooleanEventArgs;
-import com.speakerz.util.EventListener;
-
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 
 public class MusicPlayer extends Activity {
 // TODO: Szövegek beállítása,gomvnyomásra zeneváltás, Modul részbe integrállás,kimmetelés és kód rendezés
     Button play;
     Button stop;
-    MediaPlayer mp;
-    SeekBar elapsedtime;
+
+    SpeakerzService _service;
+    boolean _isBounded=false;
+    MusicPlayer selfActivity=this;
+
+    SeekBar seekBar;
     ListView playListView;
-    ArrayList<String> data = new ArrayList<String>();
-    ArrayAdapter LA;
+    ArrayAdapter songLA;
     int totalTime;
 
     @Override
@@ -41,55 +38,80 @@ public class MusicPlayer extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music_player);
 
+        Button buttonBack = (Button) findViewById(R.id.back);
+        buttonBack.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                finish();
+            }
 
-        // playlist
+        });
+
+        //start or stop
+        final Button buttonPlay = (Button) findViewById(R.id.play);
+        buttonPlay.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                if (!(_service.getModel().getMusicPlayerModel()).mediaPlayer.isPlaying()) {
+                    (_service.getModel().getMusicPlayerModel()).mediaPlayer.start();
+                    buttonPlay.setText("Stop");
+
+                } else {
+                    (_service.getModel().getMusicPlayerModel()).mediaPlayer.pause();
+                    buttonPlay.setText("Start");
+                }
+
+            }
+
+        });
+
+
+    }
+
+
+
+    public void initAndStart(){
+
+        // playlist, this adds the songs from the memory to the list
         playListView = (ListView) findViewById(R.id.playlist);
         Field[] fields = R.raw.class.getFields();
         for( int i = 0 ; i < fields.length ; i++){
-            data.add(fields[i].getName());
-
+            (_service.getModel().getMusicPlayerModel()).songQueue.add(fields[i].getName());
         }
 
-
-        //front
-        LA = new ArrayAdapter<String>(this, R.layout.list_item, data);
-
-        playListView.setAdapter(LA);
+        //front, This adapts the song queue into list view
+        songLA = new ArrayAdapter<String>(this, R.layout.list_item, (_service.getModel().getMusicPlayerModel()).songQueue);
+        playListView.setAdapter(songLA);
 
 
-
+        // if you click a song that will be played.
         playListView.setOnItemClickListener( new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                if(mp!=null){
-                    mp.release();
+                if((_service.getModel().getMusicPlayerModel()).mediaPlayer !=null){
+                    (_service.getModel().getMusicPlayerModel()).mediaPlayer.release();
                 }
-                int resID = getResources().getIdentifier(data.get(i),"raw",getPackageName());
-                mp= MediaPlayer.create(MusicPlayer.this,resID);
-                totalTime = mp.getDuration();
-                elapsedtime.setMax(totalTime);
-                mp.start();
-
-
+                int resID = getResources().getIdentifier((_service.getModel().getMusicPlayerModel()).songQueue.get(i),"raw",getPackageName());
+                (_service.getModel().getMusicPlayerModel()).mediaPlayer = (_service.getModel().getMusicPlayerModel()).mediaPlayer.create(MusicPlayer.this,resID);
+                totalTime = (_service.getModel().getMusicPlayerModel()).mediaPlayer.getDuration();
+                seekBar.setMax(totalTime);
+                (_service.getModel().getMusicPlayerModel()).mediaPlayer.start();
 
             }
         });
 
-        //front_end
-
-    //others
+        //others
+        // This Part make the seekbar work
         play=(Button) findViewById(R.id.play);
-        mp = MediaPlayer.create(this, R.raw.rock);
-        totalTime = mp.getDuration();
-        elapsedtime = (SeekBar) findViewById(R.id.elapsedtime);
-        elapsedtime.setMax(totalTime);
-        elapsedtime.setOnSeekBarChangeListener(
+        (_service.getModel().getMusicPlayerModel()).mediaPlayer = (_service.getModel().getMusicPlayerModel()).mediaPlayer.create(this, R.raw.rock);
+        totalTime = (_service.getModel().getMusicPlayerModel()).mediaPlayer.getDuration();
+        seekBar = (SeekBar) findViewById(R.id.elapsedtime);
+        seekBar.setMax(totalTime);
+        seekBar.setOnSeekBarChangeListener(
                 new SeekBar.OnSeekBarChangeListener() {
                     @Override
                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                         if (fromUser) {
-                            mp.seekTo(progress);
-                            elapsedtime.setProgress(progress);
+                            (_service.getModel().getMusicPlayerModel()).mediaPlayer.seekTo(progress);
+                            MusicPlayer.this.seekBar.setProgress(progress);
                         }
                     }
 
@@ -105,25 +127,13 @@ public class MusicPlayer extends Activity {
                 }
         );
 
-
-        Button buttonBack = (Button) findViewById(R.id.back);
-        buttonBack.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View view){
-             //   Intent Act2 = new Intent(getApplicationContext(),MainActivity.class);
-              //  Act2.putExtra("Hello","Hello World");
-             //   startActivity(Act2);
-                finish();
-            }
-
-        });
-
         new Thread(new Runnable() {
             @Override
             public void run() {
-                while (mp != null) {
+                while ((_service.getModel().getMusicPlayerModel()).mediaPlayer != null) {
                     try {
                         Message msg = new Message();
-                        msg.what = mp.getCurrentPosition();
+                        msg.what = (_service.getModel().getMusicPlayerModel()).mediaPlayer.getCurrentPosition();
                         handler.sendMessage(msg);
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {}
@@ -131,38 +141,16 @@ public class MusicPlayer extends Activity {
             }
         }).start();
 
-
     }
-
+    // Seekbar handler
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             int currentPosition = msg.what;
             // Update positionBar.
-            elapsedtime.setProgress(currentPosition);
+            seekBar.setProgress(currentPosition);
         }
     };
-
-    public void playClick(View view){
-        if(!mp.isPlaying()){
-            mp.start();
-
-        }
-        else{
-            mp.pause();
-
-        }
-
-    }
-
-
-    SpeakerzService _service;
-    boolean _isBounded=false;
-    MusicPlayer selfActivity=this;
-
-    public void initAndStart(){
-
-    }
 
     private ServiceConnection connection = new ServiceConnection() {
 

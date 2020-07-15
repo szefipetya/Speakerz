@@ -1,5 +1,6 @@
 package com.speakerz.model;
 
+import com.speakerz.MusicPlayer;
 import com.speakerz.model.event.SongItemEventArgs;
 import com.speakerz.model.network.BaseNetwork;
 import com.speakerz.model.network.WifiBroadcastReciever;
@@ -15,6 +16,8 @@ import java.util.List;
 public abstract class BaseModel {
     public abstract void start();
     public abstract void stop();
+
+    MusicPlayerModel musicPlayerModel = new MusicPlayerModel();
 
     public Event<SongItemEventArgs> SongListChangedEvent=new Event<>();
 
@@ -34,6 +37,8 @@ public abstract class BaseModel {
     }
 
     protected List<String> songList=new ArrayList<>();
+
+    public MusicPlayerModel getMusicPlayerModel(){return musicPlayerModel;}
 
 
 
