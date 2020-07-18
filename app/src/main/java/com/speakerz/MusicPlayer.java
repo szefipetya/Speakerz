@@ -6,6 +6,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -18,11 +19,13 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 
 import java.lang.reflect.Field;
+import java.util.List;
 
 public class MusicPlayer extends Activity {
-// TODO: Szövegek beállítása,gomvnyomásra zeneváltás, Modul részbe integrállás,kimmetelés és kód rendezés
+// TODO: 1 bug az első zene után ha a user huzza végiga seekbart valamiért a 3. indul el nema 2. eztleszámítva error nincsen amennyire én látom,kommetelés és kód rendezés
     Button play;
-    Button stop;
+    //Button stop;
+    int playedSongnum=0;
 
     SpeakerzService _service;
     boolean _isBounded=false;
@@ -32,6 +35,7 @@ public class MusicPlayer extends Activity {
     ListView playListView;
     ArrayAdapter songLA;
     int totalTime;
+    boolean playSong=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,12 +57,23 @@ public class MusicPlayer extends Activity {
                 if (!(_service.getModel().getMusicPlayerModel()).mediaPlayer.isPlaying()) {
                     (_service.getModel().getMusicPlayerModel()).mediaPlayer.start();
                     buttonPlay.setText("Stop");
+                    playSong=true;
 
                 } else {
                     (_service.getModel().getMusicPlayerModel()).mediaPlayer.pause();
                     buttonPlay.setText("Start");
+                    playSong=false;
                 }
 
+            }
+
+        });
+
+        final Button buttonNext = (Button) findViewById(R.id.next);
+        buttonNext.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                NextSong(playedSongnum,(_service.getModel().getMusicPlayerModel()).songQueue);
+                System.out.println(playedSongnum);
             }
 
         });
@@ -66,12 +81,11 @@ public class MusicPlayer extends Activity {
 
     }
 
-
-
     public void initAndStart(){
 
         // playlist, this adds the songs from the memory to the list
         playListView = (ListView) findViewById(R.id.playlist);
+
         Field[] fields = R.raw.class.getFields();
         for( int i = 0 ; i < fields.length ; i++){
             (_service.getModel().getMusicPlayerModel()).songQueue.add(fields[i].getName());
@@ -87,12 +101,13 @@ public class MusicPlayer extends Activity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 if((_service.getModel().getMusicPlayerModel()).mediaPlayer !=null){
-                    (_service.getModel().getMusicPlayerModel()).mediaPlayer.release();
+                    (_service.getModel().getMusicPlayerModel()).mediaPlayer.reset();
                 }
                 int resID = getResources().getIdentifier((_service.getModel().getMusicPlayerModel()).songQueue.get(i),"raw",getPackageName());
                 (_service.getModel().getMusicPlayerModel()).mediaPlayer = (_service.getModel().getMusicPlayerModel()).mediaPlayer.create(MusicPlayer.this,resID);
                 totalTime = (_service.getModel().getMusicPlayerModel()).mediaPlayer.getDuration();
                 seekBar.setMax(totalTime);
+                playedSongnum=i;
                 (_service.getModel().getMusicPlayerModel()).mediaPlayer.start();
 
             }
@@ -100,7 +115,6 @@ public class MusicPlayer extends Activity {
 
         //others
         // This Part make the seekbar work
-        play=(Button) findViewById(R.id.play);
         (_service.getModel().getMusicPlayerModel()).mediaPlayer = (_service.getModel().getMusicPlayerModel()).mediaPlayer.create(this, R.raw.rock);
         totalTime = (_service.getModel().getMusicPlayerModel()).mediaPlayer.getDuration();
         seekBar = (SeekBar) findViewById(R.id.elapsedtime);
@@ -112,7 +126,21 @@ public class MusicPlayer extends Activity {
                         if (fromUser) {
                             (_service.getModel().getMusicPlayerModel()).mediaPlayer.seekTo(progress);
                             MusicPlayer.this.seekBar.setProgress(progress);
+                            if(progress>=totalTime){
+                                System.out.println("vege user");
+                                NextSong(playedSongnum,(_service.getModel().getMusicPlayerModel()).songQueue);
+
+                            }
                         }
+                        else{
+                            if(progress>=totalTime){
+                                System.out.println("vege");
+                                NextSong(playedSongnum,(_service.getModel().getMusicPlayerModel()).songQueue);
+
+                            }
+
+                        }
+
                     }
 
                     @Override
@@ -136,7 +164,9 @@ public class MusicPlayer extends Activity {
                         msg.what = (_service.getModel().getMusicPlayerModel()).mediaPlayer.getCurrentPosition();
                         handler.sendMessage(msg);
                         Thread.sleep(1000);
-                    } catch (InterruptedException e) {}
+                    } catch (InterruptedException e) {
+                        System.out.println("interuppted");
+                    }
                 }
             }
         }).start();
@@ -187,6 +217,30 @@ public class MusicPlayer extends Activity {
         super.onStop();
         unbindService(connection);
         _isBounded = false;
+    }
+
+    public void NextSong(int lastplayedsongnum, List<String> songQueue){
+        if ((_service.getModel().getMusicPlayerModel()).mediaPlayer.isPlaying()) {
+            (_service.getModel().getMusicPlayerModel()).mediaPlayer.stop();
+        }
+         (_service.getModel().getMusicPlayerModel()).mediaPlayer.release();
+        int i;
+        if(lastplayedsongnum >= songQueue.size() -1 || lastplayedsongnum < 0){
+           i=0;
+        }
+        else{
+            i=lastplayedsongnum+1;
+        }
+        int resID = getResources().getIdentifier(songQueue.get(i),"raw",getPackageName());
+        (_service.getModel().getMusicPlayerModel()).mediaPlayer = MediaPlayer.create(MusicPlayer.this,resID);
+        totalTime = (_service.getModel().getMusicPlayerModel()).mediaPlayer.getDuration();
+        seekBar.setMax(totalTime);
+        playedSongnum=i;
+        if(playSong){
+            (_service.getModel().getMusicPlayerModel()).mediaPlayer.start();
+        }
+
+
     }
 
 // using relative layout as view but its to complicated for now so i decided that i go for functionality first;
