@@ -1,6 +1,7 @@
 package com.speakerz.model;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.wifi.p2p.WifiP2pManager;
 
@@ -21,8 +22,8 @@ public class HostModel extends BaseModel {
     HostNetwork network;
 
 
-    public HostModel(WifiBroadcastReciever reciever, ConnectivityManager connectivityManager) {
-        super(reciever);
+    public HostModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager) {
+        super(context, reciever);
         network = new HostNetwork(reciever);
         network.getReciever().setConnectivityManager(connectivityManager);
         initNetworkListeners();
