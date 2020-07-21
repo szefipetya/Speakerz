@@ -93,6 +93,7 @@ public class HostModel extends BaseModel {
         D.log("Model stopped");
         if(   network.getServerSocketWrapper().controllerSocket!=null)
         network.getServerSocketWrapper().controllerSocket.shutdown();
+        musicPlayerModel.close();
         network.getReciever().clearConnections();
         network.getReciever().getWifiP2pManager().removeGroup(network.getReciever().getChannel(), new WifiP2pManager.ActionListener() {
             @Override

@@ -21,12 +21,21 @@ public class MusicPlayerModel{
     public MusicPlayerModel self = this;
     public ArrayList<String> songQueue = new ArrayList<String>();
     public MediaPlayer mediaPlayer;
+    public Context context;
 
     // Events
     public final Event<EventArgs1<Boolean>> playbackStateChanged = new Event<>();
     public final Event<EventArgs2<Integer, Integer>> playbackDurationChanged = new Event<>();
 
+    // Listeners
+    MediaPlayer.OnCompletionListener completionListener = new MediaPlayer.OnCompletionListener() {
+        @Override
+        public void onCompletion(MediaPlayer mediaPlayer) {
+            startNext();
+        }
+    };
 
+    // thread to sync playback durations
     Thread durationUpdateThread = new Thread(new Runnable() {
         @Override
         public void run() {
@@ -51,27 +60,23 @@ public class MusicPlayerModel{
     });
 
     public MusicPlayerModel(Context context) {
+        this.context = context;
+
         mediaPlayer = new MediaPlayer();
         durationUpdateThread.start();
-        playbackDurationChanged.addListener(new EventListener<EventArgs2<Integer, Integer>>() {
-            @Override
-            public void action(EventArgs2<Integer, Integer> args) {
-                int current = args.arg1();
-                int total = args.arg2();
 
-                if(current >= total){
+        // Event handler to start next song automatically
 
-                }
-            }
-        });
+        mediaPlayer.setOnCompletionListener(completionListener);
     }
 
+    // Close music player services
     public void close(){
         stop();
         durationUpdateThread.interrupt();
     }
 
-
+    // Stop playing
     public void stop(){
         if (mediaPlayer != null && mediaPlayer.isPlaying()) {
             mediaPlayer.stop();
@@ -79,12 +84,11 @@ public class MusicPlayerModel{
         }
     }
 
-    public void start(){
-        if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
-            mediaPlayer.start();
-            playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
-        }
+    public void startNext(){
+        start(currentPlayingIndex + 1);
     }
+
+    // starting song by Uri
     public void start(Context context, Uri uri){
         try {
             mediaPlayer.stop();
@@ -93,11 +97,14 @@ public class MusicPlayerModel{
             mediaPlayer = null;
 
             mediaPlayer = MediaPlayer.create(context, uri);
+            mediaPlayer.setOnCompletionListener(completionListener);
             mediaPlayer.start();
             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
         }
         catch (Exception e){}
     }
+
+    // Starting song by resId
     public void start(Context context, int resId){
         try {
             mediaPlayer.stop();
@@ -106,20 +113,36 @@ public class MusicPlayerModel{
             mediaPlayer = null;
 
             mediaPlayer = MediaPlayer.create(context, resId);
+            mediaPlayer.setOnCompletionListener(completionListener);
             mediaPlayer.start();
             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
         }
         catch (Exception e){}
     }
 
+    // Starting song from songQueue by index
     public void start(int songIndex){
-
+        if(songQueue.size() > 0 && songIndex < songQueue.size()) {
+            currentPlayingIndex = songIndex;
+            int resId = context.getResources().getIdentifier(songQueue.get(songIndex), "raw", context.getPackageName());
+            start(context, resId);
+        }
     }
 
+    // Start paused playing
+    public void start(){
+        if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
+            mediaPlayer.start();
+            playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
+        }
+    }
+
+    // returns true is media player exists and playing media
     public boolean isPlaying(){
         return mediaPlayer != null && mediaPlayer.isPlaying();
     }
 
+    // pauses media player if exists
     public void pause(){
         if(mediaPlayer != null) {
             mediaPlayer.pause();
@@ -127,6 +150,7 @@ public class MusicPlayerModel{
         }
     }
 
+    // Toggles pause and start state of player
     public void togglePause(){
         if(isPlaying())
             pause();
