@@ -1,5 +1,6 @@
 package com.speakerz.model;
 
+import android.content.Context;
 import android.net.ConnectivityManager;
 
 import com.speakerz.debug.D;
@@ -43,8 +44,8 @@ public class DeviceModel extends BaseModel {
         network.getReciever().clearConnections();
     }
 
-    public DeviceModel(WifiBroadcastReciever reciever, ConnectivityManager connectivityManager){
-        super(reciever);
+    public DeviceModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager){
+        super(context, reciever);
         network=new DeviceNetwork(reciever);
         network.getReciever().setConnectivityManager(connectivityManager);
     }
