@@ -118,6 +118,10 @@ public class MusicPlayer extends Activity {
                             //NextSong(playedSongnum,model.songQueue);
                         }
                     }
+                    else{
+                        MusicPlayer.this.seekBar.setProgress(progress);
+
+                    }
                 }
 
                 @Override
@@ -135,7 +139,9 @@ public class MusicPlayer extends Activity {
         // Add songs to model's Song Queue
         Field[] fields = R.raw.class.getFields();
         for( int i = 0 ; i < fields.length ; i++){
-            model.songQueue.add(fields[i].getName());
+            if(!model.songQueue.contains(fields[i].getName())){
+                model.songQueue.add(fields[i].getName());
+            }
         }
 
         // Connect Song Queue to list view UI conponent

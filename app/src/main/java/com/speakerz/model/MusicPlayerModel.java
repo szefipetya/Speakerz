@@ -15,6 +15,9 @@ import com.speakerz.util.EventListener;
 
 import java.util.ArrayList;
 
+//TODO: Az első zene elindításakor elég bugosak a dolgok, ennek a kijavítása kell BUGOK: Seekbar nemindul, startgomb nemjól van,seekbar nemműködik
+// Ha ráléptetjük egy zenére valamilyen módon és megnyomjuka start gombot onnantól jó megy
+
 public class MusicPlayerModel{
     private int currentPlayingIndex = 0;
 
@@ -64,7 +67,7 @@ public class MusicPlayerModel{
         this.context = context;
 
         mediaPlayer = new MediaPlayer();
-        //durationUpdateThread.start();
+        durationUpdateThread.start();
 
         // Event handler to start next song automatically
 
