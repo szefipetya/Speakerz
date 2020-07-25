@@ -40,7 +40,7 @@ public class Create extends Activity {
     ArrayAdapter<String> songListAdapter=null;
     private void subscribeModel(final HostModel model) {
         final Create selfActivity = this;
-        songListAdapter=new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1,_service.getModel().getSongList());
+        songListAdapter=new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1,model.getSongList());
         songListAdapter.setNotifyOnChange(true);
      //   songListAdapter.notifyDataSetChanged();
         lvSongsList.setAdapter(songListAdapter);

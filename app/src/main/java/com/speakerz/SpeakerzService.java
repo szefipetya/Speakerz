@@ -66,7 +66,7 @@ public class SpeakerzService extends Service {
             if(isHost && (model==null || model instanceof DeviceModel)){
                 if(model!=null){stopService("changing service type");}
 
-                model = new HostModel(service.receiver,service.connectivityManager);
+                model = new HostModel(service, service.receiver,service.connectivityManager);
                 model.start();
                 registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
 
@@ -78,7 +78,7 @@ public class SpeakerzService extends Service {
             else if(!isHost&&(model==null || model instanceof HostModel)){
                 if(model!=null){stopService("changing service type");}
 
-                model = new DeviceModel(service.receiver,service.connectivityManager);
+                model = new DeviceModel(service, service.receiver,service.connectivityManager);
                 registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
                 model.start();
                 this.subscribeEvents();

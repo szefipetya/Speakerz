@@ -175,8 +175,8 @@ public class MainActivity extends Activity {
 
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                    _service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
+            //requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                    //service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
             //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
 
         }else{
