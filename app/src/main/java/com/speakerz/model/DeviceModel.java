@@ -47,6 +47,7 @@ public class DeviceModel extends BaseModel {
     public DeviceModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager){
         super(context, reciever);
         network=new DeviceNetwork(reciever);
+        reciever.setHost(false);
         network.getReciever().setConnectivityManager(connectivityManager);
     }
 
