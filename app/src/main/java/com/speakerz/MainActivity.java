@@ -44,6 +44,10 @@ public class MainActivity extends Activity {
             LocalBinder localBinder = (LocalBinder) binder;
             _service =  localBinder.getService();
             _isBounded = true;
+            //permission check
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                checkCoarseLocationPermission();
+            }
         }
 
         @Override
@@ -145,9 +149,11 @@ public class MainActivity extends Activity {
         });
 
         gpsStatusCheck();
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             //checkCoarseLocationPermission();
         }
+
         //ez Android 8.0 felett kell
 
 
