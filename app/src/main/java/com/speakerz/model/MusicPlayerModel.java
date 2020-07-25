@@ -16,12 +16,13 @@ import com.speakerz.util.EventListener;
 import java.util.ArrayList;
 
 public class MusicPlayerModel{
-    private int currentPlayingIndex = -1;
+    private int currentPlayingIndex = 0;
 
     public MusicPlayerModel self = this;
     public ArrayList<String> songQueue = new ArrayList<String>();
     public MediaPlayer mediaPlayer;
     public Context context;
+    boolean playSong=false;
 
     // Events
     public final Event<EventArgs1<Boolean>> playbackStateChanged = new Event<>();
@@ -42,7 +43,7 @@ public class MusicPlayerModel{
             try{
                 int _current = -1, _total = -1;
                 while(true){
-                    if(mediaPlayer != null) {
+                    if(mediaPlayer != null && playSong) {
                         int current = mediaPlayer.getCurrentPosition();
                         int total = mediaPlayer.getDuration();
 
@@ -63,7 +64,7 @@ public class MusicPlayerModel{
         this.context = context;
 
         mediaPlayer = new MediaPlayer();
-        durationUpdateThread.start();
+        //durationUpdateThread.start();
 
         // Event handler to start next song automatically
 
@@ -85,7 +86,13 @@ public class MusicPlayerModel{
     }
 
     public void startNext(){
-        start(currentPlayingIndex + 1);
+        if (currentPlayingIndex>= songQueue.size()-1){
+            currentPlayingIndex =0;
+            start(currentPlayingIndex);
+        }
+        else{
+            start(currentPlayingIndex + 1);
+        }
     }
 
     // starting song by Uri
@@ -132,6 +139,7 @@ public class MusicPlayerModel{
     // Start paused playing
     public void start(){
         if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
+            playSong=true;
             mediaPlayer.start();
             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
         }
@@ -145,6 +153,7 @@ public class MusicPlayerModel{
     // pauses media player if exists
     public void pause(){
         if(mediaPlayer != null) {
+            playSong=false;
             mediaPlayer.pause();
             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
         }
