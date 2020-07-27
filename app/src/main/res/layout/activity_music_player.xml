@@ -23,10 +23,10 @@
             android:id="@+id/back"
             android:layout_width="102dp"
             android:layout_height="50dp"
-            android:layout_marginTop="100dp"
+            android:layout_marginTop="108dp"
             android:text="back"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.252"
+            app:layout_constraintHorizontal_bias="0.216"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
