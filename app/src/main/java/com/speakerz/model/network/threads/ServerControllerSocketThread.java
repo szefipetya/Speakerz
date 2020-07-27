@@ -29,8 +29,11 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     @Override
     public void run() {
         try{
-            serverSocket = new ServerSocket(5048);
+            serverSocket = new ServerSocket();
             serverSocket.setReuseAddress(true);
+            serverSocket.bind(new InetSocketAddress(5048));
+            D.log("server address: "+serverSocket.getInetAddress());
+            D.log("localsocketaddress : "+serverSocket.getLocalSocketAddress());
             //serverSocket.bind(new InetSocketAddress(5048));
             //waiting for someone
             D.log("server running");
@@ -48,7 +51,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                 struct.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
                 socketList.add(struct);
                 writeWelcome(struct);
-                D.log("client connected: "+socket.getLocalAddress());
+                D.log("client connected: "+socket.getInetAddress());
 
                 //új szálon elindítjuk a socketet, hogy hallgassuk a bejövő adatokat.
                 new Thread() {
@@ -101,6 +104,8 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                 D.log("Exception message: " + ex.getMessage());
             else
                 D.log("null");
+
+            shutdown();
         }
     }
 

@@ -73,11 +73,16 @@ public class HostModel extends BaseModel {
 
     @SuppressLint("MissingPermission")
     public void startAdvertising() {
+
+
         //stop();
+       // network.getReciever().getWifiP2pManager().d
         network.getReciever().getWifiP2pManager().discoverPeers(network.getReciever().getChannel(), new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
                 D.log("advertising...");
+                network.removeGroupIfExists();
+
             }
 
             @Override
@@ -86,7 +91,7 @@ public class HostModel extends BaseModel {
 
             }
         });
-        network.startGroup();
+
     }
     @Override
     public void stop() {

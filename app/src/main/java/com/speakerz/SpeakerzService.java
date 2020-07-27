@@ -100,7 +100,7 @@ public class SpeakerzService extends Service {
         public void stopService(String msg){
             D.log("Stopping service: " + startId);
             if(model == null) return;
-
+            unregisterReceiver(model.getNetwork().getReciever());
             model.stop();
             stopSelf(startId);
             startId = -1;

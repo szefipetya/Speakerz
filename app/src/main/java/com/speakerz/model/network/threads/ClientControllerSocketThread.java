@@ -44,15 +44,11 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
         } catch (IOException  | ClassNotFoundException e) {
             D.log(e.getMessage());
             e.printStackTrace();
-            try {
 
-                struct.socket.close();
-                struct.objectOutputStream.close();
-                struct.objectInputStream.close();
 
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
+             shutdown();
+
+
 
         }
         //send and recieve
