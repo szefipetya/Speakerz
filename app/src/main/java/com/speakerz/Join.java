@@ -1,5 +1,6 @@
 package com.speakerz;
 
+import android.Manifest;
 import android.app.Activity;
 
 import android.content.ComponentName;
@@ -7,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.View;
@@ -25,6 +27,7 @@ import com.speakerz.debug.D;
 import com.speakerz.model.BaseModel;
 import com.speakerz.model.DeviceModel;
 import com.speakerz.model.enums.EVT;
+import com.speakerz.model.enums.PERM;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
 import com.speakerz.model.event.SongItemEventArgs;
 import com.speakerz.model.network.DeviceNetwork;
@@ -87,14 +90,20 @@ public class Join extends Activity {
         _service.PermissionCheckEvent.addListener(new EventListener<PermissionCheckEventArgs>() {
             @Override
             public void action(PermissionCheckEventArgs args) {
-                if (ActivityCompat.checkSelfPermission(selfActivity, args.getRequiredPermission()) != args.getSuccessNumber()) {
-                    Toast.makeText(selfActivity, "Failure in connection with host ", Toast.LENGTH_SHORT).show();
-                    //D.log("connection failure: Service");
-                    checkPermission(args.getRequiredPermission(), _service.ACCESS_FINE_LOCATION_CODE);
-                } else if (_service.getModel() instanceof DeviceModel) {
-                    //critical call. Need to make sure the type before casting...
-                    ((DeviceNetwork) (_service.getModel().getNetwork())).connectWithPermissionGranted();
-                    //D.log("access granted");
+                if(args.getReason()== PERM.connectionPermission) {
+                    if (ActivityCompat.checkSelfPermission(selfActivity, args.getRequiredPermission()) != args.getSuccessNumber()) {
+                        Toast.makeText(selfActivity, "Failure at granting a permission. ", Toast.LENGTH_SHORT).show();
+                        //D.log("connection failure: Service");
+                        checkPermission(args.getRequiredPermission(), _service.ACCESS_FINE_LOCATION_CODE);
+                    } else if (_service.getModel() instanceof DeviceModel) {
+                        //critical call. Need to make sure the type before casting...
+                        ((DeviceNetwork) (_service.getModel().getNetwork())).connectWithPermissionGranted();
+                        //D.log("access granted");
+                    }
+                }
+
+                if(args.getReason()==PERM.ACCESS_COARSE_LOCATION){
+                    checkPermission(args.getRequiredPermission(),_service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
                 }
             }
         });
@@ -305,7 +314,8 @@ public class Join extends Activity {
     public void checkPermission(String permission, int requestCode) {
 
         // Checking if permission is not granted
-        if (ContextCompat.checkSelfPermission(Join.this, permission) == PackageManager.PERMISSION_DENIED) {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&ContextCompat.checkSelfPermission(Join.this, permission) == PackageManager.PERMISSION_DENIED) {
             ActivityCompat
                     .requestPermissions(
                             Join.this,
@@ -313,12 +323,17 @@ public class Join extends Activity {
                             requestCode);
         } else {
             //permission already granted
+            D.log(permission +" already granted.");
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == _service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            D.log("ACCESS_COARSE_LOCATION Permission granted.");
+        }
 
     }
 

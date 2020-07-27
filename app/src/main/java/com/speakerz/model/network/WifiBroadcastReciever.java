@@ -33,7 +33,7 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
     private WifiP2pManager.Channel channel;
 
     private ConnectivityManager connectivityManager;
-    private boolean isHost =true;
+    private boolean isHost =false;
 
     public void setHost(boolean host) {
         isHost = host;
@@ -48,19 +48,24 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
             D.log("onCOnnectionInfoavailable "+hostAddress);
             // After the group negotiation, we can determine the group owner
             // (server).
-            if(hostAddress!=null){
-            if (isHost/*info.groupFormed && info.isGroupOwner*/) {
+            if (info.groupFormed/* && info.isGroupOwner*/&&isHost) {
                 D.log("owner");
+                // Do whatever tasks are specific to the group owner.
+                // One common case is creating a group owner thread and accepting
+                // incoming connections.
                 // ConnectionChangedEvent.invoke(new ConnectionChangedEventArgs(self, wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner));
                 HostAddressAvailableEvent.invoke(new HostAddressEventArgs(self,info.groupOwnerAddress,true));
-            } else {
+            } if (info.groupFormed&&!isHost) {
+                if (info.groupOwnerAddress != null) {
                     D.log("client " + info.groupOwnerAddress);
                     HostAddressAvailableEvent.invoke(new HostAddressEventArgs(self,info.groupOwnerAddress,false));
+                    // The other device acts as the peer (client). In this case,
+                    // you'll want to create a peer thread that connects
+                    // to the group owner.
+                }
 
             }
         }
-        }
-
     };
 
 
@@ -135,7 +140,6 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                 // We are connected with the other device, request connection
                 // info to find group owner IP
                 D.log("connected ");
-
                 wifiP2pManager.requestConnectionInfo(channel, connectionInfoListener);
 
             }else{

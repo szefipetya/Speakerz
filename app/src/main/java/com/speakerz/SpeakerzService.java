@@ -100,7 +100,7 @@ public class SpeakerzService extends Service {
         public void stopService(String msg){
             D.log("Stopping service: " + startId);
             if(model == null) return;
-
+            unregisterReceiver(model.getNetwork().getReciever());
             model.stop();
             stopSelf(startId);
             startId = -1;
@@ -153,27 +153,24 @@ public class SpeakerzService extends Service {
     private TextValueStorage textValueStorage ;
     @Override
     public void onCreate() {
-
-
-        HandlerThread thread = new HandlerThread("ServiceStartArguments",
-                Process.THREAD_PRIORITY_BACKGROUND);
-        thread.start();
-
-        // Get the HandlerThread's Looper and use it for our Handler
-        serviceLooper = thread.getLooper();
         // Initialize connection objects
         textValueStorage = new TextValueStorage();
 
         wifiManager = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         wifiP2pManager = (WifiP2pManager)getApplicationContext().getSystemService(Context.WIFI_P2P_SERVICE);
-        wifiP2pChannel = wifiP2pManager.initialize(this, Looper.getMainLooper(), null);
+        wifiP2pChannel = wifiP2pManager.initialize(this, getMainLooper(), null);
         receiver = new WifiBroadcastReciever(wifiManager,wifiP2pManager,wifiP2pChannel);
         connectivityManager=(ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         // Start up the thread running the service. Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block. We also make it
         // background priority so CPU-intensive work doesn't disrupt our UI.
+        HandlerThread thread = new HandlerThread("ServiceStartArguments",
+                Process.THREAD_PRIORITY_BACKGROUND);
+        thread.start();
 
+        // Get the HandlerThread's Looper and use it for our Handler
+        serviceLooper = thread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper, this);
     }
 

@@ -39,7 +39,7 @@ public class MusicPlayerModel{
     Thread durationUpdateThread = new Thread(new Runnable() {
         @Override
         public void run() {
-            try{
+           /* try{
                 int _current = -1, _total = -1;
                 while(true){
                     if(mediaPlayer != null) {
@@ -55,7 +55,7 @@ public class MusicPlayerModel{
                     Thread.sleep(250);
                 }
             }
-            catch (InterruptedException e) { }
+            catch (InterruptedException e) { }*/
         }
     });
 
