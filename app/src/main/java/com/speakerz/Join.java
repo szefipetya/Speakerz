@@ -50,6 +50,12 @@ public class Join extends Activity {
     ListView lvSongsList;
     ArrayAdapter<String> peerListAdapter;
     ArrayAdapter<String> songListAdapter = null;
+    private final Integer PermissionCheckEvent_EVT_ID=10;
+    private final Integer SongListChangedEvent_EVT_ID=11;
+    private final Integer WirelessStatusChanged_EVT_ID=12;
+    private final Integer TextChanged_EVT_ID=13;
+    private final Integer ConnectionChangedEvent_EVT_ID=14;
+    private final Integer ConnectionUpdatedEvent_EVT_ID=15;
 
     boolean _isRegisterRecieverConnected;
 
@@ -59,12 +65,25 @@ public class Join extends Activity {
 
     private void initAndStart() {
         cleanTextValues();
-        subscribeModel(_service.getModel());
-        subscribeServiceEvents();
+        if(!_service.getModel().getAreUiEventsSubscribed())
+        {
+            subscribeModel(_service.getModel());
+            subscribeServiceEvents();
+        _service.getModel().setAreUiEventsSubscribed(true);
+        }
         lvSongsList = (ListView) findViewById(R.id.lv_song_list_test);
         lvPeersList = (ListView) findViewById(R.id.lv_peers);
         //_service.getModel().start();
-        peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
+
+            while(!(_service.getModel().getNetwork() instanceof DeviceNetwork)){
+                try {
+                    wait(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
+
         lvPeersList.setAdapter(peerListAdapter);
         //  adapter.notifyDataSetChanged();
         /*registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
@@ -86,7 +105,9 @@ public class Join extends Activity {
             ((TextView) (findViewById(R.id.host_name))).setText("Connected!\nHost:" + ((DeviceNetwork) (_service.getModel().getNetwork())).getHostDevice().deviceName);
     }
 
+
     private void subscribeServiceEvents() {
+
         _service.PermissionCheckEvent.addListener(new EventListener<PermissionCheckEventArgs>() {
             @Override
             public void action(PermissionCheckEventArgs args) {
@@ -106,7 +127,7 @@ public class Join extends Activity {
                     checkPermission(args.getRequiredPermission(),_service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
                 }
             }
-        });
+        },PermissionCheckEvent_EVT_ID);
     }
 
     //REQUIRED_END MODEL
@@ -226,6 +247,7 @@ public class Join extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
+
         unbindService(connection);
         _isBounded = false;
     }

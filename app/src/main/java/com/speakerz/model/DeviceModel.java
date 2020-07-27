@@ -39,9 +39,15 @@ public class DeviceModel extends BaseModel {
 
     @Override
     public void stop() {
-        if(network.getClientSocketWrapper().controllerSocket!=null)
-        network.getClientSocketWrapper().controllerSocket.shutdown();
-        network.getReciever().clearConnections();
+        if(network.getClientSocketWrapper().controllerSocket!=null) {
+            network.getClientSocketWrapper().controllerSocket.shutdown();
+            try {
+                network.getClientSocketWrapper().controllerSocket.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            network.getReciever().clearConnections();
+        }
     }
 
     public DeviceModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager){

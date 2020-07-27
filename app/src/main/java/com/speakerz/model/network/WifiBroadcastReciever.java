@@ -48,7 +48,7 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
             D.log("onCOnnectionInfoavailable "+hostAddress);
             // After the group negotiation, we can determine the group owner
             // (server).
-            if (info.groupFormed/* && info.isGroupOwner*/&&isHost) {
+            if (info.groupFormed && info.isGroupOwner&&isHost) {
                 D.log("owner");
                 // Do whatever tasks are specific to the group owner.
                 // One common case is creating a group owner thread and accepting
