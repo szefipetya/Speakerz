@@ -47,16 +47,13 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
 
 
              shutdown();
-
-
-
         }
         //send and recieve
     }
 
     @Override
     public void listen(SocketStruct struct) throws IOException, ClassNotFoundException {
-        while(true) {
+        while(struct.socket!=null) {
             D.log("listening...");
             // read the list of messages from the socket
             ChannelObject chObject = (ChannelObject) struct.objectInputStream.readObject();
@@ -102,9 +99,13 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
                 struct.objectOutputStream.reset();
                 struct.objectOutputStream.flush();
                 struct.objectOutputStream.close();
+
             }
             if(struct.socket!=null)
                 struct. socket.close();
+            struct.socket=null;
+            System.gc();
+
 
         } catch (IOException e) {
             e.printStackTrace();

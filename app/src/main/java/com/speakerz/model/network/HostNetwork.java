@@ -27,6 +27,7 @@ import com.speakerz.model.network.threads.ServerControllerSocketThread;
 import com.speakerz.model.network.threads.ServerSocketWrapper;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
 
 import java.util.ArrayList;
@@ -36,9 +37,23 @@ import java.util.Map;
 import javax.xml.transform.dom.DOMLocator;
 
 public class HostNetwork extends BaseNetwork {
-   public HostNetwork(WifiBroadcastReciever reciever) {
+
+   private void subscribeServerSocketThreadEventListeners(){
+      serverSocketWrapper.controllerSocket.MusicPlayerActionEvent.addListener(new EventListener<MusicPlayerActionEventArgs>() {
+         @Override
+         public void action(MusicPlayerActionEventArgs args) {
+            MusicPlayerActionEvent.invoke(args);
+         }
+      });
+   }
+
+    public HostNetwork(WifiBroadcastReciever reciever) {
       super(reciever);
-      reciever.setHost(true);
+      //this is necessary to create the eventListeners for the serverSocketThread
+      serverSocketWrapper.controllerSocket = new ServerControllerSocketThread();
+      subscribeServerSocketThreadEventListeners();
+
+       reciever.setHost(true);
       reciever.HostAddressAvailableEvent.addListener(new EventListener<HostAddressEventArgs>() {
          @Override
          public void action(HostAddressEventArgs args) {
@@ -50,10 +65,18 @@ public class HostNetwork extends BaseNetwork {
    }
 
    private void startServerThread(){
-      D.log("Starting serverController thread...");
-      serverSocketWrapper.controllerSocket = new ServerControllerSocketThread();
-      serverSocketWrapper.controllerSocket.start();
-      ControllerSocketEstablishedEvent.invoke(new EventArgs(self));
+
+      if(!serverSocketWrapper.controllerSocket.isAlive()&&
+      serverSocketWrapper.controllerSocket.getServerSocket()==null
+      ) {
+         D.log("Starting serverController thread...");
+         try {
+            serverSocketWrapper.controllerSocket.start();
+         }catch (IllegalThreadStateException ex){
+            D.log("err: controllerSocketThread Already started. [HostNetWork]");
+         }
+
+      }
    }
 
    public ServerSocketWrapper getServerSocketWrapper() {
@@ -62,7 +85,7 @@ public class HostNetwork extends BaseNetwork {
 
 
 
-   Event<MusicPlayerActionEventArgs> MusicPlayerActionEvent=new Event<>();
+  public Event<MusicPlayerActionEventArgs> MusicPlayerActionEvent=new Event<>();
 
    ServerSocketWrapper serverSocketWrapper=new ServerSocketWrapper();
 

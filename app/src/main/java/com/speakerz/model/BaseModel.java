@@ -43,7 +43,15 @@ public abstract class BaseModel {
 
     public MusicPlayerModel getMusicPlayerModel(){return musicPlayerModel;}
 
+    private Boolean AreUiEventsSubscribed=false;
 
+    public Boolean getAreUiEventsSubscribed() {
+        return AreUiEventsSubscribed;
+    }
+
+    public void setAreUiEventsSubscribed(Boolean areUiEventsSubscribed) {
+        AreUiEventsSubscribed = areUiEventsSubscribed;
+    }
 
 
 }
