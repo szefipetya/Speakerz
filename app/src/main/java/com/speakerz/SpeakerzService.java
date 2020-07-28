@@ -100,12 +100,14 @@ public class SpeakerzService extends Service {
         public void stopService(String msg){
             D.log("Stopping service: " + startId);
             if(model == null) return;
-
+            unregisterReceiver(model.getNetwork().getReciever());
             model.stop();
             stopSelf(startId);
             startId = -1;
             model = null;
+
             wifiP2pManager.cancelConnect(wifiP2pChannel,null);
+            System.gc();
             Toast.makeText(service,"speakerZ service shutdown\nreason: "+msg,Toast.LENGTH_SHORT).show();
         }
 
@@ -114,6 +116,7 @@ public class SpeakerzService extends Service {
             /*if(model != null){
                 stopService("model already exists");
             }*/
+            D.log("starting service");
             startService(msg.arg2 == 1, msg.arg1);
         }
 

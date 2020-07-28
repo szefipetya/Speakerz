@@ -14,6 +14,7 @@ import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.channel.MusicPlayerActionEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
 
 import java.util.ArrayList;
@@ -41,43 +42,41 @@ public class HostModel extends BaseModel {
 
     HostModel self=this;
     private void initNetworkListeners() {
-        //a network jelez, hogy elkézült a ControllerSocket.
-        network.ControllerSocketEstablishedEvent.addListener(new EventListener<EventArgs>() {
-            @Override
-            public void action(EventArgs args) {
-                //itt a controllersocket MusicplayerActionevent eseményeire feliratkozom, hogy a Musicplayert tudjam vezérelni.
-                //egyenlőre csak egy testPlayer van.
-                D.log("Hostmodel: Controllersocket established ");
-                network.getServerSocketWrapper().controllerSocket.MusicPlayerActionEvent.addListener(new EventListener<MusicPlayerActionEventArgs>() {
-                    @Override
-                    public void action(MusicPlayerActionEventArgs args) {
 
-                        //ADD_SONG event történt, eszerint kasztoljuk az objectet.
-                        if(args.getChannelObject().getSubType()== SUBTYPE.MP_ADD_SONG){
-                            D.log("Hostmodel: MusicplayerActionEvent Happened, got a song object.");
-                            //megkapom az objectet
-                         final SongRequestObject songReq=(SongRequestObject)(args.getChannelObject().getObj());
-                            //beteszem a listába
-                           // songList.add(songReq.getTitle()+" "+songReq.getSender());
-                            //UPDATE: majd a nézet teszi be, mert nem mingid tudja lekövetni.
-                            //értesítem a nézetet, aki fel van iratkozva.
-                            SongListChangedEvent.invoke(new SongItemEventArgs(self,songReq));
-                        }
-                    }
-                });
+
+        //a network jelzi, hogy songObjectet kapott.
+        network.MusicPlayerActionEvent.addListener(new EventListener<MusicPlayerActionEventArgs>() {
+            @Override
+            public void action(MusicPlayerActionEventArgs args) {
+                if(args.getChannelObject().getSubType()== SUBTYPE.MP_ADD_SONG){
+                    D.log("Hostmodel: MusicplayerActionEvent Happened, got a song object.");
+                    //megkapom az objectet
+                    final SongRequestObject songReq=(SongRequestObject)(args.getChannelObject().getObj());
+                    //beteszem a listába
+                    // songList.add(songReq.getTitle()+" "+songReq.getSender());
+                    //UPDATE: majd a nézet teszi be, mert nem mingid tudja lekövetni.
+                    //értesítem a nézetet, aki fel van iratkozva.
+                    SongListChangedEvent.invoke(new SongItemEventArgs(self,songReq));
+                }
             }
         });
+        //a network jelez, hogy elkézült a ControllerSocket.
     }
 
 
 
     @SuppressLint("MissingPermission")
     public void startAdvertising() {
-        //stop();
+
+
+        //stop();st
+       // network.getReciever().getWifiP2pManager().d
         network.getReciever().getWifiP2pManager().discoverPeers(network.getReciever().getChannel(), new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
                 D.log("advertising...");
+                network.removeGroupIfExists();
+
             }
 
             @Override
@@ -86,13 +85,20 @@ public class HostModel extends BaseModel {
 
             }
         });
-        network.startGroup();
+
     }
     @Override
     public void stop() {
         D.log("Model stopped");
-        if(   network.getServerSocketWrapper().controllerSocket!=null)
-        network.getServerSocketWrapper().controllerSocket.shutdown();
+        if(   network.getServerSocketWrapper().controllerSocket!=null) {
+            network.getServerSocketWrapper().controllerSocket.shutdown();
+            try {
+                network.getServerSocketWrapper().controllerSocket.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         musicPlayerModel.close();
         network.getReciever().clearConnections();
         network.getReciever().getWifiP2pManager().removeGroup(network.getReciever().getChannel(), new WifiP2pManager.ActionListener() {
@@ -108,6 +114,8 @@ public class HostModel extends BaseModel {
 
             }
         });
+
+
 
 
     }

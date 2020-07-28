@@ -8,6 +8,7 @@ import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 
 import com.speakerz.debug.D;
@@ -49,6 +50,9 @@ ClientSocketWrapper clientSocketWrapper=new ClientSocketWrapper();
     }
 
     public void discoverPeers() {
+       // PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this,PERM.ACCESS_COARSE_LOCATION,));
+        PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,PackageManager.PERMISSION_GRANTED));
+
         reciever.discoverPeers(new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
@@ -69,7 +73,7 @@ ClientSocketWrapper clientSocketWrapper=new ClientSocketWrapper();
                 D.log("Peers available");
                 //if the saved list is outdated, replace it with the fresh devices
 
-                    //D.log("Peers and not equals" + peerList.getDeviceList().size());
+                    D.log("Found peers: " + peerList.getDeviceList().size());
                     peers.clear();
                     peers.addAll(peerList.getDeviceList());
 
@@ -112,16 +116,49 @@ ClientSocketWrapper clientSocketWrapper=new ClientSocketWrapper();
      * We can use that index to find the device in the devices list
      * @param i this param descibed the index of the selected device in the deviceList
      */
-    public void connect(int i) {
+    @SuppressLint("MissingPermission")
+    private void removeGroupIfExists(final int i){
+        reciever.getWifiP2pManager().requestGroupInfo(reciever.getChannel(), new WifiP2pManager.GroupInfoListener() {
+            @Override
+            public void onGroupInfoAvailable(WifiP2pGroup group) {
+                if (group != null) {
+                    reciever.getWifiP2pManager().removeGroup(reciever.getChannel(), new WifiP2pManager.ActionListener() {
+                        @Override
+                        public void onSuccess() {
+                           D.log("group removed");
+                           connectWithNoGroup(i);
+                        }
+
+                        @Override
+                        public void onFailure(int reason) {
+                            D.log("group removing failed. reason: " + reason);
+                        }
+                    });
+                } else {
+                  D.log("no group found");
+                    connectWithNoGroup(i);
+                }
+            }
+        });
+    }
+    public void connectWithNoGroup(final int i){
         hostDevice = devices[i];
         hostConnectionConfig = new WifiP2pConfig();
         hostConnectionConfig.deviceAddress = hostDevice.deviceAddress;
         // make sure, this device does not become a groupowner
         hostConnectionConfig.wps.setup = WpsInfo.PBC;
+
         hostConnectionConfig.groupOwnerIntent=0;
+        PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
+
+    }
+
+    public void connect(int i) {
+        removeGroupIfExists(i);
+
+
 
         //send an invoke to the service, to check the FINE_LOCATION access permission
-        PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
 
 
 

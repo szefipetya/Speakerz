@@ -7,12 +7,14 @@ import android.net.wifi.p2p.WifiP2pManager;
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.event.EventHandler;
+import com.speakerz.model.event.SongItemEventArgs;
 import com.speakerz.model.event.UpdateEventManager;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.event.channel.ConnectionUpdatedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +36,9 @@ public abstract class BaseNetwork  {
 
     public Event<EventArgs> ControllerSocketEstablishedEvent=new Event<>();
     public Event<ConnectionUpdatedEventArgs> ConnectionUpdatedEvent=new Event<>();
+
+    //This triggers when the serversocket gets a new object
+    public Event<SongItemEventArgs> PackageRecievedEvent;
 
 
     List<WifiP2pDevice> peers;

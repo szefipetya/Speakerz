@@ -38,20 +38,27 @@ public class Create extends Activity {
     boolean _isRegisterRecieverConnected=false;
     ListView lvSongsList;
     ArrayAdapter<String> songListAdapter=null;
+
+    Integer SongListChangedEvent_EVT_ID=1;
+    Integer WirelessStatusChanged_EVT_ID=2;
+    Integer TextChanged_EVT_ID=3;
+    Integer GroupConnectionChangedEvent_EVT_ID=4;
     private void subscribeModel(final HostModel model) {
+        D.log("events subscribed.");
         final Create selfActivity = this;
         songListAdapter=new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1,model.getSongList());
         songListAdapter.setNotifyOnChange(true);
-     //   songListAdapter.notifyDataSetChanged();
         lvSongsList.setAdapter(songListAdapter);
 
         //Basemodel Events
         _service.getModel().SongListChangedEvent.addListener(new EventListener<SongItemEventArgs>() {
             @Override
             public void action(final SongItemEventArgs args) {
+                D.log("ServerUI: got an object. ");
                 if(songListAdapter!=null) {
                     //must run on Ui thread:
-                    
+                    D.log("SonglistAdapter is not null. ");
+
                     Runnable run=new Runnable() {
                         @Override
                         public void run() {
@@ -82,7 +89,7 @@ public class Create extends Activity {
                     D.log("Data recieved.", _service.getModel().getSongList().toString());
                 }
             }
-        });
+        },SongListChangedEvent_EVT_ID);
 
         // Wireless changed event
         model.getNetwork().getReciever().WirelessStatusChanged.addListener(new EventListener<WirelessStatusChangedEventArgs>() {
@@ -90,7 +97,7 @@ public class Create extends Activity {
             public void action(WirelessStatusChangedEventArgs args) {
                 _service.getTextValueStorage().autoConfigureTexts(selfActivity);
             }
-        });
+        },WirelessStatusChanged_EVT_ID);
 
 
         model.getNetwork().TextChanged.addListener(new EventListener<TextChangedEventArgs>() {
@@ -105,7 +112,7 @@ public class Create extends Activity {
                     _service.getTextValueStorage().autoConfigureTexts(selfActivity);
                 }
             }
-        });
+        },TextChanged_EVT_ID);
         model.getNetwork().GroupConnectionChangedEvent.addListener(new EventListener<BooleanEventArgs>() {
             @Override
             public void action(BooleanEventArgs args) {
@@ -118,13 +125,17 @@ public class Create extends Activity {
                 }
 
             }
-        });
+        },GroupConnectionChangedEvent_EVT_ID);
 
     }
 
     private void initAndStart() {
         lvSongsList=(ListView) findViewById(R.id.lv_song_list_test);
+        if(!_service.getModel().getAreUiEventsSubscribed())
+        {
 
+            _service.getModel().setAreUiEventsSubscribed(true);
+        }
         subscribeModel((HostModel) _service.getModel());
         _service.getTextValueStorage().autoConfigureTexts(this);
         //_service.getModel().start();
@@ -153,6 +164,7 @@ public class Create extends Activity {
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
+            D.log("service disconnected");
             _isBounded = false;
         }
     };
@@ -161,16 +173,24 @@ public class Create extends Activity {
     protected void onStart() {
         super.onStart();
         // Bind to LocalService
-        Intent intent = new Intent(this, SpeakerzService.class);
-        bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
     }
 
     @Override
     protected void onStop() {
+        unSubscribeEvents();
         super.onStop();
         unbindService(connection);
         _isBounded = false;
+
+    }
+
+    private void unSubscribeEvents() {
+        D.log("events unsubscribed");
+        _service.getModel().SongListChangedEvent.removeListener(SongListChangedEvent_EVT_ID);
+        _service.getModel().getNetwork().getReciever().WirelessStatusChanged.removeListener(WirelessStatusChanged_EVT_ID);
+        _service.getModel().getNetwork().TextChanged.removeListener(TextChanged_EVT_ID);
+        ((HostModel)(_service.getModel())).getNetwork().GroupConnectionChangedEvent.removeListener(GroupConnectionChangedEvent_EVT_ID);
     }
 
 
@@ -192,6 +212,7 @@ public class Create extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        //unSubscribeEvents();
         /*if (_service != null){
                 if(_isRegisterRecieverConnected )
                 { unregisterReceiver((_service.getModel().getNetwork().getReciever()));}
@@ -203,6 +224,10 @@ public class Create extends Activity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create);
+        Intent intent = new Intent(this, SpeakerzService.class);
+
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+
 
         Button buttonBack = (Button) findViewById(R.id.back);
         buttonBack.setOnClickListener(new View.OnClickListener() {

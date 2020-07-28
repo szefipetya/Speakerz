@@ -27,6 +27,7 @@ import com.speakerz.model.network.threads.ServerControllerSocketThread;
 import com.speakerz.model.network.threads.ServerSocketWrapper;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
 
 import java.util.ArrayList;
@@ -36,19 +37,46 @@ import java.util.Map;
 import javax.xml.transform.dom.DOMLocator;
 
 public class HostNetwork extends BaseNetwork {
-   public HostNetwork(WifiBroadcastReciever reciever) {
+
+   private void subscribeServerSocketThreadEventListeners(){
+      serverSocketWrapper.controllerSocket.MusicPlayerActionEvent.addListener(new EventListener<MusicPlayerActionEventArgs>() {
+         @Override
+         public void action(MusicPlayerActionEventArgs args) {
+            MusicPlayerActionEvent.invoke(args);
+         }
+      });
+   }
+
+    public HostNetwork(WifiBroadcastReciever reciever) {
       super(reciever);
+      //this is necessary to create the eventListeners for the serverSocketThread
+      serverSocketWrapper.controllerSocket = new ServerControllerSocketThread();
+      subscribeServerSocketThreadEventListeners();
+
+       reciever.setHost(true);
       reciever.HostAddressAvailableEvent.addListener(new EventListener<HostAddressEventArgs>() {
          @Override
          public void action(HostAddressEventArgs args) {
             if(args.isHost()) {
-               D.log("Starting serverController thread...");
-               serverSocketWrapper.controllerSocket = new ServerControllerSocketThread();
-               serverSocketWrapper.controllerSocket.start();
-               ControllerSocketEstablishedEvent.invoke(new EventArgs(self));
+             startServerThread();
             }
          }
       });
+   }
+
+   private void startServerThread(){
+
+      if(!serverSocketWrapper.controllerSocket.isAlive()&&
+      serverSocketWrapper.controllerSocket.getServerSocket()==null
+      ) {
+         D.log("Starting serverController thread...");
+         try {
+            serverSocketWrapper.controllerSocket.start();
+         }catch (IllegalThreadStateException ex){
+            D.log("err: controllerSocketThread Already started. [HostNetWork]");
+         }
+
+      }
    }
 
    public ServerSocketWrapper getServerSocketWrapper() {
@@ -57,7 +85,7 @@ public class HostNetwork extends BaseNetwork {
 
 
 
-   Event<MusicPlayerActionEventArgs> MusicPlayerActionEvent=new Event<>();
+  public Event<MusicPlayerActionEventArgs> MusicPlayerActionEvent=new Event<>();
 
    ServerSocketWrapper serverSocketWrapper=new ServerSocketWrapper();
 
@@ -65,6 +93,12 @@ public class HostNetwork extends BaseNetwork {
 
    @SuppressLint("MissingPermission")
    private void createGroup(){
+    //  WifiP2pConfig.Builder builder=new WifiP2pConfig.Builder();
+    //  builder.setNetworkName("Group");
+   //   builder.build().wps.setup=WpsInfo.PBC;
+     // builder.build().groupOwnerIntent=15;
+    //  D.log("group device address: "+builder.build().deviceAddress);
+
       reciever.getWifiP2pManager().createGroup(reciever.getChannel(), new WifiP2pManager.ActionListener() {
          @Override
          public void onSuccess() {
@@ -72,9 +106,24 @@ public class HostNetwork extends BaseNetwork {
             D.log("group created succesfully");
             TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Group Created succesfully"));
             //this makes sure that ACESS_FINE_LOCATION is enabled
-            PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
+          //  PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
+            PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,PackageManager.PERMISSION_GRANTED));
 
+           //  startServerThread();
             //advertiseMySelf();
+            getReciever().getWifiP2pManager().discoverPeers(getReciever().getChannel(), new WifiP2pManager.ActionListener() {
+               @Override
+               public void onSuccess() {
+                  D.log("advertising...");
+
+               }
+
+               @Override
+               public void onFailure(int i) {
+                  D.log("advertising init failed");
+
+               }
+            });
          }
 
          @Override
@@ -85,7 +134,7 @@ public class HostNetwork extends BaseNetwork {
       });
    }
    @SuppressLint("MissingPermission")
-   public void startGroup() {
+   public void removeGroupIfExists() {
     //  WifiP2pConfig config=new WifiP2pConfig();
       //config.groupOwnerIntent=15;
       //config.wps.setup= WpsInfo.PBC;
@@ -99,6 +148,7 @@ public class HostNetwork extends BaseNetwork {
                        reciever.getWifiP2pManager().removeGroup(reciever.getChannel(), new WifiP2pManager.ActionListener() {
                           @Override
                           public void onSuccess() {
+                             D.log("group removed");
                              createGroup();
                           }
 
@@ -109,6 +159,7 @@ public class HostNetwork extends BaseNetwork {
                        });
                     } else {
                        createGroup();
+                       D.log("no groups found");
                     }
                  }
               });

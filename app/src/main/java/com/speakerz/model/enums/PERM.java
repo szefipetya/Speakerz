@@ -1,5 +1,6 @@
 package com.speakerz.model.enums;
 
 public enum PERM {
-    connectionPermission
+    connectionPermission,
+    ACCESS_COARSE_LOCATION
 }

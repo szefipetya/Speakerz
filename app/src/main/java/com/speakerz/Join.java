@@ -1,5 +1,6 @@
 package com.speakerz;
 
+import android.Manifest;
 import android.app.Activity;
 
 import android.content.ComponentName;
@@ -7,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.View;
@@ -25,6 +27,7 @@ import com.speakerz.debug.D;
 import com.speakerz.model.BaseModel;
 import com.speakerz.model.DeviceModel;
 import com.speakerz.model.enums.EVT;
+import com.speakerz.model.enums.PERM;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
 import com.speakerz.model.event.SongItemEventArgs;
 import com.speakerz.model.network.DeviceNetwork;
@@ -47,6 +50,12 @@ public class Join extends Activity {
     ListView lvSongsList;
     ArrayAdapter<String> peerListAdapter;
     ArrayAdapter<String> songListAdapter = null;
+    private final Integer PermissionCheckEvent_EVT_ID=10;
+    private final Integer SongListChangedEvent_EVT_ID=11;
+    private final Integer WirelessStatusChanged_EVT_ID=12;
+    private final Integer TextChanged_EVT_ID=13;
+    private final Integer ConnectionChangedEvent_EVT_ID=14;
+    private final Integer ConnectionUpdatedEvent_EVT_ID=15;
 
     boolean _isRegisterRecieverConnected;
 
@@ -56,12 +65,25 @@ public class Join extends Activity {
 
     private void initAndStart() {
         cleanTextValues();
-        subscribeModel(_service.getModel());
-        subscribeServiceEvents();
+        if(!_service.getModel().getAreUiEventsSubscribed())
+        {
+            subscribeModel(_service.getModel());
+            subscribeServiceEvents();
+        _service.getModel().setAreUiEventsSubscribed(true);
+        }
         lvSongsList = (ListView) findViewById(R.id.lv_song_list_test);
         lvPeersList = (ListView) findViewById(R.id.lv_peers);
         //_service.getModel().start();
-        peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
+
+            while(!(_service.getModel().getNetwork() instanceof DeviceNetwork)){
+                try {
+                    wait(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
+
         lvPeersList.setAdapter(peerListAdapter);
         //  adapter.notifyDataSetChanged();
         /*registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
@@ -83,21 +105,29 @@ public class Join extends Activity {
             ((TextView) (findViewById(R.id.host_name))).setText("Connected!\nHost:" + ((DeviceNetwork) (_service.getModel().getNetwork())).getHostDevice().deviceName);
     }
 
+
     private void subscribeServiceEvents() {
+
         _service.PermissionCheckEvent.addListener(new EventListener<PermissionCheckEventArgs>() {
             @Override
             public void action(PermissionCheckEventArgs args) {
-                if (ActivityCompat.checkSelfPermission(selfActivity, args.getRequiredPermission()) != args.getSuccessNumber()) {
-                    Toast.makeText(selfActivity, "Failure in connection with host ", Toast.LENGTH_SHORT).show();
-                    //D.log("connection failure: Service");
-                    checkPermission(args.getRequiredPermission(), _service.ACCESS_FINE_LOCATION_CODE);
-                } else if (_service.getModel() instanceof DeviceModel) {
-                    //critical call. Need to make sure the type before casting...
-                    ((DeviceNetwork) (_service.getModel().getNetwork())).connectWithPermissionGranted();
-                    //D.log("access granted");
+                if(args.getReason()== PERM.connectionPermission) {
+                    if (ActivityCompat.checkSelfPermission(selfActivity, args.getRequiredPermission()) != args.getSuccessNumber()) {
+                        Toast.makeText(selfActivity, "Failure at granting a permission. ", Toast.LENGTH_SHORT).show();
+                        //D.log("connection failure: Service");
+                        checkPermission(args.getRequiredPermission(), _service.ACCESS_FINE_LOCATION_CODE);
+                    } else if (_service.getModel() instanceof DeviceModel) {
+                        //critical call. Need to make sure the type before casting...
+                        ((DeviceNetwork) (_service.getModel().getNetwork())).connectWithPermissionGranted();
+                        //D.log("access granted");
+                    }
+                }
+
+                if(args.getReason()==PERM.ACCESS_COARSE_LOCATION){
+                    checkPermission(args.getRequiredPermission(),_service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
                 }
             }
-        });
+        },PermissionCheckEvent_EVT_ID);
     }
 
     //REQUIRED_END MODEL
@@ -217,6 +247,7 @@ public class Join extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
+
         unbindService(connection);
         _isBounded = false;
     }
@@ -305,7 +336,8 @@ public class Join extends Activity {
     public void checkPermission(String permission, int requestCode) {
 
         // Checking if permission is not granted
-        if (ContextCompat.checkSelfPermission(Join.this, permission) == PackageManager.PERMISSION_DENIED) {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&ContextCompat.checkSelfPermission(Join.this, permission) == PackageManager.PERMISSION_DENIED) {
             ActivityCompat
                     .requestPermissions(
                             Join.this,
@@ -313,12 +345,17 @@ public class Join extends Activity {
                             requestCode);
         } else {
             //permission already granted
+            D.log(permission +" already granted.");
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == _service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            D.log("ACCESS_COARSE_LOCATION Permission granted.");
+        }
 
     }
 
