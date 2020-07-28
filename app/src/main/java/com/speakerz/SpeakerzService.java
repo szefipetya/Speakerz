@@ -101,9 +101,12 @@ public class SpeakerzService extends Service {
             D.log("Stopping service: " + startId);
             if(model == null) return;
             unregisterReceiver(model.getNetwork().getReciever());
+          //  model.getNetwork().getReciever().abortBroadcast();
             model.stop();
             stopSelf(startId);
             startId = -1;
+
+
             model = null;
 
             wifiP2pManager.cancelConnect(wifiP2pChannel,null);

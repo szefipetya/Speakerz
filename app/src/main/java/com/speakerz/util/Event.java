@@ -22,7 +22,10 @@ public class Event <E extends EventArgs> {
         indexedListenerMap.put(groupId,listener);
         listeners.add(listener);
     }
-
+    public void removeAllListeners(){
+      indexedListenerMap.clear();
+      listeners.clear();
+    }
     public void removeListener(EventListener<E> listener){
         listeners.remove(listener);
     }

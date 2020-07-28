@@ -38,7 +38,7 @@ public abstract class BaseNetwork  {
     public Event<ConnectionUpdatedEventArgs> ConnectionUpdatedEvent=new Event<>();
 
     //This triggers when the serversocket gets a new object
-    public Event<SongItemEventArgs> PackageRecievedEvent;
+    public Event<SongItemEventArgs> PackageRecievedEvent=new Event<>();
 
 
     List<WifiP2pDevice> peers;

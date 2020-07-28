@@ -114,8 +114,17 @@ public class HostModel extends BaseModel {
 
             }
         });
-
-
+      //  getNetwork().getReciever().abortBroadcast();
+        network.PermissionCheckEvent.removeAllListeners();
+        network.PermissionCheckEvent=null;
+        network.ConnectionUpdatedEvent.removeAllListeners();
+        network.ConnectionUpdatedEvent=null;
+        network.PackageRecievedEvent.removeAllListeners();
+        network.PackageRecievedEvent=null;
+        network.ListChanged.removeAllListeners();
+        network.ListChanged=null;
+        network.TextChanged.removeAllListeners();
+        network.TextChanged=null;
 
 
     }

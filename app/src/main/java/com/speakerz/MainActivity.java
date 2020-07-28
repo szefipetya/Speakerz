@@ -118,11 +118,10 @@ public class MainActivity extends Activity {
                 Intent Act2 = new Intent(getApplicationContext(),Join.class);
                 Act2.putExtra("Hello","Hello World");
                 startActivity(Act2);
-
-
             }
 
         });
+
 
         Button buttonCreate = (Button) findViewById(R.id.create);
         buttonCreate.setOnClickListener(new View.OnClickListener(){
