@@ -14,13 +14,15 @@ import android.net.wifi.p2p.WifiP2pManager;
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.enums.PERM;
+import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.event.HostAddressEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
-import com.speakerz.model.network.event.channel.ConnectionUpdatedEventArgs;
 import com.speakerz.model.network.threads.ClientControllerSocketThread;
 import com.speakerz.model.network.threads.ClientSocketWrapper;
+import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
 
 import java.util.ArrayList;
@@ -28,25 +30,28 @@ import java.util.List;
 
 public class DeviceNetwork extends BaseNetwork {
 
-ClientSocketWrapper clientSocketWrapper=new ClientSocketWrapper();
+ClientSocketWrapper clientSocketWrapper =new ClientSocketWrapper();
+Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
     public DeviceNetwork(WifiBroadcastReciever reciever) {
         super(reciever);
+        clientSocketWrapper.controllerSocket = new ClientControllerSocketThread();
+        subscribeSocketEvents();
         reciever.HostAddressAvailableEvent.addListener(new EventListener<HostAddressEventArgs>() {
             @Override
             public void action(HostAddressEventArgs args) {
                 if(!args.isHost()) {
-                    clientSocketWrapper.controllerSocket = new ClientControllerSocketThread(args.getAddress());
+
+                    clientSocketWrapper.controllerSocket.setAddress(args.getAddress());
                     clientSocketWrapper.controllerSocket.start();
-                    clientSocketWrapper.controllerSocket.ConnectionUpdatedEvent.addListener(new EventListener<ConnectionUpdatedEventArgs>() {
-                        @Override
-                        public void action(ConnectionUpdatedEventArgs args) {
-                            //a nézet a network ConnectionEventjére van csak feliratkozva.
-                            ConnectionUpdatedEvent.invoke(args);
-                        }
-                    });
+
                 }
             }
         });
+
+    }
+
+    private void subscribeSocketEvents(){
+
     }
 
     public void discoverPeers() {
@@ -166,6 +171,23 @@ ClientSocketWrapper clientSocketWrapper=new ClientSocketWrapper();
     @SuppressLint("MissingPermission")
     public void connectWithPermissionGranted(){
         hostConnectionConfig.groupOwnerIntent=0;
+      /*  reciever.getWifiP2pManager().cancelConnect(reciever.getChannel(), new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                connectWithClearedPending();
+            }
+
+            @Override
+            public void onFailure(int i) {
+                connectWithClearedPending();
+            }
+        });*/
+        connectWithClearedPending();
+
+    }
+
+    @SuppressLint("MissingPermission")
+    private void connectWithClearedPending(){
         reciever.getWifiP2pManager().connect(reciever.getChannel(), hostConnectionConfig, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
@@ -176,7 +198,7 @@ ClientSocketWrapper clientSocketWrapper=new ClientSocketWrapper();
 
             @Override
             public void onFailure(int i) {
-                TextChanged.invoke(new TextChangedEventArgs(this,EVT.update_host_name_failed,""));
+                TextChanged.invoke(new TextChangedEventArgs(this,EVT.update_host_name_failed,"errcode: "+i));
             }
         });
     }

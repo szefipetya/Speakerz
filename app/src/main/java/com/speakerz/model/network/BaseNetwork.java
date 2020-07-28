@@ -4,10 +4,8 @@ import android.content.IntentFilter;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 
-import com.speakerz.debug.D;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.event.EventHandler;
-import com.speakerz.model.event.SongItemEventArgs;
 import com.speakerz.model.event.UpdateEventManager;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
@@ -33,13 +31,8 @@ public abstract class BaseNetwork  {
     public Event<TextChangedEventArgs> TextChanged = new Event<>();
     public Event<EventArgs> ListChanged = new Event<>();
     public Event<PermissionCheckEventArgs> PermissionCheckEvent = new Event<>();
-
-    public Event<EventArgs> ControllerSocketEstablishedEvent=new Event<>();
-    public Event<ConnectionUpdatedEventArgs> ConnectionUpdatedEvent=new Event<>();
-
-    //This triggers when the serversocket gets a new object
-    public Event<SongItemEventArgs> PackageRecievedEvent=new Event<>();
-
+    //Music player events
+    //
 
     List<WifiP2pDevice> peers;
     List<String> deviceNames = new ArrayList<>();
