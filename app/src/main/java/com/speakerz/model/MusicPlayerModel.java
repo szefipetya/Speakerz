@@ -25,7 +25,7 @@ public class MusicPlayerModel{
     public ArrayList<String> songQueue = new ArrayList<String>();
     public MediaPlayer mediaPlayer;
     public Context context;
-    boolean playSong=false;
+    public String SongPlayed;
 
     // Events
     public final Event<EventArgs1<Boolean>> playbackStateChanged = new Event<>();
@@ -46,7 +46,7 @@ public class MusicPlayerModel{
             try{
                 int _current = -1, _total = -1;
                 while(true){
-                    if(mediaPlayer != null && playSong) {
+                    if(mediaPlayer != null && mediaPlayer.isPlaying()) {
                         int current = mediaPlayer.getCurrentPosition();
                         int total = mediaPlayer.getDuration();
 
@@ -109,6 +109,7 @@ public class MusicPlayerModel{
             mediaPlayer = MediaPlayer.create(context, uri);
             mediaPlayer.setOnCompletionListener(completionListener);
             mediaPlayer.start();
+
             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
         }
         catch (Exception e){}
@@ -132,17 +133,20 @@ public class MusicPlayerModel{
 
     // Starting song from songQueue by index
     public void start(int songIndex){
+        if(mediaPlayer.isPlaying()){
+            mediaPlayer.stop();
+        }
         if(songQueue.size() > 0 && songIndex < songQueue.size()) {
             currentPlayingIndex = songIndex;
             int resId = context.getResources().getIdentifier(songQueue.get(songIndex), "raw", context.getPackageName());
             start(context, resId);
+            SongPlayed = songQueue.get(songIndex);
         }
     }
 
     // Start paused playing
     public void start(){
         if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
-            playSong=true;
             mediaPlayer.start();
             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
         }
@@ -156,7 +160,6 @@ public class MusicPlayerModel{
     // pauses media player if exists
     public void pause(){
         if(mediaPlayer != null) {
-            playSong=false;
             mediaPlayer.pause();
             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
         }

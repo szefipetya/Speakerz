@@ -17,6 +17,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.util.EventArgs1;
@@ -37,6 +38,7 @@ public class MusicPlayer extends Activity {
     MusicPlayer selfActivity=this;
 
     // UI elements
+    TextView songPlayed;
     Button buttonBack;
     Button buttonPlay;
     Button buttonNext;
@@ -78,6 +80,7 @@ public class MusicPlayer extends Activity {
         setContentView(R.layout.activity_music_player);
 
         // connect ui elements
+        songPlayed= (TextView) findViewById(R.id.playedsong);
         buttonBack = (Button) findViewById(R.id.back);
         buttonPlay = (Button) findViewById(R.id.play);
         buttonNext = (Button) findViewById(R.id.next);
@@ -162,8 +165,10 @@ public class MusicPlayer extends Activity {
         });
 
         // starting music if not playing
-        if(!model.isPlaying())
+        if(!model.isPlaying()){
             model.startNext();
+
+        }
     }
 
 
@@ -172,6 +177,8 @@ public class MusicPlayer extends Activity {
 
     public void NextSong(int lastplayedsongnum, List<String> songQueue){
         model.startNext();
+        songPlayed.setText(model.SongPlayed);
+
     }
 
     private ServiceConnection connection = new ServiceConnection() {
