@@ -77,7 +77,6 @@ public class MusicPlayerModel{
                         ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self, MP_EVT.SEND_LIST, tmp, args.arg1()));
                     }else{
                         //kliensként csak kiolvassuk
-
                         songQueue.clear();
                         for (SongItem item : ((List<SongItem>)((GetSongListBody)args.arg1()).getContent())) {
                             songQueue.add(item.title+"\n"+item.sender);
