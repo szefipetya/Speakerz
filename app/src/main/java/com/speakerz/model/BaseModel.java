@@ -2,17 +2,15 @@ package com.speakerz.model;
 
 import android.content.Context;
 
-import com.speakerz.MusicPlayer;
-import com.speakerz.model.event.SongItemEventArgs;
 import com.speakerz.model.network.BaseNetwork;
+import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public abstract class BaseModel {
@@ -20,26 +18,34 @@ public abstract class BaseModel {
     public abstract void stop();
 
     MusicPlayerModel musicPlayerModel;
+    public volatile Event<EventArgs> SongQueueUpdatedEvent=new Event<>();
+    public volatile Event<EventArgs1<Body>> MusicPlayerActionEvent=new Event<>();
+    public volatile Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
 
-    public Event<SongItemEventArgs> SongListChangedEvent=new Event<>();
 
-
-    public BaseModel(Context context, WifiBroadcastReciever reciever){
+    public BaseModel(Context context, WifiBroadcastReciever reciever,Boolean isHost){
         musicPlayerModel = new MusicPlayerModel(context);
+        musicPlayerModel.setHost(isHost);
+        //inject Events to MusicPLayerModel
+        musicPlayerModel.MusicPlayerActionEvent=this.MusicPlayerActionEvent;
+        musicPlayerModel.subscribeEventsFromModel();
+
+
         reciever.WirelessStatusChanged.addListener(new EventListener<WirelessStatusChangedEventArgs>() {
             @Override
             public void action(WirelessStatusChangedEventArgs args) {
             }
         });
+
     }
 
     public abstract BaseNetwork getNetwork();
 
-    public List<String> getSongList() {
+  /*  public List<String> getSongList() {
         return songList;
-    }
+    }*/
 
-    protected List<String> songList=new ArrayList<>();
+ //   protected List<String> songList=new ArrayList<>();
 
     public MusicPlayerModel getMusicPlayerModel(){return musicPlayerModel;}
 
@@ -52,6 +58,7 @@ public abstract class BaseModel {
     public void setAreUiEventsSubscribed(Boolean areUiEventsSubscribed) {
         AreUiEventsSubscribed = areUiEventsSubscribed;
     }
+    protected abstract void injectNetworkDependencies();
 
 
 }

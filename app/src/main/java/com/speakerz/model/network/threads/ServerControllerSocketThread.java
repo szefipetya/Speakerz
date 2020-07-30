@@ -1,12 +1,16 @@
 package com.speakerz.model.network.threads;
 
 import com.speakerz.debug.D;
+import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.GetServerInfoBody;
+import com.speakerz.model.network.Serializable.body.GetSongListBody;
 import com.speakerz.model.network.Serializable.ChannelObject;
-import com.speakerz.model.network.Serializable.SongRequestObject;
-import com.speakerz.model.network.Serializable.WelcomeChObject;
+import com.speakerz.model.network.Serializable.body.PutSongRequestBody;
+import com.speakerz.model.network.Serializable.body.content.ServerInfo;
+import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 import com.speakerz.model.network.Serializable.enums.TYPE;
-import com.speakerz.model.network.event.channel.MusicPlayerActionEventArgs;
 import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs1;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +30,10 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     }
 
     ServerSocket serverSocket=null;
-    public Event<MusicPlayerActionEventArgs> MusicPlayerActionEvent =new Event<>();
+    //dependency injection
+    public Event<EventArgs1<Body>> MusicPlayerActionEvent =null;
+    public Event<EventArgs1<Body>> MetaInfoEvent = null;
+
 
 
     InputStream inputStream;
@@ -54,8 +61,11 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                 struct.socket = socket;
                 struct.objectInputStream = new ObjectInputStream(socket.getInputStream());
                 struct.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                recentStruct=struct;
                 socketList.add(struct);
                 writeWelcome(struct);
+
+
                 D.log("client connected: "+socket.getInetAddress());
 
                 //új szálon elindítjuk a socketet, hogy hallgassuk a bejövő adatokat.
@@ -115,8 +125,11 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     }
 
     private void writeWelcome(SocketStruct struct) throws IOException {
-        struct.objectOutputStream.writeObject(new WelcomeChObject("The Host","Welcome!","host_addr"));
+        struct.objectOutputStream.writeObject(new ChannelObject(new GetServerInfoBody(new ServerInfo("asd","bsd")),TYPE.META));
         struct.objectOutputStream.flush();
+
+        MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,new GetSongListBody(null)));
+
         D.log("welcome sent");
 
     }
@@ -126,9 +139,10 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
         // read the list of messages from the socket
          while (serverSocket!=null) {
              if(struct.socket.isConnected()&&!struct.socket.isClosed()) {
+                 recentStruct=struct;
                  D.log("listening...");
-                 ChannelObject chObject = (ChannelObject) struct.objectInputStream.readObject();
-                 handleIncomingObject(chObject);
+
+                 handleIncomingObject((ChannelObject) struct.objectInputStream.readObject());
              }
              else{
                  break;
@@ -142,14 +156,53 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
 
     }
 
+    //be careful with that!
+   volatile SocketStruct recentStruct=null;
+
+    private SocketStruct getSocketStructByAddress(String address){
+        for(SocketStruct s: socketList){
+            if(s.socket.getInetAddress().getHostAddress()==address){
+                return s;
+            }
+        }
+        return null;
+    }
+
+    //be careful with null value!
+    public void send(String address,ChannelObject channelObject) throws IOException{
+
+
+        if(address==null&& recentStruct!=null){
+            recentStruct.objectOutputStream.writeObject(channelObject);
+            recentStruct.objectOutputStream.flush();
+        }else{
+            SocketStruct s=getSocketStructByAddress(address);
+            if(s!=null) {
+                s.objectOutputStream.writeObject(channelObject);
+                s.objectOutputStream.flush();
+            }else throw new IOException(this.toString()+" error: No socket found with address "+address);
+
+        }
+    }
+
+    public void sendAll(ChannelObject chObject) throws IOException {
+        for(SocketStruct s : socketList){
+            s.objectOutputStream.writeObject(chObject);
+            s.objectOutputStream.flush();
+        }
+
+    }
 
     @Override
-    public void handleIncomingObject(ChannelObject chObject) {
-        D.log("server: got an object: "+chObject.getType());
-        if(chObject.getType()== TYPE.MP){
-            MusicPlayerActionEvent.invoke(new MusicPlayerActionEventArgs(this,chObject));
+    public void handleIncomingObject(ChannelObject chObject) throws IOException {
+        D.log("server: got an object: "+chObject.TYPE);
+        if(chObject.TYPE== TYPE.MP){
+            MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+
+
+
             D.log(" server: MusicPlayerActionEvent Happened: ");
-            D.log(((SongRequestObject)chObject).toString());
+
         }
     }
     @Override

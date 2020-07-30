@@ -3,17 +3,8 @@ package com.speakerz.model.network;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
-import android.net.wifi.WpsInfo;
-import android.net.wifi.p2p.WifiP2pConfig;
-import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
-import android.os.Build;
-import android.widget.Toast;
-
-import androidx.core.app.ActivityCompat;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.EVT;
@@ -22,29 +13,16 @@ import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.HostAddressEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
-import com.speakerz.model.network.event.channel.MusicPlayerActionEventArgs;
 import com.speakerz.model.network.threads.ServerControllerSocketThread;
 import com.speakerz.model.network.threads.ServerSocketWrapper;
 import com.speakerz.util.Event;
-import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.xml.transform.dom.DOMLocator;
 
 public class HostNetwork extends BaseNetwork {
 
    private void subscribeServerSocketThreadEventListeners(){
-      serverSocketWrapper.controllerSocket.MusicPlayerActionEvent.addListener(new EventListener<MusicPlayerActionEventArgs>() {
-         @Override
-         public void action(MusicPlayerActionEventArgs args) {
-            MusicPlayerActionEvent.invoke(args);
-         }
-      });
+
    }
 
     public HostNetwork(WifiBroadcastReciever reciever) {
@@ -85,7 +63,6 @@ public class HostNetwork extends BaseNetwork {
 
 
 
-  public Event<MusicPlayerActionEventArgs> MusicPlayerActionEvent=new Event<>();
 
    ServerSocketWrapper serverSocketWrapper=new ServerSocketWrapper();
 

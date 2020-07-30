@@ -4,25 +4,42 @@ import android.content.Context;
 import android.media.MediaPlayer;
 import android.net.Uri;
 
-import com.speakerz.MusicPlayer;
-import com.speakerz.model.network.BaseNetwork;
-import com.speakerz.model.network.WifiBroadcastReciever;
+import com.speakerz.debug.D;
+import com.speakerz.model.enums.MP_EVT;
+import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.GetSongListBody;
+import com.speakerz.model.network.Serializable.body.PutSongRequestBody;
+import com.speakerz.model.network.Serializable.body.content.SongItem;
+import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 import com.speakerz.util.Event;
-import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
+import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 //TODO: Az első zene elindításakor elég bugosak a dolgok, ennek a kijavítása kell BUGOK: Seekbar nemindul, startgomb nemjól van,seekbar nemműködik
 // Ha ráléptetjük egy zenére valamilyen módon és megnyomjuka start gombot onnantól jó megy
 
 public class MusicPlayerModel{
-    private int currentPlayingIndex = 0;
 
+
+    private Boolean isHost;
+
+
+
+    private int currentPlayingIndex = 0;
     public MusicPlayerModel self = this;
-    public ArrayList<String> songQueue = new ArrayList<String>();
+
+    public List<String> getSongQueue() {
+        return songQueue;
+    }
+
+    //TODO NEED A LITTLE BIT MORE SPECIFIC DATATYPE
+    //I REQUEST SongItem...
+    public List<String> songQueue = new LinkedList<>();
     public MediaPlayer mediaPlayer;
     public Context context;
     public String SongPlayed;
@@ -30,6 +47,49 @@ public class MusicPlayerModel{
     // Events
     public final Event<EventArgs1<Boolean>> playbackStateChanged = new Event<>();
     public final Event<EventArgs2<Integer, Integer>> playbackDurationChanged = new Event<>();
+
+        //From Model
+    //comes as external dependency from model
+    public Event<EventArgs1<Body>> MusicPlayerActionEvent;
+    //common communation channel with model.
+    public Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
+
+    public void subscribeEventsFromModel(){
+        MusicPlayerActionEvent.addListener(new EventListener<EventArgs1<Body>>() {
+            @Override
+            public void action(EventArgs1<Body> args) {
+                if(args.arg1().SUBTYPE()== SUBTYPE.MP_PUT_SONG){
+                    D.log("recieved a song.");
+                    SongItem item=((PutSongRequestBody)args.arg1()).getContent();
+                    songQueue.add(item.title+ "\n"+item.sender);
+                    ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object,Body>(self,MP_EVT.SEND_SONG,item,args.arg1()));
+                }
+
+                if(args.arg1().SUBTYPE()==SUBTYPE.MP_GET_LIST) {
+
+                    if (isHost) {
+                        List<SongItem> tmp = new LinkedList<SongItem>();
+                        for (String str : songQueue) {
+                            //TODO: after a few rounds this becomes chaotic...
+                            tmp.add(new SongItem(str, " ", "link"));
+                        }
+                        //((GetSongListBody)args.arg1()).getContent();
+                        ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self, MP_EVT.SEND_LIST, tmp, args.arg1()));
+                    }else{
+                        //kliensként csak kiolvassuk
+                        songQueue.clear();
+                        for (SongItem item : ((List<SongItem>)((GetSongListBody)args.arg1()).getContent())) {
+                            songQueue.add(item.title+"\n"+item.sender);
+                        }
+
+                        ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object,Body>(self,MP_EVT.SEND_LIST,null,null));
+
+                    }
+                }
+            }
+        });
+    }
+
 
     // Listeners
     MediaPlayer.OnCompletionListener completionListener = new MediaPlayer.OnCompletionListener() {
@@ -72,7 +132,9 @@ public class MusicPlayerModel{
         // Event handler to start next song automatically
 
         mediaPlayer.setOnCompletionListener(completionListener);
+
     }
+
 
     // Close music player services
     public void close(){
@@ -173,4 +235,12 @@ public class MusicPlayerModel{
             start();
     }
 
+//Getter && Setter
+    public Boolean getHost() {
+        return isHost;
+    }
+
+    public void setHost(Boolean host) {
+        isHost = host;
+    }
 }

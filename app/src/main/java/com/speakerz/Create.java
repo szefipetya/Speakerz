@@ -18,13 +18,13 @@ import android.widget.Toast;
 import com.speakerz.debug.D;
 import com.speakerz.model.HostModel;
 import com.speakerz.model.enums.EVT;
-import com.speakerz.model.event.SongItemEventArgs;
-import com.speakerz.model.network.HostNetwork;
+import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.content.SongItem;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
-import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
 
 import java.util.concurrent.ExecutionException;
@@ -46,14 +46,14 @@ public class Create extends Activity {
     private void subscribeModel(final HostModel model) {
         D.log("events subscribed.");
         final Create selfActivity = this;
-        songListAdapter=new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1,model.getSongList());
+        songListAdapter=new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1,model.getMusicPlayerModel().getSongQueue());
         songListAdapter.setNotifyOnChange(true);
         lvSongsList.setAdapter(songListAdapter);
 
         //Basemodel Events
-        _service.getModel().SongListChangedEvent.addListener(new EventListener<SongItemEventArgs>() {
+        _service.getModel().SongQueueUpdatedEvent.addListener(new EventListener<EventArgs>() {
             @Override
-            public void action(final SongItemEventArgs args) {
+            public void action(final EventArgs args) {
                 D.log("ServerUI: got an object. ");
                 if(songListAdapter!=null) {
                     //must run on Ui thread:
@@ -62,20 +62,15 @@ public class Create extends Activity {
                     Runnable run=new Runnable() {
                         @Override
                         public void run() {
-                           // _service.getModel().getSongList().add(args.getSongRequestObject().getTitle()+" "+args.getSongRequestObject().getSender());
                             //TEMPORARY FIXME 1 vvv
-                          //  songListAdapter=new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1,_service.getModel().getSongList());
                             // ^^^ FIXME 1 ^^^
                             synchronized(songListAdapter){
-                                _service.getModel().getSongList().add(args.getSongRequestObject().getTitle()+" "+args.getSongRequestObject().getSender());
                                 songListAdapter.notifyDataSetChanged();
                                 songListAdapter.notify();
                             }
-                          //  lvSongsList.setAdapter(songListAdapter);
                             lvSongsList.invalidateViews();
-                            Toast.makeText(selfActivity, "recieved: "+args.getSongRequestObject().toString(),Toast.LENGTH_SHORT).show();
                             D.log("dataset updated.");
-                            D.log("size: "+_service.getModel().getSongList().size());
+                            D.log("size: "+_service.getModel().getMusicPlayerModel().getSongQueue().size());
                         }
                     };
                     RunnableFuture<Void> task = new FutureTask<>(run, null);
@@ -86,7 +81,6 @@ public class Create extends Activity {
                         D.log("UiRefresh exception. "+e.getMessage());
                         // handle exception
                     }
-                    D.log("Data recieved.", _service.getModel().getSongList().toString());
                 }
             }
         },SongListChangedEvent_EVT_ID);
@@ -173,6 +167,9 @@ public class Create extends Activity {
     protected void onStart() {
         super.onStart();
         // Bind to LocalService
+        Intent intent = new Intent(this, SpeakerzService.class);
+
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
     }
 
@@ -187,7 +184,6 @@ public class Create extends Activity {
 
     private void unSubscribeEvents() {
         D.log("events unsubscribed");
-        _service.getModel().SongListChangedEvent.removeListener(SongListChangedEvent_EVT_ID);
         _service.getModel().getNetwork().getReciever().WirelessStatusChanged.removeListener(WirelessStatusChanged_EVT_ID);
         _service.getModel().getNetwork().TextChanged.removeListener(TextChanged_EVT_ID);
         ((HostModel)(_service.getModel())).getNetwork().GroupConnectionChangedEvent.removeListener(GroupConnectionChangedEvent_EVT_ID);
@@ -224,9 +220,8 @@ public class Create extends Activity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create);
-        Intent intent = new Intent(this, SpeakerzService.class);
 
-        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+
 
 
         Button buttonBack = (Button) findViewById(R.id.back);

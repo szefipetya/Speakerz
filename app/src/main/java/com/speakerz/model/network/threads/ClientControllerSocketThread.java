@@ -1,12 +1,16 @@
 package com.speakerz.model.network.threads;
 
 import com.speakerz.debug.D;
+import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.GetServerInfoBody;
+import com.speakerz.model.network.Serializable.body.content.ServerInfo;
 import com.speakerz.model.network.Serializable.ChannelObject;
-import com.speakerz.model.network.Serializable.SongRequestObject;
-import com.speakerz.model.network.Serializable.WelcomeChObject;
+import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.event.channel.ConnectionUpdatedEventArgs;
 import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -19,9 +23,11 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     SocketStruct struct;
     String hostAddress;
 
-   public Event<ConnectionUpdatedEventArgs> ConnectionUpdatedEvent=new Event<>();
-    public ClientControllerSocketThread(InetAddress hostAddress){
-        this.hostAddress=hostAddress.getHostAddress();
+    //injection
+   public Event<EventArgs1<Body>> MetaInfoReceivedEvent;
+    public Event<EventArgs1<Body>> MusicPlayerActionEvent;
+
+    public ClientControllerSocketThread(){
 
     }
 
@@ -42,7 +48,8 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             struct.objectInputStream = new ObjectInputStream(struct.socket.getInputStream());
             listen(struct);
         } catch (IOException  | ClassNotFoundException e) {
-            D.log(e.getMessage());
+            if(e.getMessage()!=null)
+               D.log(e.getMessage());
             e.printStackTrace();
 
 
@@ -64,23 +71,20 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     @Override
     public void handleIncomingObject(ChannelObject chObject) {
         D.log("got a ChObj");
-        if(chObject.getType()== TYPE.WELCOME){
-            WelcomeChObject welcomeObj=(WelcomeChObject)chObject.getObj();
-            ConnectionUpdatedEvent.invoke(new ConnectionUpdatedEventArgs(
-                    this
-                    ,welcomeObj.getHostNickName()
-                    ,welcomeObj.getWelcomeMessage()
-                    ,welcomeObj.getHostAddress())
-            );
+        if(chObject.TYPE== TYPE.META){
+            MetaInfoReceivedEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+        }if(chObject.TYPE==TYPE.MP){
+            MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this, chObject.body));
         }
     }
 
 
     //adds a new song to the party. returns true if the connection exists.
-    public boolean addNewSong(SongRequestObject obj) throws Exception{
+    public boolean addNewSong(ChannelObject chobj) throws Exception{
         if(struct.socket!=null)
         {
-            struct.objectOutputStream.writeObject(obj);
+            chobj.body.senderAddress=struct.socket.getInetAddress().getHostAddress();
+            struct.objectOutputStream.writeObject(chobj);
             struct.objectOutputStream.flush();
             return true;
         }else return false;
@@ -89,8 +93,6 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     @Override
     public void shutdown(){
         try {
-
-
             if(struct.objectInputStream!=null){
 
                 struct.objectInputStream.close();
@@ -113,4 +115,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
         }
     }
 
+    public void setAddress(InetAddress address) {
+        this.hostAddress=address.getHostAddress();
+    }
 }
