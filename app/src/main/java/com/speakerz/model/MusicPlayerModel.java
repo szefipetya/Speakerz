@@ -1,8 +1,11 @@
 package com.speakerz.model;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.provider.MediaStore;
 
 import com.speakerz.MusicPlayer;
 import com.speakerz.model.network.BaseNetwork;
@@ -22,10 +25,13 @@ public class MusicPlayerModel{
     private int currentPlayingIndex = 0;
 
     public MusicPlayerModel self = this;
+    public ArrayList<String> AudioList = new ArrayList<String>();
     public ArrayList<String> songQueue = new ArrayList<String>();
+    ArrayList<Song> audioList = new ArrayList<Song>();
     public MediaPlayer mediaPlayer;
     public Context context;
     public String SongPlayed;
+
 
     // Events
     public final Event<EventArgs1<Boolean>> playbackStateChanged = new Event<>();
@@ -43,7 +49,7 @@ public class MusicPlayerModel{
     Thread durationUpdateThread = new Thread(new Runnable() {
         @Override
         public void run() {
-           /* try{
+            try{
                 int _current = -1, _total = -1;
                 while(true){
                     if(mediaPlayer != null && mediaPlayer.isPlaying()) {
@@ -59,7 +65,7 @@ public class MusicPlayerModel{
                     Thread.sleep(250);
                 }
             }
-            catch (InterruptedException e) { }*/
+            catch (InterruptedException e) { }
         }
     });
 
@@ -72,6 +78,7 @@ public class MusicPlayerModel{
         // Event handler to start next song automatically
 
         mediaPlayer.setOnCompletionListener(completionListener);
+        loadAudio();
     }
 
     // Close music player services
@@ -171,6 +178,32 @@ public class MusicPlayerModel{
             pause();
         else
             start();
+    }
+
+    //Load All Audio from the device To AudioList ( you will be bale to choose from these to add to the SongQueue
+    private void loadAudio() {
+        ContentResolver contentResolver = context.getContentResolver();
+
+        Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
+        String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
+        Cursor cursor = contentResolver.query(uri, null, selection, null, sortOrder);
+
+        if (cursor != null && cursor.getCount() > 0) {
+            audioList = new ArrayList<>();
+            while (cursor.moveToNext()) {
+                String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+                String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
+                String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
+                String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+
+                //Print the title of the song that it found.
+                System.out.println(title);
+                // Save to audioList
+                audioList.add(new Song(data, title, album, artist));
+            }
+        }
+        cursor.close();
     }
 
 }

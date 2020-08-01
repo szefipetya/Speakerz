@@ -144,6 +144,7 @@ public class MusicPlayer extends Activity {
         for( int i = 0 ; i < fields.length ; i++){
             if(!model.songQueue.contains(fields[i].getName())){
                 model.songQueue.add(fields[i].getName());
+                System.out.println(fields[i].getName());
             }
         }
 
@@ -157,8 +158,7 @@ public class MusicPlayer extends Activity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 // Retrieve the resource id of the selected song
-                int resID = getResources().getIdentifier(model.songQueue.get(i),"raw",getPackageName());
-
+                int resID = getResources().getIdentifier(model.songQueue.get(i),"raw",getPackageName()); 
                 // Starting song
                 model.start(i);
             }
