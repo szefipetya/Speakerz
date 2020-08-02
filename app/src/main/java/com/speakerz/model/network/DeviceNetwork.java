@@ -20,6 +20,7 @@ import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.threads.ClientControllerSocketThread;
 import com.speakerz.model.network.threads.ClientSocketWrapper;
+import com.speakerz.model.network.threads.audio.ClientAudioMultiCastReceiverSocketThread;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
@@ -35,6 +36,7 @@ Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
     public DeviceNetwork(WifiBroadcastReciever reciever) {
         super(reciever);
         clientSocketWrapper.controllerSocket = new ClientControllerSocketThread();
+        clientSocketWrapper.audioSocket = new ClientAudioMultiCastReceiverSocketThread();
         subscribeSocketEvents();
         reciever.HostAddressAvailableEvent.addListener(new EventListener<HostAddressEventArgs>() {
             @Override
@@ -43,6 +45,9 @@ Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
 
                     clientSocketWrapper.controllerSocket.setAddress(args.getAddress());
                     clientSocketWrapper.controllerSocket.start();
+
+                    clientSocketWrapper.audioSocket.setAddress(args.getAddress());
+                    clientSocketWrapper.audioSocket.start();
 
                 }
             }

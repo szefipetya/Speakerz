@@ -43,7 +43,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
         try{
             serverSocket = new ServerSocket();
             serverSocket.setReuseAddress(true);
-            serverSocket.bind(new InetSocketAddress(5048));
+            serverSocket.bind(new InetSocketAddress(5050));
             D.log("server address: "+serverSocket.getInetAddress());
             D.log("localsocketaddress : "+serverSocket.getLocalSocketAddress());
             //serverSocket.bind(new InetSocketAddress(5048));

@@ -125,11 +125,9 @@ public class Create extends Activity {
 
     private void initAndStart() {
         lvSongsList=(ListView) findViewById(R.id.lv_song_list_test);
-        if(!_service.getModel().getAreUiEventsSubscribed())
-        {
+
 
             _service.getModel().setAreUiEventsSubscribed(true);
-        }
         subscribeModel((HostModel) _service.getModel());
         _service.getTextValueStorage().autoConfigureTexts(this);
         //_service.getModel().start();

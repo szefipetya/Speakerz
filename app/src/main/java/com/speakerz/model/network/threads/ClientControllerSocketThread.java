@@ -38,7 +38,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             struct=new SocketStruct();
             struct.socket=new Socket();
             struct.socket.setReuseAddress(true);
-            struct.socket.connect(new InetSocketAddress(hostAddress,5048),1000);
+            struct.socket.connect(new InetSocketAddress(hostAddress,5050),1000);
 
             D.log("connection succesful to "+ hostAddress);
             //PrintWriter pr=new PrintWriter(socket.getOutputStream());
@@ -93,26 +93,28 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     @Override
     public void shutdown(){
         try {
-            if(struct.objectInputStream!=null){
+            if (struct != null) {
+                if (struct.objectInputStream != null) {
 
-                struct.objectInputStream.close();
+                    struct.objectInputStream.close();
+                }
+                if (struct.objectOutputStream != null) {
+                    struct.objectOutputStream.reset();
+                    struct.objectOutputStream.flush();
+                    struct.objectOutputStream.close();
+
+                }
+                if (struct.socket != null)
+                    struct.socket.close();
+                struct.socket = null;
+                System.gc();
+
             }
-            if(struct.objectOutputStream!=null){
-                struct.objectOutputStream.reset();
-                struct.objectOutputStream.flush();
-                struct.objectOutputStream.close();
-
+            } catch(IOException e){
+                e.printStackTrace();
+                D.log(e.getMessage());
             }
-            if(struct.socket!=null)
-                struct. socket.close();
-            struct.socket=null;
-            System.gc();
 
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            D.log(e.getMessage());
-        }
     }
 
     public void setAddress(InetAddress address) {

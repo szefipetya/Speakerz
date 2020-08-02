@@ -38,6 +38,8 @@ import com.speakerz.viewModel.TextValueStorage;
 
 public class SpeakerzService extends Service {
 
+
+
     private final class ServiceHandler extends Handler {
         private  SpeakerzService service;
         private BaseModel model = null;
