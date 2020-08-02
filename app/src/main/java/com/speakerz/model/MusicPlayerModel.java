@@ -25,9 +25,9 @@ public class MusicPlayerModel{
     private int currentPlayingIndex = 0;
 
     public MusicPlayerModel self = this;
-    public ArrayList<String> AudioList = new ArrayList<String>();
     public ArrayList<String> songQueue = new ArrayList<String>();
-    ArrayList<Song> audioList = new ArrayList<Song>();
+    public ArrayList<Song> audioList = new ArrayList<Song>();
+    public ArrayList<String> audioNameList = new ArrayList<String>();
     public MediaPlayer mediaPlayer;
     public Context context;
     public String SongPlayed;
@@ -79,6 +79,7 @@ public class MusicPlayerModel{
 
         mediaPlayer.setOnCompletionListener(completionListener);
         loadAudio();
+        System.out.println(audioList.size());
     }
 
     // Close music player services
@@ -192,18 +193,21 @@ public class MusicPlayerModel{
         if (cursor != null && cursor.getCount() > 0) {
             audioList = new ArrayList<>();
             while (cursor.moveToNext()) {
-                String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+                //String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                 String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
                 String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
                 String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
 
                 //Print the title of the song that it found.
                 System.out.println(title);
+
                 // Save to audioList
-                audioList.add(new Song(data, title, album, artist));
+                audioList.add(new Song("alma", title, album, artist));
+                audioNameList.add(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)));
             }
         }
         cursor.close();
+
     }
 
 }

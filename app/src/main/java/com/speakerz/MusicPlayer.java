@@ -20,6 +20,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.speakerz.model.MusicPlayerModel;
+import com.speakerz.model.Song;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
@@ -44,6 +45,7 @@ public class MusicPlayer extends Activity {
     Button buttonNext;
     SeekBar seekBar;
     ListView playListView;
+    ListView audioListView;
     ArrayAdapter songLA;
 
 
@@ -86,6 +88,7 @@ public class MusicPlayer extends Activity {
         buttonNext = (Button) findViewById(R.id.next);
         seekBar = (SeekBar) findViewById(R.id.elapsedtime);
         playListView = (ListView) findViewById(R.id.playlist);
+        audioListView = (ListView) findViewById(R.id.audiolist);
 
         // Register UI event handlers
         buttonBack.setOnClickListener(new View.OnClickListener() {
@@ -103,7 +106,7 @@ public class MusicPlayer extends Activity {
         buttonNext.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 NextSong(playedSongnum,model.songQueue);
-                System.out.println(playedSongnum);
+               // System.out.println(playedSongnum);
             }
         });
 
@@ -144,13 +147,17 @@ public class MusicPlayer extends Activity {
         for( int i = 0 ; i < fields.length ; i++){
             if(!model.songQueue.contains(fields[i].getName())){
                 model.songQueue.add(fields[i].getName());
-                System.out.println(fields[i].getName());
             }
         }
 
         // Connect Song Queue to list view UI conponent
         songLA = new ArrayAdapter<String>(this, R.layout.list_item, model.songQueue);
         playListView.setAdapter(songLA);
+
+
+        // All audio file list
+        songLA = new ArrayAdapter<String>(this, R.layout.list_item, model.audioNameList);
+        audioListView.setAdapter(songLA);
 
 
         // Add onClick handler to song list view
