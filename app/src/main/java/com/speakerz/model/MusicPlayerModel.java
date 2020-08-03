@@ -31,6 +31,7 @@ public class MusicPlayerModel{
 
 
     private Boolean isHost;
+    private Boolean asd;
 
 
 
