@@ -1,9 +1,13 @@
 package com.speakerz.model;
 
 import android.content.Context;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.net.Uri;
 
+import com.speakerz.R;
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.Serializable.body.Body;
@@ -17,6 +21,10 @@ import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -133,6 +141,9 @@ public class MusicPlayerModel{
 
         mediaPlayer.setOnCompletionListener(completionListener);
 
+      //  playFromAudioStream();
+        playFromAudioStreamDirectly(null);
+
     }
 
 
@@ -234,6 +245,75 @@ public class MusicPlayerModel{
         else
             start();
     }
+
+   private void playFromAudioStreamDirectly(InputStream is){
+        final int duration = 10; // duration of sound
+        final int sampleRate = 22050; // Hz (maximum frequency is 7902.13Hz (B8))
+        final int numSamples = duration * sampleRate;
+        final double samples[] = new double[numSamples];
+        final short buffer[] = new short[numSamples];
+        for (int i = 0; i < numSamples; ++i) {
+            samples[i] = Math.sin(2 * Math.PI * i / (sampleRate / 3)); // Sine wave
+            buffer[i] = (short) (samples[i] * Short.MAX_VALUE);  // Higher amplitude increases volume
+        }
+
+        AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
+                sampleRate, AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT, buffer.length,
+                AudioTrack.MODE_STATIC);
+
+       audioTrack.write(buffer, 0, buffer.length);
+       audioTrack.play();
+
+    }
+
+    File tmpMediaFile;
+    public void playFromAudioStream(InputStream p_is){
+            try {
+
+
+                InputStream is =context.getResources().openRawResource(R.raw.passion_aac);
+
+                // create file to store audio
+                tmpMediaFile = new File(this.context.getCacheDir(),"mediafile");
+                FileOutputStream fos = new FileOutputStream(tmpMediaFile);
+                byte buf[] = new byte[16 * 1024];
+               D.log("FileOutputStream", "Download");
+
+                // write to file until complete
+                do {
+                    int numread = is.read(buf);
+                    if (numread <= 0)
+                        break;
+                    fos.write(buf, 0, numread);
+                } while (true);
+                fos.flush();
+                fos.close();
+                D.log("FileOutputStream", "Saved");
+                MediaPlayer mp = new MediaPlayer();
+
+                // create listener to tidy up after playback complete
+                MediaPlayer.OnCompletionListener listener = new MediaPlayer.OnCompletionListener() {
+                    public void onCompletion(MediaPlayer mp) {
+                        // free up media player
+                        mp.release();
+                        D.log("MediaPlayer.OnCompletionListener", "MediaPlayer Released");
+                    }
+                };
+                mp.setOnCompletionListener(listener);
+
+                FileInputStream fis = new FileInputStream(tmpMediaFile);
+                // set mediaplayer data source to file descriptor of input stream
+                mp.setDataSource(fis.getFD());
+                mp.prepare();
+                D.log("MediaPlayer", "Start Player");
+                mp.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+
 
 //Getter && Setter
     public Boolean getHost() {

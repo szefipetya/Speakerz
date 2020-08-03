@@ -79,6 +79,10 @@ public class DeviceModel extends BaseModel {
 
         network.getReciever().setConnectivityManager(connectivityManager);
         subscribeMusicPlayerModelEvents();
+        network.getClientSocketWrapper().audioSocket.setContext(context);
+        network.getClientSocketWrapper().audioSocket.init();
+
+
 
 
 

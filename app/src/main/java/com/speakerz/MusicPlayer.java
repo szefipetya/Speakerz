@@ -163,8 +163,8 @@ public class MusicPlayer extends Activity {
 
         // starting music if not playing
         if(!model.isPlaying()){
-            model.startNext();
-
+           // model.startNext();
+            //MODIFIED
         }
     }
 
