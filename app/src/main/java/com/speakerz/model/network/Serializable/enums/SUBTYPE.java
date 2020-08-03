@@ -1,6 +1,9 @@
 package com.speakerz.model.network.Serializable.enums;
 
 public enum SUBTYPE {
-    MP_ADD_SONG,
-    MP_DEL_SONG
+    MP_PUT_SONG,
+    MP_GET_LIST,
+    MP_SEND_LIST,
+    MP_DEL_SONG,
+    META_GET_SRV_INFO
 }

@@ -6,7 +6,7 @@ import java.net.Socket;
 
 public class SocketStruct  {
 
-    Socket socket;
+  public  Socket socket;
     public ObjectInputStream objectInputStream;
     public ObjectOutputStream objectOutputStream;
 

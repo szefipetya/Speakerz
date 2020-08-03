@@ -6,6 +6,6 @@ import java.io.IOException;
 
 public interface SocketThread {
     void listen(SocketStruct struct) throws IOException, ClassNotFoundException;
-    void handleIncomingObject(ChannelObject chObject);
+    void handleIncomingObject(ChannelObject chObject) throws IOException;
     void shutdown();
 }
