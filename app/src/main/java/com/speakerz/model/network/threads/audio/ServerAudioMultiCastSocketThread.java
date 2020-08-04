@@ -40,18 +40,46 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
     public void run() {
         running = true;
+while(!socket.isClosed()) {
+    //recieve a packet from a new client
+        DatagramPacket packet
+                = new DatagramPacket(buf, buf.length);
         try {
-            streamAudio();
+            socket.receive(packet);
+            D.log("recieved (server)");
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
+
+        final InetAddress address = packet.getAddress();
+        final int port = packet.getPort();
+        packet = new DatagramPacket(buf, buf.length, address, port);
+
+
+
+
+
+    Thread t = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            try {
+                streamAudio(address,port);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    });
+    t.start();
+}
+
+
 
     }
 
 
-    public void streamAudio() throws IOException, InterruptedException {
+    public void streamAudio(InetAddress clientAdress,Integer clientPort) throws IOException, InterruptedException {
 
         D.log("stream started");
         BufferedInputStream bis = null;
@@ -69,9 +97,10 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                 i++;
                 System.out.println("Packet:" + (i + 1));
                 D.log("Packet:" + (i + 1));
-                dp = new DatagramPacket(mybytearray, mybytearray.length,address, 5040);
+                dp = new DatagramPacket(mybytearray, mybytearray.length,clientAdress, clientPort);
                 socket.send(dp);
                 mybytearray = new byte[packetsize];
+                sleep(3000);
             }
         }finally {
             if(bis!=null)

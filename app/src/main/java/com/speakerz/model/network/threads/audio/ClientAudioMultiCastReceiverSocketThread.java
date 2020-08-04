@@ -57,7 +57,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     public ClientAudioMultiCastReceiverSocketThread() {
         try {
             socket = new DatagramSocket(5040,address);
-            init();
+
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -85,14 +85,30 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     @Override
     public void run() {
         D.log("testbegins");
+        init();
 
-        while(socket.isConnected()){
+        {//send a packet to the host to know about this client
+
+            DatagramPacket packet
+                    = new DatagramPacket(buf, buf.length, address, 5040);
+            try {
+
+                socket.send(packet);
+                D.log("sent");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        while(true){
             //D.log("recieved from server: "+ sendEcho("from client"));
             byte[] buffer=new byte[1024];
-            DatagramPacket packet = new DatagramPacket(buf, buf.length);
+
+            DatagramPacket packet =new DatagramPacket(buf, buf.length);
             try {
-                D.log("recieved");
+
                 socket.receive(packet);
+                D.log("recieved");
                handlePacket(packet.getData());
             } catch (IOException e) {
                 e.printStackTrace();
@@ -107,8 +123,8 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     private void handlePacket(byte[] buffer){
        //audioInputStrea
 
-        fos.write(buf, 0, numread);
-        fos.flush();
+      //  fos.write(buf, 0, numread);
+      //  fos.flush();
 
         D.log("FileOutputStream", "Saved");
     }
