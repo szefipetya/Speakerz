@@ -1,33 +1,159 @@
 package com.speakerz.model.network.threads.audio;
 
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
+import android.media.AudioManager;
+import android.media.AudioTrack;
+
+import android.media.MediaMetadataRetriever;
+
 import android.os.Environment;
 
+import com.google.common.collect.ImmutableSet;
 import com.speakerz.R;
 import com.speakerz.debug.D;
+import com.speakerz.model.network.threads.audio.util.AudioMetaDto;
+import com.speakerz.model.network.threads.audio.util.AudioMetaInfo;
+import com.speakerz.model.network.threads.audio.util.StreamUtil;
 
 import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.File;
+
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.Date;
+import java.util.stream.Stream;
 
-import static androidx.core.content.ContextCompat.startActivity;
+import android.media.AudioFormat;
+
+import org.apache.commons.lang3.SerializationUtils;
+
+import ealvatag.audio.AudioFile;
+import ealvatag.audio.AudioFileIO;
+import ealvatag.audio.AudioHeader;
+import ealvatag.audio.exceptions.CannotReadException;
+import ealvatag.audio.exceptions.CannotWriteException;
+import ealvatag.audio.exceptions.InvalidAudioFrameException;
+import ealvatag.tag.FieldDataInvalidException;
+import ealvatag.tag.FieldKey;
+import ealvatag.tag.NullTag;
+import ealvatag.tag.Tag;
+import ealvatag.tag.TagException;
+import ealvatag.tag.TagOptionSingleton;
+
 
 public class ServerAudioMultiCastSocketThread extends Thread {
+
+
+    private AudioTrack track;
+    private FileOutputStream os;
+    /** Called when the activity is first created. */
+    public void run() {
+       // playWav();
+
+        acceptClients();
+    }
+
+
+    public AudioMetaDto getAudioMetaDtoFromFile(File file){
+        AudioMetaInfo info=new AudioMetaInfo(file);
+        AudioMetaDto dto=new AudioMetaDto();
+        dto.bitsPerSample= (short) info.getAudioHeader().getBitsPerSample();
+        dto.channels= (short) info.getAudioHeader().getChannelCount();
+        dto.bitrate= (short) info.getAudioHeader().getBitRate();
+        dto.sampleRate=info.getAudioHeader().getSampleRate();
+        return dto;
+    }
+    public void streamAudio(InetAddress clientAdress,Integer clientPort) throws IOException, InterruptedException {
+        File file=getFileByResId(R.raw.tobu_wav,"target.wav");
+        //first, send the metadata from the audio
+        {
+            AudioMetaDto dto = getAudioMetaDtoFromFile(file);
+            byte[] dtoBytes=null;
+
+
+             //  dtoBytes = StreamUtil.encode(dto);
+                dtoBytes=SerializationUtils.serialize(dto);
+
+            DatagramPacket dtoDp = new DatagramPacket(dtoBytes, dtoBytes.length, clientAdress, clientPort);
+            socket.send(dtoDp);
+        }
+
+
+        D.log("stream started");
+        BufferedInputStream bis = null;
+        AudioTrack at= createAudioTrack(file);
+        try {
+
+            DatagramPacket dp;
+            int bufferSize = 1024;
+
+            byte[] buffer = new byte[bufferSize];
+
+            int i=0;
+
+
+                FileInputStream fin = new FileInputStream(file);
+                DataInputStream dis = new DataInputStream(fin);
+
+                at.play();
+                while((i = dis.read(buffer, 0, bufferSize)) > -1){
+                    at.write(buffer, 0, i);
+                    dp = new DatagramPacket(buffer, buffer.length,clientAdress, clientPort);
+                    socket.send(dp);
+                   // D.log("pack sent");
+                }
+
+                i++;
+                //  System.out.println("Packet:" + (i + 1));
+                D.log("Packet:" + (i + 1));
+
+
+                D.log("-");
+
+            //data end
+        }finally {
+            if(bis!=null)
+                bis.close();
+            if(socket !=null)
+                socket.close();
+        }
+    }
+
+    private AudioTrack createAudioTrack(File file){
+        AudioMetaInfo metaInfo=new AudioMetaInfo(file);
+        //
+        ///play wav
+
+        int minBufferSize = AudioTrack.getMinBufferSize(metaInfo.getAudioHeader().getSampleRate(),
+                metaInfo.getAudioHeader().getChannelCount() ==2? AudioFormat.CHANNEL_CONFIGURATION_STEREO:AudioFormat.CHANNEL_CONFIGURATION_MONO,
+                metaInfo.getAudioHeader().getBitsPerSample()==16? AudioFormat.ENCODING_PCM_16BIT:AudioFormat.ENCODING_PCM_8BIT);
+        int bufferSize = 512;
+        AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, metaInfo.getAudioHeader().getSampleRate(),
+                metaInfo.getAudioHeader().getChannelCount() ==2? AudioFormat.CHANNEL_CONFIGURATION_STEREO:AudioFormat.CHANNEL_CONFIGURATION_MONO,
+                metaInfo.getAudioHeader().getBitsPerSample()==16? AudioFormat.ENCODING_PCM_16BIT:AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);
+
+        return at;
+    }
+
+
+
+    ///
     private InetAddress address;
 
     private DatagramSocket socket;
     private boolean running;
     private byte[] buf = new byte[256];
     private Context context;
+
+
 
     public ServerAudioMultiCastSocketThread() {
         try {
@@ -37,11 +163,34 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         }
     }
 
+    File getFileByResId(int id,String targetFileName){
+        // D.log(path);
+        InputStream fis=context.getResources().openRawResource(id);
 
-    public void run() {
-        running = true;
-while(!socket.isClosed()) {
-    //recieve a packet from a new client
+        File file = new File(context.getFilesDir(),targetFileName);
+        try(OutputStream outputStream = new FileOutputStream(file)){
+            copy(fis, outputStream);
+            D.log("file readed");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            // handle exception here
+        } catch (IOException e) {
+            e.printStackTrace();
+            // handle exception here
+        }
+        return file;
+    }
+
+    void copy(InputStream source, OutputStream target) throws IOException {
+        byte[] buf = new byte[8192];
+        int length;
+        while ((length = source.read(buf)) > 0) {
+            target.write(buf, 0, length);
+        }
+    }
+
+    public void acceptClients(){
+
         DatagramPacket packet
                 = new DatagramPacket(buf, buf.length);
         try {
@@ -51,17 +200,14 @@ while(!socket.isClosed()) {
             e.printStackTrace();
         }
 
-        final InetAddress address = packet.getAddress();
-        final int port = packet.getPort();
+        InetAddress address = packet.getAddress();
+        int port = packet.getPort();
         packet = new DatagramPacket(buf, buf.length, address, port);
-
-
-
-
-
-    Thread t = new Thread(new Runnable() {
-        @Override
-        public void run() {
+        String received
+                = new String(packet.getData(), 0, packet.getLength());
+        if (received.equals("end")) {
+            D.log("client exited: "+address.getHostAddress());
+        }else{
             try {
                 streamAudio(address,port);
             } catch (IOException e) {
@@ -70,46 +216,10 @@ while(!socket.isClosed()) {
                 e.printStackTrace();
             }
         }
-    });
-    t.start();
-}
-
-
 
     }
 
 
-    public void streamAudio(InetAddress clientAdress,Integer clientPort) throws IOException, InterruptedException {
-
-        D.log("stream started");
-        BufferedInputStream bis = null;
-        InputStream fis=context.getResources().openRawResource(R.raw.passion_aac);
-        try {
-
-            DatagramPacket dp;
-            int packetsize = 1024;
-            double nosofpackets;
-
-            bis = new BufferedInputStream( fis);
-            byte[] mybytearray = new byte[packetsize];
-            int i=0;
-            while (   bis.read(mybytearray, 0, mybytearray.length)!=-1) {
-                i++;
-                System.out.println("Packet:" + (i + 1));
-                D.log("Packet:" + (i + 1));
-                dp = new DatagramPacket(mybytearray, mybytearray.length,clientAdress, clientPort);
-                socket.send(dp);
-                mybytearray = new byte[packetsize];
-                sleep(3000);
-            }
-        }finally {
-            if(bis!=null)
-                bis.close();
-            if(socket !=null)
-                socket.close();
-        }
-
-    }
 
 
     public void setAddress(InetAddress address) {

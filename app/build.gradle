@@ -25,7 +25,22 @@ dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation files('jar/tritonus-share-0.3.7-2.jar')
+    implementation files('jar/jl1.0.1.jar')
+  //  implementation fileTree(dir: 'jar', include: ['*.aar', '*.jar'], exclude: [])
+    implementation files('jar/mp3spi1.9.5/MpegAudioSPI1.9.5/mp3spi1.9.5.jar')
+
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
+    //audio
+  //  implementation group: 'com.jtransc', name: 'jtransc-rt', version: '0.6.8'
+//Thanks for using https://jar-download.com
+    //implementation 'com.googlecode.soundlibs:mp3spi:1.9.5-1'
+    implementation 'com.ealva:ealvatag:0.4.3'
+    //serialize util
+    implementation 'org.apache.commons:commons-lang3:3.5'
+
+
 }

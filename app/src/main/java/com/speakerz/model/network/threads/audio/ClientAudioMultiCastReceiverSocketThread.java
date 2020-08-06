@@ -2,16 +2,30 @@ package com.speakerz.model.network.threads.audio;
 
 import android.content.Context;
 import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.net.InetAddresses;
 
+import com.speakerz.R;
 import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.threads.SocketStruct;
 import com.speakerz.model.network.threads.SocketThread;
+import com.speakerz.model.network.threads.audio.util.AudioMetaDto;
+import com.speakerz.model.network.threads.audio.util.AudioMetaInfo;
+import com.speakerz.model.network.threads.audio.util.StreamUtil;
+import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
+
+import org.apache.commons.lang3.SerializationUtils;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -31,8 +45,10 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
     private DatagramSocket socket;
     private boolean running;
-    private byte[] buf = new byte[256];
+    private byte[] buf = new byte[1024];
     private Context context;
+    //passes the file path to the mediaplayer
+    public Event<EventArgs1<String>> SongDownloadedEvent;
 
     public Context getContext() {
         return context;
@@ -64,9 +80,10 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     }
 
     public void init(){
-        tmpFile = new File(this.context.getCacheDir(),"mediafile");
+        File tmpFile = new File(context.getFilesDir(), "audio.mp3");
         try {
             fos = new FileOutputStream(tmpFile);
+            this.fos = new FileOutputStream(tmpFile);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -87,7 +104,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
         D.log("testbegins");
         init();
 
-        {//send a packet to the host to know about this client
+      //send a packet to the host to know about this client
 
             DatagramPacket packet
                     = new DatagramPacket(buf, buf.length, address, 5040);
@@ -98,36 +115,93 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+
+        //first packet is always metadata
+        buf=new byte[1024];
+        packet =new DatagramPacket(buf, buf.length);
+        try {
+            socket.receive(packet);
+            AudioTrack at=createAudioTrack(packet.getData());
+            handleAudioPackets(at);
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        while(true){
-            //D.log("recieved from server: "+ sendEcho("from client"));
-            byte[] buffer=new byte[1024];
+    }
 
-            DatagramPacket packet =new DatagramPacket(buf, buf.length);
+    AudioMetaDto metaDto=null;
+
+    int bufferSize = 1024;
+    private AudioTrack createAudioTrack(byte[] data) {
+
+            metaDto=(AudioMetaDto) SerializationUtils.deserialize(data);
+
+        int minBufferSize = AudioTrack.getMinBufferSize(metaDto.sampleRate,
+                metaDto.channels == 2 ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO,
+                metaDto.bitsPerSample == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT);
+
+        AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, metaDto.sampleRate,
+                metaDto.channels == 2 ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO,
+                metaDto.bitsPerSample == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);
+        return at;
+    }
+
+    private void handleAudioPackets(AudioTrack at) {
+
+
+        buf = new byte[1024];
+        at.play();
+        while (true) {
+            DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
-
                 socket.receive(packet);
-                D.log("recieved");
-               handlePacket(packet.getData());
+                D.log("recv");
+                /////
+                int i = 0;
+
+                        at.write(buf, 0, packet.getLength());
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+
     }
+
 
     File tmpFile;
-    InputStream audioInputStream;
-    FileOutputStream fos;
+    OutputStream fos;
 
-    private void handlePacket(byte[] buffer){
-       //audioInputStrea
 
-      //  fos.write(buf, 0, numread);
-      //  fos.flush();
 
-        D.log("FileOutputStream", "Saved");
-    }
+
+   /* private void handlePacket(byte[] buf,int len){
+
+        try {
+
+
+             D.log("rec");
+             if(buf.equals(bufEnd)){
+                SongDownloadedEvent.invoke(new EventArgs1<String>(this,tmpFile.getPath()));
+                D.log("song ready");
+             }else{
+                 fos.write(buf);
+             }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            // handle exception here
+        } catch (IOException e) {
+            e.printStackTrace();
+            // handle exception here
+        }
+
+      //  D.log("FileOutputStream", "Saved");
+    }*/
+
+
     public void close() {
         socket.close();
     }

@@ -23,8 +23,11 @@ import com.speakerz.util.EventListener;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -62,6 +65,9 @@ public class MusicPlayerModel{
     //common communation channel with model.
     public Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
 
+    public Event<EventArgs1<String>> SongDownloadedEvent;
+
+
     public void subscribeEventsFromModel(){
         MusicPlayerActionEvent.addListener(new EventListener<EventArgs1<Body>>() {
             @Override
@@ -94,6 +100,12 @@ public class MusicPlayerModel{
 
                     }
                 }
+            }
+        });
+        SongDownloadedEvent.addListener(new EventListener<EventArgs1<String>>() {
+            @Override
+            public void action(EventArgs1<String> args) {
+                playFromFile(args.arg1());
             }
         });
     }
@@ -142,7 +154,9 @@ public class MusicPlayerModel{
         mediaPlayer.setOnCompletionListener(completionListener);
 
       //  playFromAudioStream();
-        playFromAudioStreamDirectly(null);
+      //  InputStream is =context.getResources().openRawResource(R.raw.passion_aac);
+      //  playFromAudioStreamDirectly(is);
+
 
     }
 
@@ -245,25 +259,73 @@ public class MusicPlayerModel{
         else
             start();
     }
+    void copy(InputStream source, OutputStream target) throws IOException {
+        byte[] buf = new byte[8192];
+        int length;
+        while ((length = source.read(buf)) > 0) {
+            target.write(buf, 0, length);
+        }
+    }
+    public void playFromFile(String path) {
+//        String path= context.getClassLoader().getResource("tobu_good_times.mp3").getPath();
+
+        // D.log(path);
+     //   InputStream fis = context.getResources().openRawResource(R.raw.tobu_good_times);
+
+      //  File file = new File(context.getFilesDir(), "audio.mp3");
+      //  try (OutputStream outputStream = new FileOutputStream(file)) {
+       //     copy(fis, outputStream);
+        try {
+            D.log("played from file-------------------------");
+            mediaPlayer.setDataSource(path);
+            mediaPlayer.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        mediaPlayer.start();
+      /*      D.log("file readed");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            // handle exception here
+        } catch (IOException e) {
+            e.printStackTrace();
+            // handle exception here
+        }*/
+    }
+
+
+
+
 
    private void playFromAudioStreamDirectly(InputStream is){
+
+
         final int duration = 10; // duration of sound
         final int sampleRate = 22050; // Hz (maximum frequency is 7902.13Hz (B8))
         final int numSamples = duration * sampleRate;
         final double samples[] = new double[numSamples];
         final short buffer[] = new short[numSamples];
-        for (int i = 0; i < numSamples; ++i) {
-            samples[i] = Math.sin(2 * Math.PI * i / (sampleRate / 3)); // Sine wave
-            buffer[i] = (short) (samples[i] * Short.MAX_VALUE);  // Higher amplitude increases volume
-        }
+
 
         AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
                 sampleRate, AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT, buffer.length,
                 AudioTrack.MODE_STATIC);
 
-       audioTrack.write(buffer, 0, buffer.length);
-       audioTrack.play();
+     //  audioTrack.write(buffer, 0, buffer.length);
+      // audioTrack.play();
+       while(true){
+           try {
+               byte[] buffer2 = new byte[1024];
+
+               if (!(is.read(buffer2)==-1)) break;
+               audioTrack.write(buffer2, 0, buffer2.length);
+                audioTrack.play();
+           } catch (IOException e) {
+               e.printStackTrace();
+           }
+
+       }
 
     }
 

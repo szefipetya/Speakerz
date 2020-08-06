@@ -36,6 +36,7 @@ public class DeviceModel extends BaseModel {
     }
 
     protected void injectNetworkDependencies() {
+        network.getClientSocketWrapper().audioSocket.SongDownloadedEvent=this.SongDownloadedEvent;
         network.getClientSocketWrapper().controllerSocket.MusicPlayerActionEvent=MusicPlayerActionEvent;
         network.getClientSocketWrapper().controllerSocket.MetaInfoReceivedEvent=MetaInfoReceivedEvent;
     }
