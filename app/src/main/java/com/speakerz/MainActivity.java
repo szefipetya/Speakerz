@@ -128,8 +128,9 @@ public class MainActivity extends Activity {
             public void onClick(View view){
                 initAndStart(true);
                 Intent Act2 = new Intent(getApplicationContext(),Create.class);
-                Act2.putExtra("Hello","Hello World");
                 startActivity(Act2);
+                Act2.putExtra("Hello","Hello World");
+
 
             }
 

@@ -6,11 +6,13 @@ import android.media.AudioTrack;
 
 import android.media.MediaMetadataRetriever;
 
+import android.os.Build;
 import android.os.Environment;
 
 import com.google.common.collect.ImmutableSet;
 import com.speakerz.R;
 import com.speakerz.debug.D;
+import com.speakerz.model.network.threads.audio.util.AudioDecoderThread;
 import com.speakerz.model.network.threads.audio.util.AudioMetaDto;
 import com.speakerz.model.network.threads.audio.util.AudioMetaInfo;
 import com.speakerz.model.network.threads.audio.util.StreamUtil;
@@ -31,7 +33,10 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.stream.Stream;
 
+
 import android.media.AudioFormat;
+
+import androidx.annotation.RequiresApi;
 
 import org.apache.commons.lang3.SerializationUtils;
 
@@ -47,6 +52,8 @@ import ealvatag.tag.NullTag;
 import ealvatag.tag.Tag;
 import ealvatag.tag.TagException;
 import ealvatag.tag.TagOptionSingleton;
+import javazoom.jl.decoder.Decoder;
+import javazoom.jl.decoder.SampleBuffer;
 
 
 public class ServerAudioMultiCastSocketThread extends Thread {
@@ -54,11 +61,14 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
     private AudioTrack track;
     private FileOutputStream os;
-    /** Called when the activity is first created. */
+    AudioDecoderThread decoder=new AudioDecoderThread();
+
     public void run() {
        // playWav();
 
-        acceptClients();
+       // decoder.startPlay(getFileByResId(R.raw.passion_aac,"passion.aac").getAbsolutePath());
+
+        //   acceptClients();
     }
 
 
@@ -71,25 +81,34 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         dto.sampleRate=info.getAudioHeader().getSampleRate();
         return dto;
     }
+
+
+
+
+
     public void streamAudio(InetAddress clientAdress,Integer clientPort) throws IOException, InterruptedException {
-        File file=getFileByResId(R.raw.tobu_wav,"target.wav");
+        File file=getFileByResId(R.raw.passion_aac,"target");
         //first, send the metadata from the audio
         {
-            AudioMetaDto dto = getAudioMetaDtoFromFile(file);
-            byte[] dtoBytes=null;
+          //  AudioMetaDto dto = getAudioMetaDtoFromFile(file);
+            //byte[] dtoBytes=null;
 
 
              //  dtoBytes = StreamUtil.encode(dto);
-                dtoBytes=SerializationUtils.serialize(dto);
+             //   dtoBytes=SerializationUtils.serialize(dto);
 
-            DatagramPacket dtoDp = new DatagramPacket(dtoBytes, dtoBytes.length, clientAdress, clientPort);
-            socket.send(dtoDp);
+           // DatagramPacket dtoDp = new DatagramPacket(dtoBytes, dtoBytes.length, clientAdress, clientPort);
+            //socket.send(dtoDp);
         }
+
 
 
         D.log("stream started");
         BufferedInputStream bis = null;
         AudioTrack at= createAudioTrack(file);
+
+
+
         try {
 
             DatagramPacket dp;
@@ -98,16 +117,14 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             byte[] buffer = new byte[bufferSize];
 
             int i=0;
-
-
                 FileInputStream fin = new FileInputStream(file);
                 DataInputStream dis = new DataInputStream(fin);
 
                 at.play();
                 while((i = dis.read(buffer, 0, bufferSize)) > -1){
                     at.write(buffer, 0, i);
-                    dp = new DatagramPacket(buffer, buffer.length,clientAdress, clientPort);
-                    socket.send(dp);
+                 //   dp = new DatagramPacket(buffer, buffer.length,clientAdress, clientPort);
+                 //   socket.send(dp);
                    // D.log("pack sent");
                 }
 
@@ -127,18 +144,20 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         }
     }
 
+
     private AudioTrack createAudioTrack(File file){
-        AudioMetaInfo metaInfo=new AudioMetaInfo(file);
+     //   AudioMetaInfo metaInfo=new AudioMetaInfo(file);
         //
         ///play wav
 
-        int minBufferSize = AudioTrack.getMinBufferSize(metaInfo.getAudioHeader().getSampleRate(),
-                metaInfo.getAudioHeader().getChannelCount() ==2? AudioFormat.CHANNEL_CONFIGURATION_STEREO:AudioFormat.CHANNEL_CONFIGURATION_MONO,
-                metaInfo.getAudioHeader().getBitsPerSample()==16? AudioFormat.ENCODING_PCM_16BIT:AudioFormat.ENCODING_PCM_8BIT);
+
+
+
+        int minBufferSize = AudioTrack.getMinBufferSize(44100,
+               AudioFormat.CHANNEL_CONFIGURATION_STEREO,AudioFormat.ENCODING_AAC_LC);
         int bufferSize = 512;
-        AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, metaInfo.getAudioHeader().getSampleRate(),
-                metaInfo.getAudioHeader().getChannelCount() ==2? AudioFormat.CHANNEL_CONFIGURATION_STEREO:AudioFormat.CHANNEL_CONFIGURATION_MONO,
-                metaInfo.getAudioHeader().getBitsPerSample()==16? AudioFormat.ENCODING_PCM_16BIT:AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);
+        AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, 44100,
+                AudioFormat.CHANNEL_CONFIGURATION_STEREO,AudioFormat.ENCODING_AAC_LC, minBufferSize, AudioTrack.MODE_STREAM);
 
         return at;
     }
