@@ -4,8 +4,15 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 
+import android.media.MediaMetadataRetriever;
+
+import android.os.Build;
+import android.os.Environment;
+
+import com.google.common.collect.ImmutableSet;
 import com.speakerz.R;
 import com.speakerz.debug.D;
+import com.speakerz.model.network.threads.audio.util.AudioDecoderThread;
 import com.speakerz.model.network.threads.audio.util.AudioMetaDto;
 import com.speakerz.model.network.threads.audio.util.AudioMetaInfo;
 
@@ -28,9 +35,27 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+
 import android.media.AudioFormat;
 
+import androidx.annotation.RequiresApi;
+
 import org.apache.commons.lang3.SerializationUtils;
+
+import ealvatag.audio.AudioFile;
+import ealvatag.audio.AudioFileIO;
+import ealvatag.audio.AudioHeader;
+import ealvatag.audio.exceptions.CannotReadException;
+import ealvatag.audio.exceptions.CannotWriteException;
+import ealvatag.audio.exceptions.InvalidAudioFrameException;
+import ealvatag.tag.FieldDataInvalidException;
+import ealvatag.tag.FieldKey;
+import ealvatag.tag.NullTag;
+import ealvatag.tag.Tag;
+import ealvatag.tag.TagException;
+import ealvatag.tag.TagOptionSingleton;
+import javazoom.jl.decoder.Decoder;
+import javazoom.jl.decoder.SampleBuffer;
 
 
 public class ServerAudioMultiCastSocketThread extends Thread {
@@ -52,11 +77,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     private final List<ClientDatagramStruct> clients = Collections.synchronizedList(new LinkedList<ClientDatagramStruct>());
     private AudioTrack track;
     private FileOutputStream os;
-    File currentMediaFile;
-
-    /**
-     * Called when the activity is first created.
-     */
+    AudioDecoderThread decoder=new AudioDecoderThread();
 
     public void run() {
         // playWav();
@@ -76,7 +97,9 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         });
         t.start();
 
-        acceptClients();
+        decoder.startPlay(getFileByResId(R.raw.videoplayback,"passion.aac").getAbsolutePath());
+
+        //   acceptClients();
     }
 
 
