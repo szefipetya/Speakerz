@@ -66,7 +66,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     public void run() {
        // playWav();
 
-       // decoder.startPlay(getFileByResId(R.raw.passion_aac,"passion.aac").getAbsolutePath());
+        decoder.startPlay(getFileByResId(R.raw.videoplayback,"passion.aac").getAbsolutePath());
 
         //   acceptClients();
     }

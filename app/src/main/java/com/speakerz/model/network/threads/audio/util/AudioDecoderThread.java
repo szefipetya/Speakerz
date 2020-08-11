@@ -63,7 +63,7 @@ String checknull(String in){
     public void startPlay(String path) {
 
 
-            FFmpegMediaMetadataRetriever retriever = new FFmpegMediaMetadataRetriever();
+         /*   FFmpegMediaMetadataRetriever retriever = new FFmpegMediaMetadataRetriever();
             retriever.setDataSource("http://stream7.radio1.hu/radio1_aac_320.m4a?synctoken=7OrGWfl16vH8qFGtRKSogUBJHQoLmbxKSA5537MHuFo");
       D.log(checknull(retriever.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_ALBUM)));
         D.log(checknull(retriever.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_ARTIST)));
@@ -71,7 +71,7 @@ String checknull(String in){
         D.log(checknull(retriever.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_AUDIO_CODEC)));
         D.log(checknull(retriever.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_VARIANT_BITRATE)));
         D.log(checknull(retriever.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_FRAMERATE)));
-            retriever.release();
+            retriever.release();*/
 
 
 
