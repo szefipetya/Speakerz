@@ -4,46 +4,29 @@ import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.net.InetAddresses;
 
-import com.speakerz.R;
 import com.speakerz.debug.D;
-import com.speakerz.model.network.Serializable.ChannelObject;
-import com.speakerz.model.network.threads.SocketStruct;
-import com.speakerz.model.network.threads.SocketThread;
 import com.speakerz.model.network.threads.audio.util.AudioMetaDto;
-import com.speakerz.model.network.threads.audio.util.AudioMetaInfo;
-import com.speakerz.model.network.threads.audio.util.StreamUtil;
 import com.speakerz.util.Event;
-import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 
 import org.apache.commons.lang3.SerializationUtils;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.MulticastSocket;
 import java.net.SocketException;
-import java.net.URL;
-import java.net.URLConnection;
 
 public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
 
-    private DatagramSocket socket;
+    private DatagramSocket infoSocket;
+    private DatagramSocket dataSocket;
     private boolean running;
     private byte[] buf = new byte[1024];
     private Context context;
@@ -72,7 +55,8 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
     public ClientAudioMultiCastReceiverSocketThread() {
         try {
-            socket = new DatagramSocket(5040,address);
+            //create the infoSocket to send request for a port and the audio meta
+            infoSocket = new DatagramSocket(8050);
 
         } catch (SocketException e) {
             e.printStackTrace();
@@ -88,15 +72,11 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
             e.printStackTrace();
         }
 
-        D.log("FileOutputStream", "Download");
 
         // write to file until complete
 
     }
 
-    public void listen(){
-
-    }
 
 
     @Override
@@ -107,10 +87,10 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
       //send a packet to the host to know about this client
 
             DatagramPacket packet
-                    = new DatagramPacket(buf, buf.length, address, 5040);
+                    = new DatagramPacket(buf, buf.length, address, 8050);
             try {
 
-                socket.send(packet);
+                infoSocket.send(packet);
                 D.log("sent");
             } catch (IOException e) {
                 e.printStackTrace();
@@ -121,8 +101,10 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
         buf=new byte[1024];
         packet =new DatagramPacket(buf, buf.length);
         try {
-            socket.receive(packet);
-            AudioTrack at=createAudioTrack(packet.getData());
+            infoSocket.receive(packet);
+            D.log("recieved packet");
+            AudioTrack at=createAudioTrack(packet);
+
             handleAudioPackets(at);
 
         } catch (IOException e) {
@@ -134,9 +116,19 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     AudioMetaDto metaDto=null;
 
     int bufferSize = 1024;
-    private AudioTrack createAudioTrack(byte[] data) {
+    private AudioTrack createAudioTrack(DatagramPacket p_packet) throws SocketException {
 
-            metaDto=(AudioMetaDto) SerializationUtils.deserialize(data);
+            metaDto=(AudioMetaDto) SerializationUtils.deserialize(p_packet.getData());
+            dataSocket=new DatagramSocket(metaDto.port);
+         DatagramPacket packet
+                = new DatagramPacket(buf, buf.length,address,metaDto.port);
+        try {
+            //send a packet to the server that we crated the client socket
+            dataSocket.send(packet);
+            D.log("sent");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         int minBufferSize = AudioTrack.getMinBufferSize(metaDto.sampleRate,
                 metaDto.channels == 2 ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO,
@@ -150,14 +142,14 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
     private void handleAudioPackets(AudioTrack at) {
 
-
+    D.log("receiving data packets:");
         buf = new byte[1024];
         at.play();
         while (true) {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
-                socket.receive(packet);
-                D.log("recv");
+                dataSocket.receive(packet);
+                D.log("recv package");
                 /////
                 int i = 0;
 
@@ -203,7 +195,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
 
     public void close() {
-        socket.close();
+        dataSocket.close();
     }
 
         public void listen(DatagramPacket packet) throws IOException, ClassNotFoundException {
@@ -223,7 +215,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
  /*public String sendEcho(String msg) {
         buf = msg.getBytes();
         DatagramPacket packet
-                = new DatagramPacket(buf, buf.length, address, 5040);
+                = new DatagramPacket(buf, buf.length, address, ****);
         try {
             D.log("sent");
             socket.send(packet);

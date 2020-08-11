@@ -26,13 +26,16 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     LinkedList<SocketStruct> socketList=new LinkedList<>();
 
     public ServerSocket getServerSocket() {
-        return serverSocket;
+        return dataSocket;
     }
 
-    ServerSocket serverSocket=null;
+    ServerSocket dataSocket=null;
+    ServerSocket requestSocket=null;
     //dependency injection
     public Event<EventArgs1<Body>> MusicPlayerActionEvent =null;
     public Event<EventArgs1<Body>> MetaInfoEvent = null;
+
+
 
 
 
@@ -41,18 +44,18 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     @Override
     public void run() {
         try{
-            serverSocket = new ServerSocket();
-            serverSocket.setReuseAddress(true);
-            serverSocket.bind(new InetSocketAddress(5050));
-            D.log("server address: "+serverSocket.getInetAddress());
-            D.log("localsocketaddress : "+serverSocket.getLocalSocketAddress());
+            dataSocket = new ServerSocket();
+            dataSocket.setReuseAddress(true);
+            dataSocket.bind(new InetSocketAddress(8040));
+            D.log("server address: "+dataSocket.getInetAddress());
+            D.log("localsocketaddress : "+dataSocket.getLocalSocketAddress());
             //serverSocket.bind(new InetSocketAddress(5048));
             //waiting for someone
             D.log("server running");
 
-            while(serverSocket!=null&&!serverSocket.isClosed()) {
-                ServerSocketChannel channel =  serverSocket.getChannel();
-                final Socket socket = serverSocket.accept();
+            while(dataSocket!=null&&!dataSocket.isClosed()) {
+                ServerSocketChannel channel =  dataSocket.getChannel();
+                final Socket socket = dataSocket.accept();
                 if(socket == null){
                     D.log("nonblocking");
                     continue;
@@ -137,7 +140,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     @Override
      public void listen(SocketStruct struct) throws IOException, ClassNotFoundException {
         // read the list of messages from the socket
-         while (serverSocket!=null) {
+         while (dataSocket!=null) {
              if(struct.socket.isConnected()&&!struct.socket.isClosed()) {
                  recentStruct=struct;
                  D.log("listening...");
@@ -218,9 +221,9 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                     s.socket.close();
                 s=null;
             }
-            if(serverSocket!=null){
-                serverSocket.close();
-                serverSocket=null;
+            if(dataSocket!=null){
+                dataSocket.close();
+                dataSocket=null;
             }
 
             System.gc();

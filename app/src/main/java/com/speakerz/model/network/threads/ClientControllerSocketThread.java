@@ -38,7 +38,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             struct=new SocketStruct();
             struct.socket=new Socket();
             struct.socket.setReuseAddress(true);
-            struct.socket.connect(new InetSocketAddress(hostAddress,5050),1000);
+            struct.socket.connect(new InetSocketAddress(hostAddress,8040),1000);
 
             D.log("connection succesful to "+ hostAddress);
             //PrintWriter pr=new PrintWriter(socket.getOutputStream());
