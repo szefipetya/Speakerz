@@ -35,6 +35,7 @@ public class HostModel extends BaseModel {
 
         subscribeMusicPlayerModelEvents();
         subscribeNetWorkEvents();
+        network.getServerSocketWrapper().audioSocket.setContext(context);
     }
 
     private void subscribeNetWorkEvents() {

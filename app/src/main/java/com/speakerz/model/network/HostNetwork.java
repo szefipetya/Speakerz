@@ -3,6 +3,7 @@ package com.speakerz.model.network;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
+import android.net.InetAddresses;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 
@@ -15,9 +16,13 @@ import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.threads.ServerControllerSocketThread;
 import com.speakerz.model.network.threads.ServerSocketWrapper;
+import com.speakerz.model.network.threads.audio.ServerAudioMultiCastSocketThread;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
+
+import java.io.IOException;
+import java.net.InetAddress;
 
 public class HostNetwork extends BaseNetwork {
 
@@ -27,22 +32,24 @@ public class HostNetwork extends BaseNetwork {
 
     public HostNetwork(WifiBroadcastReciever reciever) {
       super(reciever);
-      //this is necessary to create the eventListeners for the serverSocketThread
       serverSocketWrapper.controllerSocket = new ServerControllerSocketThread();
-      subscribeServerSocketThreadEventListeners();
 
+          serverSocketWrapper.audioSocket=new ServerAudioMultiCastSocketThread();
+
+       //this is necessary to create the eventListeners for the serverSocketThread
+       subscribeServerSocketThreadEventListeners();
        reciever.setHost(true);
-      reciever.HostAddressAvailableEvent.addListener(new EventListener<HostAddressEventArgs>() {
+       reciever.HostAddressAvailableEvent.addListener(new EventListener<HostAddressEventArgs>() {
          @Override
          public void action(HostAddressEventArgs args) {
             if(args.isHost()) {
-             startServerThread();
+             startServerThread(args.getAddress());
             }
-         }
-      });
+          }
+       });
    }
 
-   private void startServerThread(){
+   private void startServerThread(InetAddress addr){
 
       if(!serverSocketWrapper.controllerSocket.isAlive()&&
       serverSocketWrapper.controllerSocket.getServerSocket()==null
@@ -54,6 +61,15 @@ public class HostNetwork extends BaseNetwork {
             D.log("err: controllerSocketThread Already started. [HostNetWork]");
          }
 
+      }
+      if(!serverSocketWrapper.audioSocket.isAlive()){
+         D.log("Starting audioSocket thread...");
+         try {
+            serverSocketWrapper.audioSocket.setAddress(addr);
+            serverSocketWrapper.audioSocket.start();
+         }catch (IllegalThreadStateException ex){
+            D.log("err: audioSocket Already started. [HostNetWork]");
+         }
       }
    }
 

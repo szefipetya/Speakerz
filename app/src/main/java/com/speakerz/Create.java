@@ -121,11 +121,9 @@ public class Create extends Activity {
 
     private void initAndStart() {
         lvSongsList=(ListView) findViewById(R.id.lv_song_list_test);
-        if(!_service.getModel().getAreUiEventsSubscribed())
-        {
+
 
             _service.getModel().setAreUiEventsSubscribed(true);
-        }
         subscribeModel((HostModel) _service.getModel());
         _service.getTextValueStorage().autoConfigureTexts(this);
         //_service.getModel().start();
@@ -144,12 +142,28 @@ public class Create extends Activity {
             SpeakerzService.LocalBinder localBinder = (SpeakerzService.LocalBinder) binder;
             _service = localBinder.getService();
             _isBounded = true;
-            runOnUiThread(new Runnable() {
+            if(_service.getModel() instanceof  HostModel){
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        selfActivity.initAndStart();
+                    }
+                });
+            }
+            _service.ModelReadyEvent.addListener(new EventListener<BooleanEventArgs>() {
                 @Override
-                public void run() {
-                    selfActivity.initAndStart();
+                public void action(final BooleanEventArgs args) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(args.getValue())
+                            selfActivity.initAndStart();
+
+                        }
+                    });
                 }
             });
+
         }
 
         @Override
@@ -254,13 +268,5 @@ public class Create extends Activity {
 
     }
     //ITS A FIXME ATTEMT TO FIXME1
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
-            //lvSongsList.onWindowFocusChanged(true);
-           // lvSongsList.invalidate();
-           // lvSongsList.invalidateViews();
-        }
-    }
+
 }

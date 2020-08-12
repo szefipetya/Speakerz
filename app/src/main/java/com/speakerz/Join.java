@@ -68,6 +68,7 @@ public class Join extends Activity {
     }
 
     private void initAndStart() {
+        D.log("initandstart");
         cleanTextValues();
 
             subscribeModel((DeviceModel) _service.getModel());
@@ -217,7 +218,26 @@ public class Join extends Activity {
             SpeakerzService.LocalBinder localBinder = (SpeakerzService.LocalBinder) binder;
             _service = localBinder.getService();
             _isBounded = true;
-            selfActivity.initAndStart();
+            if(_service.getModel() instanceof DeviceModel){
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                            selfActivity.initAndStart();
+                    }
+                });
+            }
+            _service.ModelReadyEvent.addListener(new EventListener<BooleanEventArgs>() {
+                @Override
+                public void action(final BooleanEventArgs args) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(!args.getValue())
+                            selfActivity.initAndStart();
+                        }
+                    });
+                }
+            });
         }
 
         @Override

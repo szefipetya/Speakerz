@@ -1,0 +1,5 @@
+8040:	TCP 	conroller communication
+8050:	UDP 	AuioClients connect
+5101:	UDP 	AudioClient data transfer
+5102:	UDP 	AudioClient data transfer
+5103:	UDP 	AudioClient data transfer	

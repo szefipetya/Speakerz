@@ -24,12 +24,15 @@ public abstract class BaseModel {
     public volatile Event<EventArgs> SongQueueUpdatedEvent=new Event<>();
     public volatile Event<EventArgs1<Body>> MusicPlayerActionEvent=new Event<>();
     public volatile Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
+    public Event<EventArgs1<String>> SongDownloadedEvent=new Event<>();
+
 
 
     public BaseModel(Context context, WifiBroadcastReciever reciever,Boolean isHost){
         musicPlayerModel = new MusicPlayerModel(context);
         musicPlayerModel.setHost(isHost);
         //inject Events to MusicPLayerModel
+        musicPlayerModel.SongDownloadedEvent=SongDownloadedEvent;
         musicPlayerModel.MusicPlayerActionEvent=this.MusicPlayerActionEvent;
         musicPlayerModel.PermissionCheckEvent=this.PermissionCheckEvent;
 

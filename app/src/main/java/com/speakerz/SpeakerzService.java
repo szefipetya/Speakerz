@@ -39,6 +39,7 @@ import com.speakerz.viewModel.TextValueStorage;
 public class SpeakerzService extends Service {
 
 
+
     private final class ServiceHandler extends Handler {
         private  SpeakerzService service;
         private BaseModel model = null;
@@ -74,7 +75,7 @@ public class SpeakerzService extends Service {
 
                 this.subscribeEvents();
                 startId = sId;
-
+                ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
                 D.log("hostmodel created");
             }
             else if(!isHost&&(model==null || model instanceof HostModel)){
@@ -87,7 +88,7 @@ public class SpeakerzService extends Service {
                 model.start();
                 this.subscribeEvents();
                 startId = sId;
-
+                ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
                 D.log("devicemodel created");
             }
             else { // nem kell service csere
@@ -95,7 +96,7 @@ public class SpeakerzService extends Service {
                 startId = sId;
             }
 
-            ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
+
 
 
         }
