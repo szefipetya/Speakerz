@@ -6,6 +6,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.View;
@@ -41,6 +42,8 @@ public class MusicPlayer extends Activity {
     Button buttonNext;
     SeekBar seekBar;
     ListView playListView;
+    ListView audioListView;
+    ArrayAdapter songViewLA =null;
     ArrayAdapter songLA;
 
 
@@ -83,6 +86,8 @@ public class MusicPlayer extends Activity {
         buttonNext = (Button) findViewById(R.id.next);
         seekBar = (SeekBar) findViewById(R.id.elapsedtime);
         playListView = (ListView) findViewById(R.id.playlist);
+        audioListView = (ListView) findViewById(R.id.audiolist);
+
 
         // Register UI event handlers
         buttonBack.setOnClickListener(new View.OnClickListener() {
@@ -99,8 +104,8 @@ public class MusicPlayer extends Activity {
 
         buttonNext.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                NextSong(playedSongnum,model.songQueue);
-                System.out.println(playedSongnum);
+                NextSong(playedSongnum,model.songNameQueue);
+               // System.out.println(playedSongnum);
             }
         });
 
@@ -113,10 +118,6 @@ public class MusicPlayer extends Activity {
                     if (fromUser) {
                         model.mediaPlayer.seekTo(progress);
                         MusicPlayer.this.seekBar.setProgress(progress);
-                        if(progress>=totalTime){
-                            System.out.println("vege user");
-                            //NextSong(playedSongnum,model.songQueue);
-                        }
                     }
                     else{
                         MusicPlayer.this.seekBar.setProgress(progress);
@@ -137,16 +138,23 @@ public class MusicPlayer extends Activity {
     public void initAndStart(){
 
         // Add songs to model's Song Queue
-        Field[] fields = R.raw.class.getFields();
+        /*Field[] fields = R.raw.class.getFields();
         for( int i = 0 ; i < fields.length ; i++){
-            if(!model.songQueue.contains(fields[i].getName())){
-                model.songQueue.add(fields[i].getName());
+            if(!model.songNameQueue.contains(fields[i].getName())){
+                model.songNameQueue.add(fields[i].getName());
             }
-        }
+        }*/
 
-        // Connect Song Queue to list view UI conponent
-        songLA = new ArrayAdapter<String>(this, R.layout.list_item, model.songQueue);
-        playListView.setAdapter(songLA);
+        // Connect Song Queue to list view UI component
+        songViewLA = new ArrayAdapter<String>(model.context,  R.layout.list_item,model.songNameQueue);
+        playListView.setAdapter(songViewLA);
+        songViewLA.setNotifyOnChange(true);
+
+
+        // All audio file list
+        songLA = new ArrayAdapter<String>(this, R.layout.list_item, model.audioNameList);
+        audioListView.setAdapter(songLA);
+        songLA.setNotifyOnChange(true);
 
 
         // Add onClick handler to song list view
@@ -154,18 +162,35 @@ public class MusicPlayer extends Activity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 // Retrieve the resource id of the selected song
-                int resID = getResources().getIdentifier(model.songQueue.get(i),"raw",getPackageName());
-
+               // int resID = getResources().getIdentifier(model.songNameQueue.get(i),"raw",getPackageName());
                 // Starting song
-                model.start(i);
+                model.start(model.context,Uri.parse(model.songQueue.get(i).getData()));
             }
         });
 
-        // starting music if not playing
-        if(!model.isPlaying()){
-           // model.startNext();
-            //MODIFIED
-        }
+        audioListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                //Uri myUri = Uri.parse(model.audioList.get(i).getData());
+                //model.start(model.context, Uri.parse(model.audioList.get(i).getData()));
+                model.songNameQueue.add(model.audioList.get(i).getTitle());
+                model.songQueue.add(model.audioList.get(i));
+
+                songViewLA.notifyDataSetChanged();
+                System.out.println(model.songNameQueue.size());
+                //playListView.setAdapter(songViewLA);
+
+            }
+        });
+
+
+
+        // starting music if not playing,
+        // EZ itt bugos, ha ez bent van akkor automatikusan elkezd lejátszani egy zenét és nem lehet leállítani
+        //if(!model.isPlaying()){
+            //model.startNext();
+
+        //}
     }
 
 
@@ -174,7 +199,7 @@ public class MusicPlayer extends Activity {
 
     public void NextSong(int lastplayedsongnum, List<String> songQueue){
         model.startNext();
-        songPlayed.setText(model.SongPlayed);
+        songPlayed.setText(model.playedSongName);
 
     }
 
@@ -220,6 +245,8 @@ public class MusicPlayer extends Activity {
         super.onStop();
         unbindService(connection);
     }
+
+
 }
 
 

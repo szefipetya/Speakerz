@@ -29,6 +29,7 @@ public class HostModel extends BaseModel {
     public HostModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager) {
         super(context, reciever,true);
         network = new HostNetwork(reciever);
+        network.PermissionCheckEvent=this.PermissionCheckEvent;
         network.getReciever().setConnectivityManager(connectivityManager);
         injectNetworkDependencies();
 

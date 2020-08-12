@@ -23,7 +23,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.speakerz.debug.D;
-import com.speakerz.model.BaseModel;
 import com.speakerz.model.DeviceModel;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.enums.PERM;
@@ -39,7 +38,6 @@ import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
-import com.speakerz.model.network.event.channel.ConnectionUpdatedEventArgs;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
@@ -78,7 +76,7 @@ public class Join extends Activity {
         lvSongsList = (ListView) findViewById(R.id.lv_song_list_test);
         lvPeersList = (ListView) findViewById(R.id.lv_peers);
         //_service.getModel().start();
-        songListAdapter = new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1, _service.getModel().getMusicPlayerModel().getSongQueue());
+        songListAdapter = new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1, _service.getModel().getMusicPlayerModel().getSongNameQueue());
         lvSongsList.setAdapter(songListAdapter);
 
         peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
@@ -104,26 +102,6 @@ public class Join extends Activity {
 
     private void subscribeServiceEvents() {
 
-        _service.PermissionCheckEvent.addListener(new EventListener<PermissionCheckEventArgs>() {
-            @Override
-            public void action(PermissionCheckEventArgs args) {
-                if(args.getReason()== PERM.connectionPermission) {
-                    if (ActivityCompat.checkSelfPermission(selfActivity, args.getRequiredPermission()) != args.getSuccessNumber()) {
-                        Toast.makeText(selfActivity, "Failure at granting a permission. ", Toast.LENGTH_SHORT).show();
-                        //D.log("connection failure: Service");
-                        checkPermission(args.getRequiredPermission(), _service.ACCESS_FINE_LOCATION_CODE);
-                    } else if (_service.getModel() instanceof DeviceModel) {
-                        //critical call. Need to make sure the type before casting...
-                        ((DeviceNetwork) (_service.getModel().getNetwork())).connectWithPermissionGranted();
-                        //D.log("access granted");
-                    }
-                }
-
-                if(args.getReason()==PERM.ACCESS_COARSE_LOCATION){
-                    checkPermission(args.getRequiredPermission(),_service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
-                }
-            }
-        },PermissionCheckEvent_EVT_ID);
     }
 
     //REQUIRED_END MODEL
@@ -145,7 +123,7 @@ public class Join extends Activity {
                         }
 
                         lvSongsList.invalidateViews();
-                        D.log("songList updated, size: "+_service.getModel().getMusicPlayerModel().getSongQueue().size());
+                        D.log("songList updated, size: "+_service.getModel().getMusicPlayerModel().getSongNameQueue().size());
                     }
                 };
                 RunnableFuture<Void> task = new FutureTask<>(run, null);
@@ -365,32 +343,7 @@ public class Join extends Activity {
     //PERMISSIONS
 
 
-    // Function to check and request permission
-    public void checkPermission(String permission, int requestCode) {
 
-        // Checking if permission is not granted
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&ContextCompat.checkSelfPermission(Join.this, permission) == PackageManager.PERMISSION_DENIED) {
-            ActivityCompat
-                    .requestPermissions(
-                            Join.this,
-                            new String[]{permission},
-                            requestCode);
-        } else {
-            //permission already granted
-            D.log(permission +" already granted.");
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == _service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            D.log("ACCESS_COARSE_LOCATION Permission granted.");
-        }
-
-    }
 
 
 }

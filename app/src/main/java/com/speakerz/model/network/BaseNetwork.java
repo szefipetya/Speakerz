@@ -30,7 +30,8 @@ public abstract class BaseNetwork  {
 
     public Event<TextChangedEventArgs> TextChanged = new Event<>();
     public Event<EventArgs> ListChanged = new Event<>();
-    public Event<PermissionCheckEventArgs> PermissionCheckEvent = new Event<>();
+    //@Injected
+    public Event<PermissionCheckEventArgs> PermissionCheckEvent =null;
     //Music player events
     //
 

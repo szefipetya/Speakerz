@@ -88,11 +88,11 @@ public class HostNetwork extends BaseNetwork {
    private void createGroup(){
     //  WifiP2pConfig.Builder builder=new WifiP2pConfig.Builder();
     //  builder.setNetworkName("Group");
-   //   builder.build().wps.setup=WpsInfo.PBC;
+   // builder.build().wps.setup=WpsInfo.PBC;
      // builder.build().groupOwnerIntent=15;
     //  D.log("group device address: "+builder.build().deviceAddress);
 
-      reciever.getWifiP2pManager().createGroup(reciever.getChannel(), new WifiP2pManager.ActionListener() {
+      reciever.getWifiP2pManager().createGroup(reciever.getChannel(), new WifiP2pManager.ActionListener(){
          @Override
          public void onSuccess() {
             // Device is ready to accept incoming connections from peers.
