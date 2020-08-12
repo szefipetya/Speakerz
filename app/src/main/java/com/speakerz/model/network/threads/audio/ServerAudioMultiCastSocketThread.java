@@ -12,9 +12,13 @@ import android.os.Environment;
 import com.google.common.collect.ImmutableSet;
 import com.speakerz.R;
 import com.speakerz.debug.D;
+import com.speakerz.model.network.threads.audio.util.AUDIO;
 import com.speakerz.model.network.threads.audio.util.AudioDecoderThread;
 import com.speakerz.model.network.threads.audio.util.AudioMetaDto;
 import com.speakerz.model.network.threads.audio.util.AudioMetaInfo;
+import com.speakerz.model.network.threads.audio.util.YouTubeStreamAPI;
+import com.speakerz.util.EventArgs2;
+import com.speakerz.util.EventListener;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -59,6 +63,9 @@ import javazoom.jl.decoder.SampleBuffer;
 
 
 public class ServerAudioMultiCastSocketThread extends Thread {
+
+
+
     private class ClientDatagramStruct {
         public ClientDatagramStruct(DatagramSocket socket, InetAddress address, int port) {
             this.address = address;
@@ -73,48 +80,36 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         public int clientPort;
     }
 
-
+   // File currentMediaFile;
     private final List<ClientDatagramStruct> clients = Collections.synchronizedList(new LinkedList<ClientDatagramStruct>());
     private AudioTrack track;
     private FileOutputStream os;
     AudioDecoderThread decoder=new AudioDecoderThread();
+    YouTubeStreamAPI yt=new YouTubeStreamAPI();
+    private void init(){
+        subscribeDecoderEvents();
+    }
+
 
     public void run() {
         // playWav();
-        currentMediaFile = getFileByResId(R.raw.tobu_wav, "target.wav");
-
+       // currentMediaFile = getFileByResId(R.raw.tobu_wav, "target.wav");
+        init();
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    streamAudio();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                   decoder.startPlay(getFileByResId(R.raw.videoplayback,"target.m4a").getAbsolutePath(), AUDIO.M4A);
+          //  yt.play("TW9d8vYrVFQ");
             }
         });
         t.start();
 
-        decoder.startPlay(getFileByResId(R.raw.videoplayback,"passion.aac").getAbsolutePath());
 
-        //   acceptClients();
-    }
-
-
-    public AudioMetaDto getAudioMetaDtoFromFile(File file) {
-        AudioMetaInfo info = new AudioMetaInfo(file);
-        AudioMetaDto dto = new AudioMetaDto();
-        dto.bitsPerSample = (short) info.getAudioHeader().getBitsPerSample();
-        dto.channels = (short) info.getAudioHeader().getChannelCount();
-        dto.bitrate = (short) info.getAudioHeader().getBitRate();
-        dto.sampleRate = info.getAudioHeader().getSampleRate();
-        return dto;
+        acceptClients();
     }
 
     public void sendAudioMeta(ClientDatagramStruct client) {
-        AudioMetaDto dto = getAudioMetaDtoFromFile(currentMediaFile);
+        AudioMetaDto dto = decoder.getAudioMeta();
         dto.port = currentClientPort;
         byte[] dtoBytes = null;
         dtoBytes = SerializationUtils.serialize(dto);
@@ -126,67 +121,6 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             e.printStackTrace();
         }
 
-    }
-
-    public void streamAudio() throws IOException, InterruptedException {
-        D.log("stream started");
-        BufferedInputStream bis = null;
-        AudioTrack at = createAudioTrack(currentMediaFile);
-        try {
-
-            DatagramPacket dp;
-            int bufferSize = 1024;
-
-            byte[] buffer = new byte[bufferSize];
-
-            int i = 0;
-
-
-            FileInputStream fin = new FileInputStream(currentMediaFile);
-            DataInputStream dis = new DataInputStream(fin);
-
-            at.play();
-            while ((i = dis.read(buffer, 0, bufferSize)) > -1) {
-                at.write(buffer, 0, i);
-                synchronized (clients) {
-                    //sending tha packet to all the clients
-                    Iterator it = clients.iterator();
-                    while (it.hasNext()) {
-                        ClientDatagramStruct tmpClient = (ClientDatagramStruct) it.next();
-                        dp = new DatagramPacket(buffer, buffer.length, tmpClient.address, tmpClient.clientPort);
-                        tmpClient.socket.send(dp);
-                        D.log("Packet:" + i + " sent to" + tmpClient.address.getHostAddress() + ":" + tmpClient.clientPort);
-                    }
-                }
-                // D.log("pack sent");
-            }
-            i++;
-            //  System.out.println("Packet:" + (i + 1));
-            D.log("Packet:" + (i + 1));
-
-            //data end
-        } finally {
-            if (bis != null)
-                bis.close();
-            if (recieverSocket != null)
-                recieverSocket.close();
-        }
-    }
-
-    private AudioTrack createAudioTrack(File file) {
-        AudioMetaInfo metaInfo = new AudioMetaInfo(file);
-        //
-        ///play wav
-
-        int minBufferSize = AudioTrack.getMinBufferSize(metaInfo.getAudioHeader().getSampleRate(),
-                metaInfo.getAudioHeader().getChannelCount() == 2 ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO,
-                metaInfo.getAudioHeader().getBitsPerSample() == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT);
-        int bufferSize = 512;
-        AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, metaInfo.getAudioHeader().getSampleRate(),
-                metaInfo.getAudioHeader().getChannelCount() == 2 ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO,
-                metaInfo.getAudioHeader().getBitsPerSample() == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);
-
-        return at;
     }
 
 
@@ -289,7 +223,30 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         }
     }
 
+    private void subscribeDecoderEvents(){
+        decoder.AudioTrackBufferUpdateEvent.addListener(new EventListener<EventArgs2<byte[], Integer>>() {
+            @Override
+            public void action(EventArgs2<byte[], Integer> args) {
+                synchronized (clients) {
+                    //sending tha packet to all the clients
+                    Iterator it = clients.iterator();
+                    DatagramPacket dp=null;
+                    while (it.hasNext()) {
+                        ClientDatagramStruct tmpClient = (ClientDatagramStruct) it.next();
+                        dp = new DatagramPacket(args.arg1(), args.arg1().length, tmpClient.address, tmpClient.clientPort);
+                        try {
+                            tmpClient.socket.send(dp);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                      //  D.log("Packet:" + i + " sent to" + tmpClient.address.getHostAddress() + ":" + tmpClient.clientPort);
+                    }
+                }
+            }
+        });
+    }
 
+//GETTER & SETTER
     public void setAddress(InetAddress address) {
         this.address = address;
     }
@@ -305,6 +262,8 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     public Context getContext() {
         return context;
     }
+
+
 }
   /* while (running) {
             DatagramPacket packet

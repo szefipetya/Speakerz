@@ -17,12 +17,14 @@ package com.speakerz.model.network.threads.audio.util;
  * https://github.com/taehwandev/MediaCodecExample/blob/master/src/net/thdev/mediacodecexample/decoder/AudioDecoderThread.java
  */
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
+import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
 
-import android.graphics.Bitmap;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -34,10 +36,10 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.speakerz.debug.D;
+import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs2;
 
-import org.xml.sax.Parser;
-
-import wseemann.media.FFmpegMediaMetadataRetriever;
+import static android.os.FileUtils.copy;
 
 
 /**
@@ -52,6 +54,25 @@ public class AudioDecoderThread {
 
     private boolean eosReceived;
     private int mSampleRate = 0;
+    public Event<EventArgs2<byte[],Integer>> AudioTrackBufferUpdateEvent=new Event<>();
+
+    public void startPlay(String path, AUDIO audioType) {
+        currentFile=new File(path);
+       startPlay(currentFile,audioType);
+    }
+
+    AUDIO audioType=AUDIO.NONE;
+    public void startPlay(File file, AUDIO audioType) {
+        this.audioType=audioType;
+        currentFile=file;
+        if(audioType==AUDIO.AAC||audioType==AUDIO.M4A){
+            playM4A_AAC(file.getAbsolutePath());
+        }else if(audioType==AUDIO.WAV){
+            playWAV(file);
+        }
+
+    }
+File currentFile=null;
 
 
 String checknull(String in){
@@ -60,23 +81,86 @@ String checknull(String in){
     else return in;
 }
 
-    public void startPlay(String path) {
 
 
-         /*   FFmpegMediaMetadataRetriever retriever = new FFmpegMediaMetadataRetriever();
-            retriever.setDataSource("http://stream7.radio1.hu/radio1_aac_320.m4a?synctoken=7OrGWfl16vH8qFGtRKSogUBJHQoLmbxKSA5537MHuFo");
-      D.log(checknull(retriever.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_ALBUM)));
-        D.log(checknull(retriever.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_ARTIST)));
-        D.log(checknull(retriever.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_ENCODER)));
-        D.log(checknull(retriever.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_AUDIO_CODEC)));
-        D.log(checknull(retriever.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_VARIANT_BITRATE)));
-        D.log(checknull(retriever.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_FRAMERATE)));
-            retriever.release();*/
+    public AudioMetaDto getAudioMeta(){
+          return metaDto;
+    }
+
+    private void playWAV(File file){
+        D.log("stream started");
+        BufferedInputStream bis = null;
+        AudioTrack at = createWavAudioTrack(file);
+        try {
+
+            DatagramPacket dp;
+            int bufferSize = 1024;
+
+            byte[] buffer = new byte[bufferSize];
+
+            int i = 0;
 
 
+            FileInputStream fin = new FileInputStream(file);
+            DataInputStream dis = new DataInputStream(fin);
 
+            at.play();
+            while ((i = dis.read(buffer, 0, bufferSize)) > -1) {
+                at.write(buffer, 0, i);
+                AudioTrackBufferUpdateEvent.invoke(new EventArgs2<byte[], Integer>( self,buffer,i));
 
+                // D.log("pack sent");
+            }
+            i++;
+            //  System.out.println("Packet:" + (i + 1));
+            D.log("Packet:" + (i + 1));
 
+            //data end
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (bis != null) {
+                try {
+                    bis.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    }
+
+    public AudioMetaDto getAudioMetaDtoFromWavFile(File file) {
+        AudioMetaInfo info = new AudioMetaInfo(file);
+        AudioMetaDto dto = new AudioMetaDto();
+        dto.bitsPerSample = (short) info.getAudioHeader().getBitsPerSample();
+        dto.channels = (short) info.getAudioHeader().getChannelCount();
+        dto.bitrate = (short) info.getAudioHeader().getBitRate();
+        dto.sampleRate = info.getAudioHeader().getSampleRate();
+        dto.packageSize=1024;
+        return dto;
+    }
+
+    private AudioTrack createWavAudioTrack(File file) {
+        AudioMetaInfo metaInfo = new AudioMetaInfo(file);
+        //
+        ///play wav
+
+        metaDto=getAudioMetaDtoFromWavFile(file);
+
+        int minBufferSize = AudioTrack.getMinBufferSize(metaInfo.getAudioHeader().getSampleRate(),
+                metaInfo.getAudioHeader().getChannelCount() == 2 ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO,
+                metaInfo.getAudioHeader().getBitsPerSample() == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT);
+        int bufferSize = 512;
+        AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, metaInfo.getAudioHeader().getSampleRate(),
+                metaInfo.getAudioHeader().getChannelCount() == 2 ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO,
+                metaInfo.getAudioHeader().getBitsPerSample() == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);
+
+        return at;
+    }
+AudioMetaDto metaDto=new AudioMetaDto();
+    /////
+    private void playM4A_AAC(String path){
 
         eosReceived = false;
         mExtractor = new MediaExtractor();
@@ -99,7 +183,9 @@ String checknull(String in){
                     Log.e("TAG", "csd : " + csd.array()[k]);
                 }
                 mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+                metaDto.sampleRate=mSampleRate;
                 channel = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+                metaDto.channels=(short)channel;
                 break;
             }
         }
@@ -123,6 +209,11 @@ String checknull(String in){
 
         new Thread(AACDecoderAndPlayRunnable).start();
     }
+
+
+
+
+
 
     /**
      * The code profile, Sample rate, channel Count is used to
@@ -187,6 +278,7 @@ String checknull(String in){
     /**
      * After decoding AAC, Play using Audio Track.
      */
+    AudioDecoderThread self=this;
     public void AACDecoderAndPlay() {
         ByteBuffer[] inputBuffers = mDecoder.getInputBuffers();
         ByteBuffer[] outputBuffers = mDecoder.getOutputBuffers();
@@ -195,7 +287,13 @@ String checknull(String in){
 
         int buffsize = AudioTrack.getMinBufferSize(mSampleRate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
         // create an audiotrack object
-        AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, mSampleRate,
+        D.log("buffsize"+buffsize);
+        metaDto.bitsPerSample=16;
+        metaDto.sampleRate=mSampleRate;
+        metaDto.packageSize=info.size ==0?4096:info.size;
+
+        AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
+                mSampleRate,
                 AudioFormat.CHANNEL_OUT_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT,
                 buffsize,
@@ -244,7 +342,10 @@ String checknull(String in){
                         outBuffer.get(chunk); // Read the buffer all at once
                         outBuffer.clear(); // ** MUST DO!!! OTHERWISE THE NEXT TIME YOU GET THIS SAME BUFFER BAD THINGS WILL HAPPEN
 
+                      //  D.log("offset"+info.offset);
+                       // D.log("size"+info.offset + info.size);
                         audioTrack.write(chunk, info.offset, info.offset + info.size); // AudioTrack write data
+                        AudioTrackBufferUpdateEvent.invoke(new EventArgs2<byte[], Integer>( self,chunk,info.offset + info.size));
                         mDecoder.releaseOutputBuffer(outIndex, false);
                         break;
                 }

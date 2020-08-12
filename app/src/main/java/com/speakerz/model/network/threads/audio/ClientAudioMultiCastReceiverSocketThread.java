@@ -115,7 +115,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
     AudioMetaDto metaDto=null;
 
-    int bufferSize = 1024;
+
     private AudioTrack createAudioTrack(DatagramPacket p_packet) throws SocketException {
 
             metaDto=(AudioMetaDto) SerializationUtils.deserialize(p_packet.getData());
@@ -129,27 +129,42 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        D.log("channels: "+metaDto.channels);
+        D.log("bitsPerSample: "+metaDto.bitsPerSample);
+        D.log("bitrate: "+metaDto.bitrate);
+        D.log("samplerate: "+metaDto.sampleRate);
 
-        int minBufferSize = AudioTrack.getMinBufferSize(metaDto.sampleRate,
-                metaDto.channels == 2 ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO,
+        /*int minBufferSize = AudioTrack.getMinBufferSize(metaDto.sampleRate,
+                metaDto.channels == 2 ? AudioFormat.CHANNEL_OUT_STEREO : AudioFormat.CHANNEL_OUT_MONO,
                 metaDto.bitsPerSample == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT);
 
         AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, metaDto.sampleRate,
-                metaDto.channels == 2 ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO,
-                metaDto.bitsPerSample == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);
+                metaDto.channels == 2 ? AudioFormat.CHANNEL_OUT_STEREO : AudioFormat.CHANNEL_OUT_MONO,
+                metaDto.bitsPerSample == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);*/
+        int minBufferSize = AudioTrack.getMinBufferSize(metaDto.sampleRate,
+               AudioFormat.CHANNEL_OUT_STEREO,
+           AudioFormat.ENCODING_PCM_16BIT);
+
+        AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC,
+                metaDto.sampleRate,
+                AudioFormat.CHANNEL_OUT_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                minBufferSize,
+                AudioTrack.MODE_STREAM);
         return at;
     }
 
     private void handleAudioPackets(AudioTrack at) {
 
     D.log("receiving data packets:");
-        buf = new byte[1024];
+        buf = new byte[metaDto.packageSize];
+       D.log("package size: "+metaDto.packageSize);
         at.play();
         while (true) {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
                 dataSocket.receive(packet);
-                D.log("recv package");
+
                 /////
                 int i = 0;
 
