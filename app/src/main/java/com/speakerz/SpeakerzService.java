@@ -68,9 +68,9 @@ public class SpeakerzService extends Service {
             if(isHost && (model==null || model instanceof DeviceModel)){
                 if(model!=null){stopService("changing service type");}
 
-                model = new HostModel(service, service.receiver,service.connectivityManager);
-                model.PermissionCheckEvent=PermissionCheckEvent;
+                model = new HostModel(service, service.receiver,service.connectivityManager,PermissionCheckEvent);
                 model.start();
+                model.getMusicPlayerModel().loadAudio();
                 registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
 
                 this.subscribeEvents();
@@ -81,11 +81,12 @@ public class SpeakerzService extends Service {
             else if(!isHost&&(model==null || model instanceof HostModel)){
                 if(model!=null){stopService("changing service type");}
 
-                model = new DeviceModel(service, service.receiver,service.connectivityManager);
-                model.PermissionCheckEvent=PermissionCheckEvent;
+                model = new DeviceModel(service, service.receiver,service.connectivityManager,PermissionCheckEvent);
 
                 registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
                 model.start();
+                model.getMusicPlayerModel().loadAudio();
+
                 this.subscribeEvents();
                 startId = sId;
                 ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
@@ -157,6 +158,7 @@ public class SpeakerzService extends Service {
     @Override
     public void onCreate() {
         // Initialize connection objects
+
         textValueStorage = new TextValueStorage();
 
         wifiManager = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);

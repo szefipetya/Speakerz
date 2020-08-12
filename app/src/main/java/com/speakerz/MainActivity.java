@@ -58,8 +58,11 @@ public class MainActivity extends Activity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 checkCoarseLocationPermission();
             }
+            D.log("service connected");
+
 
             subscribePermissionEvents();
+            _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.READ_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED));
 
 
         }
@@ -217,6 +220,11 @@ public class MainActivity extends Activity {
         } else {
             //permission already granted
             D.log(permission +" already granted.");
+            if(requestCode==_service.PERMISSIONS_REQUEST_CODE_READ_EXTERNAL_STORAGE){
+                D.log("storage permission granted.");
+              //  if(_service.getModel()!=null)
+             //   _service.getModel().getMusicPlayerModel().loadAudioWithPermission();
+            }
         }
     }
 
@@ -224,8 +232,13 @@ public class MainActivity extends Activity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == _service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                && grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             D.log("ACCESS_COARSE_LOCATION Permission granted.");
+        }
+        if(requestCode==_service.PERMISSIONS_REQUEST_CODE_READ_EXTERNAL_STORAGE && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+            D.log("storage permission granted.");
+        //    if(_service.getModel()!=null)
+             //     _service.getModel().getMusicPlayerModel().loadAudioWithPermission();
         }
 
     }

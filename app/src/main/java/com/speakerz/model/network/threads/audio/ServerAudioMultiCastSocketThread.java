@@ -98,7 +98,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                   decoder.startPlay(getFileByResId(R.raw.videoplayback,"target.m4a").getAbsolutePath(), AUDIO.M4A);
+                 //  decoder.startPlay(getFileByResId(R.raw.videoplayback,"target.m4a").getAbsolutePath(), AUDIO.M4A);
           //  yt.play("TW9d8vYrVFQ");
             }
         });

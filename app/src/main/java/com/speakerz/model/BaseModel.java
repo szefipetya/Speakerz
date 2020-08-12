@@ -19,7 +19,7 @@ public abstract class BaseModel {
     public abstract void stop();
 
     MusicPlayerModel musicPlayerModel;
-    public Event<PermissionCheckEventArgs> PermissionCheckEvent =new Event<>();
+    public Event<PermissionCheckEventArgs> PermissionCheckEvent;
 
     public volatile Event<EventArgs> SongQueueUpdatedEvent=new Event<>();
     public volatile Event<EventArgs1<Body>> MusicPlayerActionEvent=new Event<>();
@@ -28,13 +28,15 @@ public abstract class BaseModel {
 
 
 
-    public BaseModel(Context context, WifiBroadcastReciever reciever,Boolean isHost){
-        musicPlayerModel = new MusicPlayerModel(context);
+    public BaseModel(Context context, WifiBroadcastReciever reciever,Boolean isHost, Event<PermissionCheckEventArgs> PermissionCheckEvent){
+        this.PermissionCheckEvent=PermissionCheckEvent;
+        musicPlayerModel = new MusicPlayerModel(context,this.PermissionCheckEvent);
         musicPlayerModel.setHost(isHost);
+
+
         //inject Events to MusicPLayerModel
         musicPlayerModel.SongDownloadedEvent=SongDownloadedEvent;
         musicPlayerModel.MusicPlayerActionEvent=this.MusicPlayerActionEvent;
-        musicPlayerModel.PermissionCheckEvent=this.PermissionCheckEvent;
 
         musicPlayerModel.subscribeEventsFromModel();
 
@@ -46,6 +48,7 @@ public abstract class BaseModel {
         });
 
     }
+
 
     public abstract BaseNetwork getNetwork();
 

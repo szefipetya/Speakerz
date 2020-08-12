@@ -15,6 +15,7 @@ import com.speakerz.model.network.Serializable.body.content.SongItem;
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
+import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs3;
@@ -71,8 +72,8 @@ public class DeviceModel extends BaseModel {
 
     }
 
-    public DeviceModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager){
-        super(context, reciever,false);
+    public DeviceModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager, Event<PermissionCheckEventArgs> PermissionCheckEvent){
+        super(context, reciever,false,PermissionCheckEvent);
         network=new DeviceNetwork(reciever);
         network.PermissionCheckEvent=this.PermissionCheckEvent;
         injectNetworkDependencies();

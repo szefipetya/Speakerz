@@ -3,6 +3,8 @@ package com.speakerz.model;
 import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -26,7 +28,12 @@ import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
@@ -109,12 +116,6 @@ public class MusicPlayerModel{
                 }
             }
         });
-        SongDownloadedEvent.addListener(new EventListener<EventArgs1<String>>() {
-            @Override
-            public void action(EventArgs1<String> args) {
-                playFromFile(args.arg1());
-            }
-        });
     }
 
 
@@ -150,16 +151,15 @@ public class MusicPlayerModel{
         }
     });
 
-    public MusicPlayerModel(Context context) {
+    public MusicPlayerModel(Context context,Event<PermissionCheckEventArgs> permEvt) {
         this.context = context;
-
+        this.PermissionCheckEvent=permEvt;
         mediaPlayer = new MediaPlayer();
         durationUpdateThread.start();
 
         // Event handler to start next song automatically
 
         mediaPlayer.setOnCompletionListener(completionListener);
-        loadAudio();
 
       //  playFromAudioStream();
       //  InputStream is =context.getResources().openRawResource(R.raw.passion_aac);
@@ -283,123 +283,6 @@ public class MusicPlayerModel{
         else
             start();
     }
-    void copy(InputStream source, OutputStream target) throws IOException {
-        byte[] buf = new byte[8192];
-        int length;
-        while ((length = source.read(buf)) > 0) {
-            target.write(buf, 0, length);
-        }
-    }
-    public void playFromFile(String path) {
-//        String path= context.getClassLoader().getResource("tobu_good_times.mp3").getPath();
-
-        // D.log(path);
-     //   InputStream fis = context.getResources().openRawResource(R.raw.tobu_good_times);
-
-      //  File file = new File(context.getFilesDir(), "audio.mp3");
-      //  try (OutputStream outputStream = new FileOutputStream(file)) {
-       //     copy(fis, outputStream);
-        try {
-            D.log("played from file-------------------------");
-            mediaPlayer.setDataSource(path);
-            mediaPlayer.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        mediaPlayer.start();
-      /*      D.log("file readed");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            // handle exception here
-        } catch (IOException e) {
-            e.printStackTrace();
-            // handle exception here
-        }*/
-    }
-
-
-
-
-
-   private void playFromAudioStreamDirectly(InputStream is){
-
-
-        final int duration = 10; // duration of sound
-        final int sampleRate = 22050; // Hz (maximum frequency is 7902.13Hz (B8))
-        final int numSamples = duration * sampleRate;
-        final double samples[] = new double[numSamples];
-        final short buffer[] = new short[numSamples];
-
-
-        AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
-                sampleRate, AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT, buffer.length,
-                AudioTrack.MODE_STATIC);
-
-     //  audioTrack.write(buffer, 0, buffer.length);
-      // audioTrack.play();
-       while(true){
-           try {
-               byte[] buffer2 = new byte[1024];
-
-               if (!(is.read(buffer2)==-1)) break;
-               audioTrack.write(buffer2, 0, buffer2.length);
-                audioTrack.play();
-           } catch (IOException e) {
-               e.printStackTrace();
-           }
-
-       }
-
-    }
-
-    File tmpMediaFile;
-    public void playFromAudioStream(InputStream p_is){
-            try {
-
-
-                InputStream is =context.getResources().openRawResource(R.raw.passion_aac);
-
-                // create file to store audio
-                tmpMediaFile = new File(this.context.getCacheDir(),"mediafile");
-                FileOutputStream fos = new FileOutputStream(tmpMediaFile);
-                byte buf[] = new byte[16 * 1024];
-               D.log("FileOutputStream", "Download");
-
-                // write to file until complete
-                do {
-                    int numread = is.read(buf);
-                    if (numread <= 0)
-                        break;
-                    fos.write(buf, 0, numread);
-                } while (true);
-                fos.flush();
-                fos.close();
-                D.log("FileOutputStream", "Saved");
-                MediaPlayer mp = new MediaPlayer();
-
-                // create listener to tidy up after playback complete
-                MediaPlayer.OnCompletionListener listener = new MediaPlayer.OnCompletionListener() {
-                    public void onCompletion(MediaPlayer mp) {
-                        // free up media player
-                        mp.release();
-                        D.log("MediaPlayer.OnCompletionListener", "MediaPlayer Released");
-                    }
-                };
-                mp.setOnCompletionListener(listener);
-
-                FileInputStream fis = new FileInputStream(tmpMediaFile);
-                // set mediaplayer data source to file descriptor of input stream
-                mp.setDataSource(fis.getFD());
-                mp.prepare();
-                D.log("MediaPlayer", "Start Player");
-                mp.start();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-
 
     //Getter && Setter
     public Boolean getHost() {
@@ -413,9 +296,7 @@ public class MusicPlayerModel{
 
 
     //Load All Audio from the device To AudioList ( you will be bale to choose from these to add to the SongQueue
-    private void loadAudio() {
-
-        PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.READ_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED));
+    public void loadAudioWithPermission(){
         ContentResolver contentResolver = context.getContentResolver();
 
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
@@ -440,5 +321,10 @@ public class MusicPlayerModel{
         }
         cursor.close();
 
+
+    }
+
+    public void loadAudio() {
+        loadAudioWithPermission();
     }
 }

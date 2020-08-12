@@ -15,6 +15,8 @@ import com.speakerz.model.network.Serializable.body.PutSongRequestBody;
 import com.speakerz.model.network.Serializable.body.content.SongItem;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
+import com.speakerz.model.network.event.PermissionCheckEventArgs;
+import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
@@ -26,8 +28,9 @@ public class HostModel extends BaseModel {
     HostNetwork network;
 
 
-    public HostModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager) {
-        super(context, reciever,true);
+    public HostModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager, Event<PermissionCheckEventArgs> PermissionCheckEvent) {
+
+        super(context, reciever,true,PermissionCheckEvent);
         network = new HostNetwork(reciever);
         network.PermissionCheckEvent=this.PermissionCheckEvent;
         network.getReciever().setConnectivityManager(connectivityManager);
