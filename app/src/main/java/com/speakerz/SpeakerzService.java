@@ -38,6 +38,7 @@ import com.speakerz.viewModel.TextValueStorage;
 
 public class SpeakerzService extends Service {
 
+
     private final class ServiceHandler extends Handler {
         private  SpeakerzService service;
         private BaseModel model = null;
@@ -67,6 +68,7 @@ public class SpeakerzService extends Service {
                 if(model!=null){stopService("changing service type");}
 
                 model = new HostModel(service, service.receiver,service.connectivityManager);
+                model.PermissionCheckEvent=PermissionCheckEvent;
                 model.start();
                 registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
 
@@ -79,6 +81,8 @@ public class SpeakerzService extends Service {
                 if(model!=null){stopService("changing service type");}
 
                 model = new DeviceModel(service, service.receiver,service.connectivityManager);
+                model.PermissionCheckEvent=PermissionCheckEvent;
+
                 registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
                 model.start();
                 this.subscribeEvents();
@@ -124,15 +128,7 @@ public class SpeakerzService extends Service {
         }
 
         private void subscribeEvents(){
-            model.getNetwork().PermissionCheckEvent.addListener(new EventListener<PermissionCheckEventArgs>() {
-                @Override
-                public void action(PermissionCheckEventArgs args) {
-                    //pass the permission sh*t to one of the views
-                    PermissionCheckEvent.invoke(args);
 
-                }
-
-            });
 
         }
         public BaseModel getModel(){
@@ -253,5 +249,7 @@ public class SpeakerzService extends Service {
     public final int ACCESS_FINE_LOCATION_CODE = 100;
     public final int STORAGE_PERMISSION_CODE = 101;
     public final int PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION = 102;
+    public final int PERMISSIONS_REQUEST_CODE_READ_EXTERNAL_STORAGE= 103;
+
 
 }

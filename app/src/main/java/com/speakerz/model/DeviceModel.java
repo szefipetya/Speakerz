@@ -73,6 +73,7 @@ public class DeviceModel extends BaseModel {
     public DeviceModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager){
         super(context, reciever,false);
         network=new DeviceNetwork(reciever);
+        network.PermissionCheckEvent=this.PermissionCheckEvent;
         injectNetworkDependencies();
 
         subscribeNetworkEvents();

@@ -5,6 +5,7 @@ import android.content.Context;
 import com.speakerz.model.network.BaseNetwork;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.WifiBroadcastReciever;
+import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
@@ -18,6 +19,8 @@ public abstract class BaseModel {
     public abstract void stop();
 
     MusicPlayerModel musicPlayerModel;
+    public Event<PermissionCheckEventArgs> PermissionCheckEvent =new Event<>();
+
     public volatile Event<EventArgs> SongQueueUpdatedEvent=new Event<>();
     public volatile Event<EventArgs1<Body>> MusicPlayerActionEvent=new Event<>();
     public volatile Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
@@ -28,6 +31,8 @@ public abstract class BaseModel {
         musicPlayerModel.setHost(isHost);
         //inject Events to MusicPLayerModel
         musicPlayerModel.MusicPlayerActionEvent=this.MusicPlayerActionEvent;
+        musicPlayerModel.PermissionCheckEvent=this.PermissionCheckEvent;
+
         musicPlayerModel.subscribeEventsFromModel();
 
 

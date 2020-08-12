@@ -1,7 +1,11 @@
 package com.speakerz;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import android.app.Activity;
 
 import android.Manifest;
@@ -18,11 +22,17 @@ import android.os.IBinder;
 import android.os.StrictMode;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 
 import com.speakerz.SpeakerzService.LocalBinder;
 import com.speakerz.debug.D;
+import com.speakerz.model.DeviceModel;
+import com.speakerz.model.enums.PERM;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
+import com.speakerz.model.network.DeviceNetwork;
+import com.speakerz.model.network.event.PermissionCheckEventArgs;
+import com.speakerz.util.EventListener;
 
 
 /**REQUIRED means: it needs to be in every Activity.*/
@@ -34,7 +44,7 @@ public class MainActivity extends Activity {
     CommonModel_ViewEventHandler viewEventHandler;
 
     //REQUIRED_END MODEL
-
+    Integer PermissionCheckEvent_EVT_ID=145;
 
     private ServiceConnection connection = new ServiceConnection() {
 
@@ -48,6 +58,10 @@ public class MainActivity extends Activity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 checkCoarseLocationPermission();
             }
+
+            subscribePermissionEvents();
+
+
         }
 
         @Override
@@ -55,6 +69,35 @@ public class MainActivity extends Activity {
             _isBounded = false;
         }
     };
+
+    private void subscribePermissionEvents(){
+
+
+
+        _service.PermissionCheckEvent.addListener(new EventListener<PermissionCheckEventArgs>() {
+            @Override
+            public void action(PermissionCheckEventArgs args) {
+                if(args.getReason()== PERM.connectionPermission) {
+                    if (ActivityCompat.checkSelfPermission(MainActivity.this, args.getRequiredPermission()) != args.getSuccessNumber()) {
+                        Toast.makeText(MainActivity.this, "Failure at granting a permission. ", Toast.LENGTH_SHORT).show();
+                        //D.log("connection failure: Service");
+                        checkPermission(args.getRequiredPermission(), _service.ACCESS_FINE_LOCATION_CODE);
+                    } else if (_service.getModel() instanceof DeviceModel) {
+                        //critical call. Need to make sure the type before casting...
+                        ((DeviceNetwork) (_service.getModel().getNetwork())).connectWithPermissionGranted();
+                        //D.log("access granted");
+                    }
+                }
+
+                if(args.getReason()==PERM.ACCESS_COARSE_LOCATION){
+                    checkPermission(args.getRequiredPermission(),_service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
+                }
+                if(args.getReason()==PERM.READ_EXTERNAL_STORAGE){
+                    checkPermission(args.getRequiredPermission(),_service.PERMISSIONS_REQUEST_CODE_READ_EXTERNAL_STORAGE);
+                }
+            }
+        },PermissionCheckEvent_EVT_ID);
+    }
 
     @Override
     protected void onStart() {
@@ -158,6 +201,38 @@ public class MainActivity extends Activity {
 
     }
 
+    //Permission&Policy
+    // Function to check and request permission
+    public void checkPermission(String permission, int requestCode) {
+
+        // Checking if permission is not granted
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && ContextCompat.checkSelfPermission(MainActivity.this, permission) == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat
+                    .requestPermissions(
+                            MainActivity.this,
+                            new String[]{permission},
+                            requestCode);
+        } else {
+            //permission already granted
+            D.log(permission +" already granted.");
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == _service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            D.log("ACCESS_COARSE_LOCATION Permission granted.");
+        }
+
+    }
+
+
+
+
+
     private void checkDataSendingPolicy() {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -189,15 +264,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                           int[] grantResults) {
-        if (requestCode == _service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            // Do something with granted permission
-            D.log("ACCESS_COARSE_LOCATION Permission granted by request");
-        }
-    }
+
 
     private void buildAlertMessageNoGps() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);

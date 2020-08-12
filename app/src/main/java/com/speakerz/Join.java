@@ -101,26 +101,6 @@ public class Join extends Activity {
 
     private void subscribeServiceEvents() {
 
-        _service.PermissionCheckEvent.addListener(new EventListener<PermissionCheckEventArgs>() {
-            @Override
-            public void action(PermissionCheckEventArgs args) {
-                if(args.getReason()== PERM.connectionPermission) {
-                    if (ActivityCompat.checkSelfPermission(selfActivity, args.getRequiredPermission()) != args.getSuccessNumber()) {
-                        Toast.makeText(selfActivity, "Failure at granting a permission. ", Toast.LENGTH_SHORT).show();
-                        //D.log("connection failure: Service");
-                        checkPermission(args.getRequiredPermission(), _service.ACCESS_FINE_LOCATION_CODE);
-                    } else if (_service.getModel() instanceof DeviceModel) {
-                        //critical call. Need to make sure the type before casting...
-                        ((DeviceNetwork) (_service.getModel().getNetwork())).connectWithPermissionGranted();
-                        //D.log("access granted");
-                    }
-                }
-
-                if(args.getReason()==PERM.ACCESS_COARSE_LOCATION){
-                    checkPermission(args.getRequiredPermission(),_service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
-                }
-            }
-        },PermissionCheckEvent_EVT_ID);
     }
 
     //REQUIRED_END MODEL
@@ -343,32 +323,7 @@ public class Join extends Activity {
     //PERMISSIONS
 
 
-    // Function to check and request permission
-    public void checkPermission(String permission, int requestCode) {
 
-        // Checking if permission is not granted
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&ContextCompat.checkSelfPermission(Join.this, permission) == PackageManager.PERMISSION_DENIED) {
-            ActivityCompat
-                    .requestPermissions(
-                            Join.this,
-                            new String[]{permission},
-                            requestCode);
-        } else {
-            //permission already granted
-            D.log(permission +" already granted.");
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == _service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            D.log("ACCESS_COARSE_LOCATION Permission granted.");
-        }
-
-    }
 
 
 }

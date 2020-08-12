@@ -1,7 +1,9 @@
 package com.speakerz.model;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -9,11 +11,13 @@ import android.provider.MediaStore;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
+import com.speakerz.model.enums.PERM;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.GetSongListBody;
 import com.speakerz.model.network.Serializable.body.PutSongRequestBody;
 import com.speakerz.model.network.Serializable.body.content.SongItem;
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
+import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
@@ -31,6 +35,7 @@ import java.util.ArrayList;
 public class MusicPlayerModel{
 
 
+    public Event<PermissionCheckEventArgs> PermissionCheckEvent=null;
     private Boolean isHost;
     private Boolean asd;
 
@@ -276,6 +281,8 @@ public class MusicPlayerModel{
 
     //Load All Audio from the device To AudioList ( you will be bale to choose from these to add to the SongQueue
     private void loadAudio() {
+
+        PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.READ_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED));
         ContentResolver contentResolver = context.getContentResolver();
 
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
