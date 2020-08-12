@@ -23,7 +23,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.speakerz.debug.D;
-import com.speakerz.model.BaseModel;
 import com.speakerz.model.DeviceModel;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.enums.PERM;
@@ -39,7 +38,6 @@ import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
-import com.speakerz.model.network.event.channel.ConnectionUpdatedEventArgs;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
@@ -77,7 +75,7 @@ public class Join extends Activity {
         lvSongsList = (ListView) findViewById(R.id.lv_song_list_test);
         lvPeersList = (ListView) findViewById(R.id.lv_peers);
         //_service.getModel().start();
-        songListAdapter = new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1, _service.getModel().getMusicPlayerModel().getSongQueue());
+        songListAdapter = new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1, _service.getModel().getMusicPlayerModel().getSongNameQueue());
         lvSongsList.setAdapter(songListAdapter);
 
         peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
@@ -144,7 +142,7 @@ public class Join extends Activity {
                         }
 
                         lvSongsList.invalidateViews();
-                        D.log("songList updated, size: "+_service.getModel().getMusicPlayerModel().getSongQueue().size());
+                        D.log("songList updated, size: "+_service.getModel().getMusicPlayerModel().getSongNameQueue().size());
                     }
                 };
                 RunnableFuture<Void> task = new FutureTask<>(run, null);

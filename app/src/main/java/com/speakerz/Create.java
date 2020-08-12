@@ -13,18 +13,14 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.HostModel;
 import com.speakerz.model.enums.EVT;
-import com.speakerz.model.network.Serializable.body.Body;
-import com.speakerz.model.network.Serializable.body.content.SongItem;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.EventArgs;
-import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
 
 import java.util.concurrent.ExecutionException;
@@ -46,7 +42,7 @@ public class Create extends Activity {
     private void subscribeModel(final HostModel model) {
         D.log("events subscribed.");
         final Create selfActivity = this;
-        songListAdapter=new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1,model.getMusicPlayerModel().getSongQueue());
+        songListAdapter=new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1,model.getMusicPlayerModel().getSongNameQueue());
         songListAdapter.setNotifyOnChange(true);
         lvSongsList.setAdapter(songListAdapter);
 
@@ -70,7 +66,7 @@ public class Create extends Activity {
                             }
                             lvSongsList.invalidateViews();
                             D.log("dataset updated.");
-                            D.log("size: "+_service.getModel().getMusicPlayerModel().getSongQueue().size());
+                            D.log("size: "+_service.getModel().getMusicPlayerModel().getSongNameQueue().size());
                         }
                     };
                     RunnableFuture<Void> task = new FutureTask<>(run, null);
@@ -262,9 +258,9 @@ public class Create extends Activity {
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
-            lvSongsList.onWindowFocusChanged(true);
-            lvSongsList.invalidate();
-            lvSongsList.invalidateViews();
+            //lvSongsList.onWindowFocusChanged(true);
+           // lvSongsList.invalidate();
+           // lvSongsList.invalidateViews();
         }
     }
 }

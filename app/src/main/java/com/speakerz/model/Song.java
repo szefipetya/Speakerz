@@ -1,5 +1,7 @@
 package com.speakerz.model;
 
+import android.net.Uri;
+
 import java.io.Serializable;
 
 public class Song implements Serializable {
