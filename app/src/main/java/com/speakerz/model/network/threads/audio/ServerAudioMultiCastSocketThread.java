@@ -48,20 +48,15 @@ import org.apache.commons.lang3.SerializationUtils;
 public class ServerAudioMultiCastSocketThread extends Thread {
 
     public void playAudioStreamFromLocalStorage(final File file){
-        decoder.stop();
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    decoder.startPlay(file, AUDIO.MP3);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                //  yt.play("TW9d8vYrVFQ");
-            }
-        });
-        t.start();
+        //decoder.stop();
+        synchronized(locker) {
+            D.log("SONG PLAYING");
+            songpicked=true;
+            currentFile=file;
+            locker.notify();
+        }
     }
+    File currentFile=null;
 
     public void stopAudioStream() {
         decoder.stop();
@@ -92,9 +87,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
    // File currentMediaFile;
     private final List<ClientDatagramStruct> clients = Collections.synchronizedList(new LinkedList<ClientDatagramStruct>());
-    private AudioTrack track;
     AudioMetaDto recentAudioMetaDto=null;
-    private FileOutputStream os;
     AudioDecoderThread decoder=new AudioDecoderThread();
     YouTubeStreamAPI yt=new YouTubeStreamAPI();
 
@@ -104,24 +97,52 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     }
 
 
-
-
-
+    Boolean songpicked=false;
+    final Object locker=new Object();
     public void run() {
         // playWav();
        // currentMediaFile = getFileByResId(R.raw.tobu_wav, "target.wav");
         init();
 
 
-
-        acceptClients();
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    try {
+                        synchronized(locker) {
+                            while(! songpicked) {
+                                locker.wait();
+                            }
+                            D.log("MP3 IS PLAYING");
+                            //getFileByResId(R.raw.tobu_wav,"target.wav")
+                            decoder.startPlay(currentFile,AUDIO.MP3);
+                        }
+                    } catch (InterruptedException e) {
+                        D.log("startPlayDecoder thread interrupted");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //  yt.play("TW9d8vYrVFQ");
+            }
+        });
+        t.setPriority(Thread.MAX_PRIORITY);
+        t.start();
+        Thread t2=new Thread(new Runnable() {
+            @Override
+            public void run() {
+                acceptClients();
+            }
+        });
+        t2.start();
     }
 
     public void sendAudioMeta(ClientDatagramStruct client) {
-
-        recentAudioMetaDto.port = currentClientPort;
+        AudioMetaDto dto = decoder.getAudioMeta();
+        dto.port = currentClientPort;
         byte[] dtoBytes = null;
-        dtoBytes = SerializationUtils.serialize(recentAudioMetaDto);
+        dtoBytes = SerializationUtils.serialize(dto);
 
         DatagramPacket dtoDp = new DatagramPacket(dtoBytes, dtoBytes.length, client.address,8050);
         try {
@@ -131,6 +152,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         }
 
     }
+
 
 
     ///
@@ -201,18 +223,17 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                 e.printStackTrace();
             }
 
-            D.log("sening meta to " + newClient.address.getHostAddress());
             //the new clients recieve the meta info from the server
             //and their designated port number to listen on for the audio data
+            clients.add(newClient);
+            if(recentAudioMetaDto!=null)
+            synchronized (clients) {
+                D.log("client added");
 
-            //send audiodto if something is in play
-            if(recentAudioMetaDto!=null){
                 sendAudioMeta(newClient);
                 waitForClientResponse(newClient);
             }
-            synchronized (clients) {
-                clients.add(newClient);
-            }
+
 
         }
 
@@ -232,6 +253,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             e.printStackTrace();
         }
     }
+
 
     private void subscribeDecoderEvents(){
         decoder.MetaDtoReadyEvent.addListener(new EventListener<EventArgs1<AudioMetaDto>>() {

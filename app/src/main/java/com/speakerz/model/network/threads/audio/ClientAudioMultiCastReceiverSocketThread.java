@@ -142,8 +142,8 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                 metaDto.channels == 2 ? AudioFormat.CHANNEL_OUT_STEREO : AudioFormat.CHANNEL_OUT_MONO,
                 metaDto.bitsPerSample == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);*/
         int minBufferSize = AudioTrack.getMinBufferSize(metaDto.sampleRate,
-               AudioFormat.CHANNEL_OUT_STEREO,
-           AudioFormat.ENCODING_PCM_16BIT);
+                AudioFormat.CHANNEL_OUT_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT);
 
         AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC,
                 metaDto.sampleRate,
@@ -152,23 +152,25 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                 minBufferSize,
                 AudioTrack.MODE_STREAM);
         return at;
+
+
     }
 
     private void handleAudioPackets(AudioTrack at) {
 
-    D.log("receiving data packets:");
+        D.log("receiving data packets:");
         buf = new byte[metaDto.packageSize];
-       D.log("package size: "+metaDto.packageSize);
+        D.log("package size: "+metaDto.packageSize);
         at.play();
         while (true) {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
-
                 dataSocket.receive(packet);
+
                 /////
                 int i = 0;
 
-                        at.write(buf, 0, packet.getLength());
+                at.write(buf, 0, packet.getLength());
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -176,6 +178,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
         }
 
     }
+
 
 
     File tmpFile;

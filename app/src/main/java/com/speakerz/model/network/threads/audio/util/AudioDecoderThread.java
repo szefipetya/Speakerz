@@ -94,6 +94,7 @@ public class AudioDecoderThread {
 
 
     private void playMP3(File file) throws IOException {
+        eosReceived=false;
        // Create a jlayer Decoder instance.
 D.log("PLAYING MP3 ");
                 Decoder decoder = new Decoder();
@@ -129,12 +130,8 @@ D.log("PLAYING MP3 ");
         Header frame = null;
         int framesReaded = 0;
         boolean l=false;
-        while (!eosReceived) {
-            while(!isPlaying){
-
-            }
-
-            try {
+        while (true) {
+                     try {
                 if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
                     D.log("readed tha whole music");
                     break;
@@ -164,12 +161,15 @@ D.log("PLAYING MP3 ");
             byte[] byte1024=new byte[1024];
             int i=0;
             int counter=0;
-            while(0<(i=bis.read(byte1024,0,1024))){
+           /* while(0<(i=bis.read(byte1024,0,1024))){
 
              //   D.log(String.valueOf(i));
 
                 counter++;
-            }
+            }*/
+
+
+         //  D.log("writed:"+bytes.length);
             audioTrack.write(bytes,0,bytes.length);
             AudioTrackBufferUpdateEvent.invoke(new EventArgs2<byte[], Integer>(self,bytes,bytes.length));
 
@@ -221,19 +221,11 @@ String checknull(String in){
             DataInputStream dis = new DataInputStream(fin);
 
             at.play();
-            while ((i = dis.read(buffer, 0, bufferSize)) > -1 && !eosReceived) {
-                while(!isPlaying){
-
-                }
-
+            MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
+            while ((i = dis.read(buffer, 0, bufferSize)) > -1) {
                 at.write(buffer, 0, i);
                 AudioTrackBufferUpdateEvent.invoke(new EventArgs2<byte[], Integer>( self,buffer,i));
-
                 // D.log("pack sent");
-            }
-            if(eosReceived){
-                at.stop();
-               at.release();
             }
             i++;
             //  System.out.println("Packet:" + (i + 1));
@@ -271,7 +263,6 @@ String checknull(String in){
         ///play wav
 
         metaDto=getAudioMetaDtoFromWavFile(file);
-        MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
 
         int minBufferSize = AudioTrack.getMinBufferSize(metaInfo.getAudioHeader().getSampleRate(),
                 metaInfo.getAudioHeader().getChannelCount() == 2 ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO,
