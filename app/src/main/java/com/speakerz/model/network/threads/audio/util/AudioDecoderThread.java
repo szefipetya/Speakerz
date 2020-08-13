@@ -156,7 +156,7 @@ D.log("PLAYING MP3 ");
             byte[] bytes = buffer.array();
             if(!l){
                 l=true;
-                metaDto.packageSize=1024;
+                metaDto.packageSize=bytes.length;
                 MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
                 D.log(String.valueOf(metaDto.packageSize));
             }
@@ -167,10 +167,11 @@ D.log("PLAYING MP3 ");
             while(0<(i=bis.read(byte1024,0,1024))){
 
              //   D.log(String.valueOf(i));
-                audioTrack.write(byte1024,0,i);
-                AudioTrackBufferUpdateEvent.invoke(new EventArgs2<byte[], Integer>(self,byte1024,i));
+
                 counter++;
             }
+            audioTrack.write(bytes,0,bytes.length);
+            AudioTrackBufferUpdateEvent.invoke(new EventArgs2<byte[], Integer>(self,bytes,bytes.length));
 
             //audioTrack.write(bytes, 0, bytes.length);
             bitStream.closeFrame();
