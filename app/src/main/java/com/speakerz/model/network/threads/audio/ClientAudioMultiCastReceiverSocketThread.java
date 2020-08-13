@@ -163,8 +163,8 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
         while (true) {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
-                dataSocket.receive(packet);
 
+                dataSocket.receive(packet);
                 /////
                 int i = 0;
 

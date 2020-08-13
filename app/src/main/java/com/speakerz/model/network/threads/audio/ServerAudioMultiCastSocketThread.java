@@ -17,6 +17,7 @@ import com.speakerz.model.network.threads.audio.util.AudioDecoderThread;
 import com.speakerz.model.network.threads.audio.util.AudioMetaDto;
 import com.speakerz.model.network.threads.audio.util.AudioMetaInfo;
 import com.speakerz.model.network.threads.audio.util.YouTubeStreamAPI;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
 
@@ -40,31 +41,40 @@ import java.util.LinkedList;
 import java.util.List;
 
 
-import android.media.AudioFormat;
-
-import androidx.annotation.RequiresApi;
-
 import org.apache.commons.lang3.SerializationUtils;
 
-import ealvatag.audio.AudioFile;
-import ealvatag.audio.AudioFileIO;
-import ealvatag.audio.AudioHeader;
-import ealvatag.audio.exceptions.CannotReadException;
-import ealvatag.audio.exceptions.CannotWriteException;
-import ealvatag.audio.exceptions.InvalidAudioFrameException;
-import ealvatag.tag.FieldDataInvalidException;
-import ealvatag.tag.FieldKey;
-import ealvatag.tag.NullTag;
-import ealvatag.tag.Tag;
-import ealvatag.tag.TagException;
-import ealvatag.tag.TagOptionSingleton;
-import javazoom.jl.decoder.Decoder;
-import javazoom.jl.decoder.SampleBuffer;
 
 
 public class ServerAudioMultiCastSocketThread extends Thread {
 
+    public void playAudioStreamFromLocalStorage(final File file){
+        decoder.stop();
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    decoder.startPlay(file, AUDIO.MP3);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //  yt.play("TW9d8vYrVFQ");
+            }
+        });
+        t.start();
+    }
 
+    public void stopAudioStream() {
+        decoder.stop();
+    }
+
+    public void pauseAudioStream() {
+
+        decoder.isPlaying=false;
+    }
+
+    public void resumeAudioStream() {
+        decoder.isPlaying=true;
+    }
 
     private class ClientDatagramStruct {
         public ClientDatagramStruct(DatagramSocket socket, InetAddress address, int port) {
@@ -83,36 +93,35 @@ public class ServerAudioMultiCastSocketThread extends Thread {
    // File currentMediaFile;
     private final List<ClientDatagramStruct> clients = Collections.synchronizedList(new LinkedList<ClientDatagramStruct>());
     private AudioTrack track;
+    AudioMetaDto recentAudioMetaDto=null;
     private FileOutputStream os;
     AudioDecoderThread decoder=new AudioDecoderThread();
     YouTubeStreamAPI yt=new YouTubeStreamAPI();
+
+
     private void init(){
         subscribeDecoderEvents();
     }
+
+
+
 
 
     public void run() {
         // playWav();
        // currentMediaFile = getFileByResId(R.raw.tobu_wav, "target.wav");
         init();
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                 //  decoder.startPlay(getFileByResId(R.raw.videoplayback,"target.m4a").getAbsolutePath(), AUDIO.M4A);
-          //  yt.play("TW9d8vYrVFQ");
-            }
-        });
-        t.start();
+
 
 
         acceptClients();
     }
 
     public void sendAudioMeta(ClientDatagramStruct client) {
-        AudioMetaDto dto = decoder.getAudioMeta();
-        dto.port = currentClientPort;
+
+        recentAudioMetaDto.port = currentClientPort;
         byte[] dtoBytes = null;
-        dtoBytes = SerializationUtils.serialize(dto);
+        dtoBytes = SerializationUtils.serialize(recentAudioMetaDto);
 
         DatagramPacket dtoDp = new DatagramPacket(dtoBytes, dtoBytes.length, client.address,8050);
         try {
@@ -183,14 +192,11 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                 e.printStackTrace();
             }
 
-            InetAddress address = packet.getAddress();
-            int port = packet.getPort();
-
             ClientDatagramStruct newClient = null;
             try {
                 //on the server side the client gets a designated port number.
                 currentClientPort++;
-                newClient = new ClientDatagramStruct(new DatagramSocket(currentClientPort), address, currentClientPort);
+                newClient = new ClientDatagramStruct(new DatagramSocket(currentClientPort), packet.getAddress(), currentClientPort);
             } catch (SocketException e) {
                 e.printStackTrace();
             }
@@ -198,8 +204,12 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             D.log("sening meta to " + newClient.address.getHostAddress());
             //the new clients recieve the meta info from the server
             //and their designated port number to listen on for the audio data
-            sendAudioMeta(newClient);
-            waitForClientResponse(newClient);
+
+            //send audiodto if something is in play
+            if(recentAudioMetaDto!=null){
+                sendAudioMeta(newClient);
+                waitForClientResponse(newClient);
+            }
             synchronized (clients) {
                 clients.add(newClient);
             }
@@ -224,6 +234,24 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     }
 
     private void subscribeDecoderEvents(){
+        decoder.MetaDtoReadyEvent.addListener(new EventListener<EventArgs1<AudioMetaDto>>() {
+            @Override
+            public void action(EventArgs1<AudioMetaDto> args) {
+                synchronized (clients){
+                    recentAudioMetaDto = args.arg1();
+                    //sending tha packet to all the clients
+                    Iterator it = clients.iterator();
+                    while (it.hasNext()) {
+                        ClientDatagramStruct tmpClient = (ClientDatagramStruct) it.next();
+                        sendAudioMeta(tmpClient);
+                        waitForClientResponse(tmpClient);
+                        //  D.log("Packet:" + i + " sent to" + tmpClient.address.getHostAddress() + ":" + tmpClient.clientPort);
+                    }
+                }
+
+                }
+
+        });
         decoder.AudioTrackBufferUpdateEvent.addListener(new EventListener<EventArgs2<byte[], Integer>>() {
             @Override
             public void action(EventArgs2<byte[], Integer> args) {

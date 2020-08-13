@@ -1,21 +1,14 @@
 package com.speakerz.model;
 
-import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.provider.MediaStore;
 
-import com.speakerz.R;
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
-import com.speakerz.model.enums.PERM;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.GetSongListBody;
 import com.speakerz.model.network.Serializable.body.PutSongRequestBody;
@@ -29,11 +22,6 @@ import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
@@ -131,7 +119,7 @@ public class MusicPlayerModel{
     Thread durationUpdateThread = new Thread(new Runnable() {
         @Override
         public void run() {
-            try{
+           /* try{
                 int _current = -1, _total = -1;
                 while(true){
                     if(mediaPlayer != null && mediaPlayer.isPlaying()) {
@@ -147,7 +135,7 @@ public class MusicPlayerModel{
                     Thread.sleep(250);
                 }
             }
-            catch (InterruptedException e) { }
+            catch (InterruptedException e) { }*/
         }
     });
 
@@ -197,9 +185,8 @@ public class MusicPlayerModel{
     // starting song by Uri
     public void start(Context context, Uri uri){
         try {
-            mediaPlayer.stop();
-            playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
-            if(mediaPlayer != null) mediaPlayer.reset();
+           // mediaPlayer.stop();
+         /*   if(mediaPlayer != null) mediaPlayer.reset();
             mediaPlayer = null;
 
             mediaPlayer = new MediaPlayer();
@@ -214,7 +201,14 @@ public class MusicPlayerModel{
                 e.printStackTrace();
             }
             mediaPlayer.setOnCompletionListener(completionListener);
-            mediaPlayer.start();
+            mediaPlayer.start();*/
+
+            //HostModel is registered for this event, so we pass the File
+             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
+
+            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_STOP,new File(uri.getPath()),null));
+
+            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_PLAY,new File(uri.getPath()),null));
 
             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
         }
@@ -239,9 +233,10 @@ public class MusicPlayerModel{
 
     // Starting song from songQueue by index
     public void start(int songIndex){
-        if(mediaPlayer.isPlaying()){
-            mediaPlayer.stop();
-        }
+       if(isPlaying){
+           isPlaying=false;
+           ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_STOP,null,null));
+       }
         if(songNameQueue.size() > 0 && songIndex < songNameQueue.size()) {
             currentPlayingIndex = songIndex;
             //int resId = context.getResources().getIdentifier(songNameQueue.get(songIndex), "raw", context.getPackageName());
@@ -256,11 +251,18 @@ public class MusicPlayerModel{
     }
 
     // Start paused playing
+    boolean isPlaying=false;
     public void start(){
-        if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
-            mediaPlayer.start();
+        if(isPlaying==false){
             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
+            isPlaying=true;
+            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_RESUME,null,null));
         }
+
+       /* if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
+            mediaPlayer.start();
+
+        }*/
     }
 
     // returns true is media player exists and playing media
@@ -270,10 +272,15 @@ public class MusicPlayerModel{
 
     // pauses media player if exists
     public void pause(){
-        if(mediaPlayer != null) {
-            mediaPlayer.pause();
+        if(isPlaying) {
+            isPlaying=false;
+            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self, MP_EVT.SONG_PAUSE, null, null));
             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
         }
+        /*if(mediaPlayer != null) {
+            mediaPlayer.pause();
+            playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
+        }*/
     }
 
     // Toggles pause and start state of player

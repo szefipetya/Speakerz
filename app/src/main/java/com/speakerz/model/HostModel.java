@@ -17,10 +17,10 @@ import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
-import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -69,6 +69,18 @@ public class HostModel extends BaseModel {
                         D.log("could not send a single song to"+args.arg3().senderAddress+((SongItem)(args.arg3().getContent())).sender);
                     }
 
+                }
+                if(args.arg1()==MP_EVT.SONG_PLAY){
+                    network.getServerSocketWrapper().audioSocket.playAudioStreamFromLocalStorage((File)args.arg2());
+                }
+                if(args.arg1()==MP_EVT.SONG_STOP){
+                    network.getServerSocketWrapper().audioSocket.stopAudioStream();
+                }
+                if(args.arg1()==MP_EVT.SONG_PAUSE){
+                    network.getServerSocketWrapper().audioSocket.pauseAudioStream();
+                }
+                if(args.arg1()==MP_EVT.SONG_RESUME){
+                    network.getServerSocketWrapper().audioSocket.resumeAudioStream();
                 }
             }
         });

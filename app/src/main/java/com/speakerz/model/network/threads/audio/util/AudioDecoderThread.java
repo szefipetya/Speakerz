@@ -18,12 +18,15 @@ package com.speakerz.model.network.threads.audio.util;
  */
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -37,7 +40,15 @@ import android.util.Log;
 
 import com.speakerz.debug.D;
 import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
+
+import javazoom.jl.decoder.Bitstream;
+import javazoom.jl.decoder.BitstreamException;
+import javazoom.jl.decoder.Decoder;
+import javazoom.jl.decoder.DecoderException;
+import javazoom.jl.decoder.Header;
+import javazoom.jl.decoder.SampleBuffer;
 
 import static android.os.FileUtils.copy;
 
@@ -52,27 +63,131 @@ public class AudioDecoderThread {
     private MediaExtractor mExtractor;
     private MediaCodec mDecoder;
 
-    private boolean eosReceived;
+    private volatile boolean eosReceived;
     private int mSampleRate = 0;
     public Event<EventArgs2<byte[],Integer>> AudioTrackBufferUpdateEvent=new Event<>();
+    public Event<EventArgs1<AudioMetaDto>> MetaDtoReadyEvent =new Event<>();
 
-    public void startPlay(String path, AUDIO audioType) {
+    public void startPlay(String path, AUDIO audioType) throws IOException {
         currentFile=new File(path);
        startPlay(currentFile,audioType);
     }
 
     AUDIO audioType=AUDIO.NONE;
-    public void startPlay(File file, AUDIO audioType) {
+    public void startPlay(File file, AUDIO audioType) throws IOException {
         this.audioType=audioType;
+        eosReceived = false;
         currentFile=file;
         if(audioType==AUDIO.AAC||audioType==AUDIO.M4A){
             playM4A_AAC(file.getAbsolutePath());
         }else if(audioType==AUDIO.WAV){
             playWAV(file);
+        }else if(audioType==AUDIO.MP3){
+            playMP3(file);
         }
 
     }
-File currentFile=null;
+
+    public volatile boolean isPlaying=false;
+
+
+
+
+    private void playMP3(File file) throws IOException {
+       // Create a jlayer Decoder instance.
+D.log("PLAYING MP3 ");
+                Decoder decoder = new Decoder();
+
+       // Create a jlayer BitStream instance of a given mp3 source.
+
+        AudioMetaInfo metaInfo=new AudioMetaInfo(file) ;
+        metaDto.sampleRate=metaInfo.getAudioHeader().getSampleRate();
+        metaDto.channels=(short)metaInfo.getAudioHeader().getChannelCount();
+        metaDto.bitrate=(short)metaInfo.getAudioHeader().getBitRate();
+        metaDto.bitsPerSample=(short)metaInfo.getAudioHeader().getBitsPerSample();
+        InputStream mp3Source =new FileInputStream(file);
+        Bitstream bitStream = new Bitstream(mp3Source);
+
+       // Create an AudioTrack instance.
+
+
+        final int minBufferSize = AudioTrack.getMinBufferSize( metaDto.sampleRate,
+               TransformAF.channel(metaDto.channels),
+                AudioFormat.ENCODING_PCM_16BIT);
+
+        AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
+                metaDto.sampleRate,
+                TransformAF.channel(metaDto.channels),
+                AudioFormat.ENCODING_PCM_16BIT,
+                minBufferSize,
+                AudioTrack.MODE_STREAM);
+
+      //  Decode the mp3 BitStream data by Decoder and feed the outcoming PCM chunks to AudioTrack.
+    audioTrack.play();
+        final int READ_THRESHOLD = 2147483647;
+
+        Header frame = null;
+        int framesReaded = 0;
+        boolean l=false;
+        while (!eosReceived) {
+            while(!isPlaying){
+
+            }
+
+            try {
+                if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
+                    D.log("readed tha whole music");
+                    break;
+                }
+
+            } catch (BitstreamException e) {
+                e.printStackTrace();
+            }
+            SampleBuffer sampleBuffer = null;
+            try {
+                sampleBuffer = (SampleBuffer) decoder.decodeFrame(frame, bitStream);
+            } catch (DecoderException e) {
+                e.printStackTrace();
+            }
+            short[] pcmChunk = sampleBuffer.getBuffer();
+            ByteBuffer buffer = ByteBuffer.allocate(pcmChunk.length * 2);
+            buffer.order(ByteOrder.LITTLE_ENDIAN);
+            buffer.asShortBuffer().put(pcmChunk);
+            byte[] bytes = buffer.array();
+            if(!l){
+                l=true;
+                metaDto.packageSize=1024;
+                MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
+                D.log(String.valueOf(metaDto.packageSize));
+            }
+            ByteArrayInputStream bis=new ByteArrayInputStream(bytes);
+            byte[] byte1024=new byte[1024];
+            int i=0;
+            int counter=0;
+            while(0<(i=bis.read(byte1024,0,1024))){
+
+             //   D.log(String.valueOf(i));
+                audioTrack.write(byte1024,0,i);
+                AudioTrackBufferUpdateEvent.invoke(new EventArgs2<byte[], Integer>(self,byte1024,i));
+                counter++;
+            }
+
+            //audioTrack.write(bytes, 0, bytes.length);
+            bitStream.closeFrame();
+        }
+
+        if(eosReceived){
+            audioTrack.stop();
+
+            audioTrack.release();
+        }
+
+
+    }
+
+
+
+    File currentFile=null;
 
 
 String checknull(String in){
@@ -105,11 +220,19 @@ String checknull(String in){
             DataInputStream dis = new DataInputStream(fin);
 
             at.play();
-            while ((i = dis.read(buffer, 0, bufferSize)) > -1) {
+            while ((i = dis.read(buffer, 0, bufferSize)) > -1 && !eosReceived) {
+                while(!isPlaying){
+
+                }
+
                 at.write(buffer, 0, i);
                 AudioTrackBufferUpdateEvent.invoke(new EventArgs2<byte[], Integer>( self,buffer,i));
 
                 // D.log("pack sent");
+            }
+            if(eosReceived){
+                at.stop();
+               at.release();
             }
             i++;
             //  System.out.println("Packet:" + (i + 1));
@@ -147,6 +270,7 @@ String checknull(String in){
         ///play wav
 
         metaDto=getAudioMetaDtoFromWavFile(file);
+        MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
 
         int minBufferSize = AudioTrack.getMinBufferSize(metaInfo.getAudioHeader().getSampleRate(),
                 metaInfo.getAudioHeader().getChannelCount() == 2 ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO,
@@ -162,7 +286,7 @@ AudioMetaDto metaDto=new AudioMetaDto();
     /////
     private void playM4A_AAC(String path){
 
-        eosReceived = false;
+
         mExtractor = new MediaExtractor();
         try {
             mExtractor.setDataSource(path);
@@ -291,6 +415,7 @@ AudioMetaDto metaDto=new AudioMetaDto();
         metaDto.bitsPerSample=16;
         metaDto.sampleRate=mSampleRate;
         metaDto.packageSize=info.size ==0?4096:info.size;
+        MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
 
         AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
                 mSampleRate,
@@ -301,6 +426,9 @@ AudioMetaDto metaDto=new AudioMetaDto();
         audioTrack.play();
 
         while (!eosReceived) {
+            while(!isPlaying){
+
+            }
             int inIndex = mDecoder.dequeueInputBuffer(TIMEOUT_US);
             if (inIndex >= 0) {
                 ByteBuffer buffer = inputBuffers[inIndex];
@@ -357,6 +485,9 @@ AudioMetaDto metaDto=new AudioMetaDto();
                 }
             }
         }
+        if(eosReceived){
+            audioTrack.stop();
+        }
 
         mDecoder.stop();
         mDecoder.release();
@@ -372,6 +503,11 @@ AudioMetaDto metaDto=new AudioMetaDto();
 
     public void stop() {
         eosReceived = true;
+    }
+
+    private class PcmPackageStructure{
+
+        int[] bufferSizes;
     }
 
 }
