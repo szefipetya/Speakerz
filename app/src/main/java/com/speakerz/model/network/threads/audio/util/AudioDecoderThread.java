@@ -39,9 +39,12 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.speakerz.debug.D;
+import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
+
+import org.apache.commons.lang3.SerializationUtils;
 
 import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.BitstreamException;
@@ -65,7 +68,7 @@ public class AudioDecoderThread {
 
     private volatile boolean eosReceived;
     private int mSampleRate = 0;
-    public Event<EventArgs2<byte[],Integer>> AudioTrackBufferUpdateEvent=new Event<>();
+    public Event<EventArgs1<AudioPacket>> AudioTrackBufferUpdateEvent=new Event<>();
     public Event<EventArgs1<AudioMetaDto>> MetaDtoReadyEvent =new Event<>();
 
     public void startPlay(String path, AUDIO audioType) throws IOException {
@@ -151,27 +154,34 @@ D.log("PLAYING MP3 ");
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.asShortBuffer().put(pcmChunk);
             byte[] bytes = buffer.array();
+            int packsize=2048;
             if(!l){
                 l=true;
-                metaDto.packageSize=bytes.length;
+                AudioPacket pack=new AudioPacket(packsize,new byte[packsize]);
+                byte[] data= SerializationUtils.serialize(pack);
+                D.log("serialized pack length to send: "+String.valueOf(data.length));
+                metaDto.packageSize=data.length;
                 MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
-                D.log(String.valueOf(metaDto.packageSize));
+                D.log("converted size: "+String.valueOf(metaDto.packageSize));
+                D.log("original package size: "+ String.valueOf(bytes.length));
             }
             ByteArrayInputStream bis=new ByteArrayInputStream(bytes);
-            byte[] byte1024=new byte[1024];
+            byte[] byte1024=new byte[packsize];
             int i=0;
             int counter=0;
-           /* while(0<(i=bis.read(byte1024,0,1024))){
+            while(0<(i=bis.read(byte1024,0,packsize))){
 
              //   D.log(String.valueOf(i));
+                audioTrack.write(byte1024,0,i);
+                AudioPacket pack=new AudioPacket(i,byte1024);
 
+                AudioTrackBufferUpdateEvent.invoke(new EventArgs1<AudioPacket>(self,pack));
                 counter++;
-            }*/
+            }
 
 
          //  D.log("writed:"+bytes.length);
-            audioTrack.write(bytes,0,bytes.length);
-            AudioTrackBufferUpdateEvent.invoke(new EventArgs2<byte[], Integer>(self,bytes,bytes.length));
+
 
             //audioTrack.write(bytes, 0, bytes.length);
             bitStream.closeFrame();
@@ -224,7 +234,9 @@ String checknull(String in){
             MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
             while ((i = dis.read(buffer, 0, bufferSize)) > -1) {
                 at.write(buffer, 0, i);
-                AudioTrackBufferUpdateEvent.invoke(new EventArgs2<byte[], Integer>( self,buffer,i));
+                AudioPacket pack=new AudioPacket(i,buffer);
+
+                AudioTrackBufferUpdateEvent.invoke(new EventArgs1<AudioPacket>( self,pack));
                 // D.log("pack sent");
             }
             i++;
@@ -465,7 +477,9 @@ AudioMetaDto metaDto=new AudioMetaDto();
                       //  D.log("offset"+info.offset);
                        // D.log("size"+info.offset + info.size);
                         audioTrack.write(chunk, info.offset, info.offset + info.size); // AudioTrack write data
-                        AudioTrackBufferUpdateEvent.invoke(new EventArgs2<byte[], Integer>( self,chunk,info.offset + info.size));
+                        AudioPacket pack=new AudioPacket(info.offset + info.size,chunk);
+
+                        AudioTrackBufferUpdateEvent.invoke(new EventArgs1<AudioPacket>( self,pack));
                         mDecoder.releaseOutputBuffer(outIndex, false);
                         break;
                 }

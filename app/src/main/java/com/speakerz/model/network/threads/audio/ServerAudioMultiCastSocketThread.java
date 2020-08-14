@@ -17,6 +17,7 @@ import com.speakerz.model.network.threads.audio.util.AudioDecoderThread;
 import com.speakerz.model.network.threads.audio.util.AudioMetaDto;
 import com.speakerz.model.network.threads.audio.util.AudioMetaInfo;
 import com.speakerz.model.network.threads.audio.util.YouTubeStreamAPI;
+import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
@@ -110,14 +111,16 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             public void run() {
                 try {
                     try {
-                        synchronized(locker) {
-                            while(! songpicked) {
-                                locker.wait();
+                        while(true)
+                            synchronized(locker) {
+                                while(! songpicked) {
+                                    locker.wait();
+                                }
+                                songpicked=false;
+                                D.log("MP3 IS PLAYING");
+                                //getFileByResId(R.raw.tobu_wav,"target.wav")
+                                decoder.startPlay(currentFile,AUDIO.MP3);
                             }
-                            D.log("MP3 IS PLAYING");
-                            //getFileByResId(R.raw.tobu_wav,"target.wav")
-                            decoder.startPlay(currentFile,AUDIO.MP3);
-                        }
                     } catch (InterruptedException e) {
                         D.log("startPlayDecoder thread interrupted");
                     }
@@ -274,22 +277,22 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                 }
 
         });
-        decoder.AudioTrackBufferUpdateEvent.addListener(new EventListener<EventArgs2<byte[], Integer>>() {
+        decoder.AudioTrackBufferUpdateEvent.addListener(new EventListener<EventArgs1<AudioPacket>>() {
             @Override
-            public void action(EventArgs2<byte[], Integer> args) {
+            public void action(EventArgs1<AudioPacket> args) {
                 synchronized (clients) {
                     //sending tha packet to all the clients
                     Iterator it = clients.iterator();
                     DatagramPacket dp=null;
                     while (it.hasNext()) {
                         ClientDatagramStruct tmpClient = (ClientDatagramStruct) it.next();
-                        dp = new DatagramPacket(args.arg1(), args.arg1().length, tmpClient.address, tmpClient.clientPort);
+                       byte[] data= SerializationUtils.serialize(args.arg1());
+                        dp = new DatagramPacket(data, data.length, tmpClient.address, tmpClient.clientPort);
                         try {
                             tmpClient.socket.send(dp);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                      //  D.log("Packet:" + i + " sent to" + tmpClient.address.getHostAddress() + ":" + tmpClient.clientPort);
                     }
                 }
             }

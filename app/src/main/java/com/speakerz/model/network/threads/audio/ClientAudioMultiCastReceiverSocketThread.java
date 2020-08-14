@@ -7,6 +7,7 @@ import android.media.AudioTrack;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.network.threads.audio.util.AudioMetaDto;
+import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
 
@@ -166,12 +167,12 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
                 dataSocket.receive(packet);
-
+                AudioPacket audioPacket=(AudioPacket) SerializationUtils.deserialize(packet.getData());
                 /////
                 int i = 0;
 
-                at.write(buf, 0, packet.getLength());
-
+                at.write(audioPacket.data, 0,audioPacket.size);
+                buf=new byte[metaDto.packageSize];
             } catch (IOException e) {
                 e.printStackTrace();
             }
