@@ -12,6 +12,7 @@ import android.os.Environment;
 import com.google.common.collect.ImmutableSet;
 import com.speakerz.R;
 import com.speakerz.debug.D;
+import com.speakerz.model.network.threads.ClientSocketWrapper;
 import com.speakerz.model.network.threads.audio.util.AUDIO;
 import com.speakerz.model.network.threads.audio.util.AudioDecoderThread;
 import com.speakerz.model.network.threads.audio.util.AudioMetaDto;
@@ -72,6 +73,16 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         decoder.isPlaying=true;
     }
 
+    public void shutdown() {
+        if(recieverSocket!=null)
+        recieverSocket.close();
+        for(ClientDatagramStruct ds: clients){
+            if(ds!=null){
+                ds.socket.close();
+            }
+        }
+    }
+
     private class ClientDatagramStruct {
         public ClientDatagramStruct(DatagramSocket socket, InetAddress address, int port) {
             this.address = address;
@@ -111,7 +122,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             public void run() {
                 try {
                     try {
-                        while(true)
+                        while(!recieverSocket.isClosed())
                             synchronized(locker) {
                                 while(! songpicked) {
                                     locker.wait();
@@ -206,7 +217,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
     public void acceptClients() {
 
-        while (true) {
+        while (!recieverSocket.isClosed()) {
             D.log("acccepting UDP clients...");
             DatagramPacket packet
                     = new DatagramPacket(buf, buf.length);
@@ -289,6 +300,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                        byte[] data= SerializationUtils.serialize(args.arg1());
                         dp = new DatagramPacket(data, data.length, tmpClient.address, tmpClient.clientPort);
                         try {
+                            if(!tmpClient.socket.isClosed())
                             tmpClient.socket.send(dp);
                         } catch (IOException e) {
                             e.printStackTrace();

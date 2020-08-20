@@ -114,8 +114,6 @@ public class SpeakerzService extends Service {
 
 
             model = null;
-
-            wifiP2pManager.cancelConnect(wifiP2pChannel,null);
             System.gc();
             Toast.makeText(service,"speakerZ service shutdown\nreason: "+msg,Toast.LENGTH_SHORT).show();
         }
@@ -229,12 +227,13 @@ public class SpeakerzService extends Service {
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        super.onTaskRemoved(rootIntent);
         D.log("ontaskRemoved");
         serviceHandler.stopService("terminated by user");
        // Toast.makeText(this, "user extit.", Toast.LENGTH_SHORT).show();
 
         //STOP SERVICE OR WHATEVER YOU WANT
+        super.onTaskRemoved(rootIntent);
+
     }
     //GETTERS
     public TextValueStorage getTextValueStorage() {

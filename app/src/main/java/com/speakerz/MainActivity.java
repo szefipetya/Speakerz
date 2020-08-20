@@ -63,6 +63,7 @@ public class MainActivity extends Activity {
 
             subscribePermissionEvents();
             _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.READ_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED));
+            _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
 
 
         }
@@ -81,15 +82,7 @@ public class MainActivity extends Activity {
             @Override
             public void action(PermissionCheckEventArgs args) {
                 if(args.getReason()== PERM.connectionPermission) {
-                    if (ActivityCompat.checkSelfPermission(MainActivity.this, args.getRequiredPermission()) != args.getSuccessNumber()) {
-                        Toast.makeText(MainActivity.this, "Failure at granting a permission. ", Toast.LENGTH_SHORT).show();
-                        //D.log("connection failure: Service");
-                        checkPermission(args.getRequiredPermission(), _service.ACCESS_FINE_LOCATION_CODE);
-                    } else if (_service.getModel() instanceof DeviceModel) {
-                        //critical call. Need to make sure the type before casting...
-                        ((DeviceNetwork) (_service.getModel().getNetwork())).connectWithPermissionGranted();
-                        //D.log("access granted");
-                    }
+                    checkPermission(args.getRequiredPermission(), _service.ACCESS_FINE_LOCATION_CODE);
                 }
 
                 if(args.getReason()==PERM.ACCESS_COARSE_LOCATION){
@@ -225,6 +218,12 @@ public class MainActivity extends Activity {
               //  if(_service.getModel()!=null)
              //   _service.getModel().getMusicPlayerModel().loadAudioWithPermission();
             }
+            if(requestCode== _service.ACCESS_FINE_LOCATION_CODE){
+                D.log("fine location permission granted originally.");
+
+                //  if(_service.getModel()!=null)
+                //   _service.getModel().getMusicPlayerModel().loadAudioWithPermission();
+            }
         }
     }
 
@@ -239,6 +238,12 @@ public class MainActivity extends Activity {
             D.log("storage permission granted.");
         //    if(_service.getModel()!=null)
              //     _service.getModel().getMusicPlayerModel().loadAudioWithPermission();
+        }
+        if(requestCode== _service.ACCESS_FINE_LOCATION_CODE){
+            D.log("fine location permission granted by request");
+
+            //  if(_service.getModel()!=null)
+            //   _service.getModel().getMusicPlayerModel().loadAudioWithPermission();
         }
 
     }

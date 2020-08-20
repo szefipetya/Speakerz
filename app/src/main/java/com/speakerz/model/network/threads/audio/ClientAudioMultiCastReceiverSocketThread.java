@@ -21,6 +21,8 @@ import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.MulticastSocket;
 import java.net.SocketException;
 
 public class ClientAudioMultiCastReceiverSocketThread extends Thread {
@@ -48,6 +50,11 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
     public void setAddress(InetAddress address) {
         this.address = address;
+       /* try {
+            infoSocket.bind(new InetSocketAddress(address,8050));
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }*/
     }
 
     private InetAddress address;
@@ -59,31 +66,23 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
             //create the infoSocket to send request for a port and the audio meta
             infoSocket = new DatagramSocket(8050);
 
+        //    infoSocket.setReuseAddress(true);
+
+
         } catch (SocketException e) {
             e.printStackTrace();
-        }
-    }
-
-    public void init(){
-        File tmpFile = new File(context.getFilesDir(), "audio.mp3");
-        try {
-            fos = new FileOutputStream(tmpFile);
-            this.fos = new FileOutputStream(tmpFile);
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
-
-
-        // write to file until complete
-
     }
+
 
 
 
     @Override
     public void run() {
         D.log("testbegins");
-        init();
+
 
       //send a packet to the host to know about this client
 
@@ -163,9 +162,10 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
         buf = new byte[metaDto.packageSize];
         D.log("package size: "+metaDto.packageSize);
         at.play();
-        while (true) {
+        while (!dataSocket.isClosed()) {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
+
                 dataSocket.receive(packet);
                 AudioPacket audioPacket=(AudioPacket) SerializationUtils.deserialize(packet.getData());
                 /////
@@ -226,6 +226,11 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
         }
 
         public void shutdown() {
+        if(infoSocket!=null){
+            infoSocket.close();}
+        if(dataSocket!=null){
+            dataSocket.close();
+        }
 
         }
 

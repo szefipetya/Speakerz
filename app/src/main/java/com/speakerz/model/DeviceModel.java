@@ -2,6 +2,7 @@ package com.speakerz.model;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.wifi.p2p.WifiP2pManager;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
@@ -22,6 +23,7 @@ import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 public class DeviceModel extends BaseModel {
@@ -56,6 +58,7 @@ public class DeviceModel extends BaseModel {
 
         if(network.getClientSocketWrapper().controllerSocket!=null) {
             network.getClientSocketWrapper().controllerSocket.shutdown();
+            network.getClientSocketWrapper().audioSocket.shutdown();
             try {
                 network.getClientSocketWrapper().controllerSocket.join();
             } catch (InterruptedException e) {
@@ -69,9 +72,25 @@ public class DeviceModel extends BaseModel {
         network.ListChanged=null;
         network.TextChanged.removeAllListeners();
         network.TextChanged=null;
+        deletePersistentGroups();
 
     }
 
+    private void deletePersistentGroups(){
+        try {
+            Method[] methods = WifiP2pManager.class.getMethods();
+            for (int i = 0; i < methods.length; i++) {
+                if (methods[i].getName().equals("deletePersistentGroup")) {
+                    // Delete any persistent group
+                    for (int netid = 0; netid < 32; netid++) {
+                        methods[i].invoke(network.getReciever().getWifiP2pManager(), network.getReciever().getChannel(), netid, null);
+                    }
+                }
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
     public DeviceModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager, Event<PermissionCheckEventArgs> PermissionCheckEvent){
         super(context, reciever,false,PermissionCheckEvent);
         network=new DeviceNetwork(reciever);
@@ -83,7 +102,6 @@ public class DeviceModel extends BaseModel {
         network.getReciever().setConnectivityManager(connectivityManager);
         subscribeMusicPlayerModelEvents();
         network.getClientSocketWrapper().audioSocket.setContext(context);
-        network.getClientSocketWrapper().audioSocket.init();
 
 
 

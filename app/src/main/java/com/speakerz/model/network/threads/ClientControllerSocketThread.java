@@ -26,7 +26,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     //injection
    public Event<EventArgs1<Body>> MetaInfoReceivedEvent;
     public Event<EventArgs1<Body>> MusicPlayerActionEvent;
-
+    volatile boolean externalShutdown=false;
     public ClientControllerSocketThread(){
 
     }
@@ -47,7 +47,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             struct.objectOutputStream = new ObjectOutputStream(struct.socket.getOutputStream());
             struct.objectInputStream = new ObjectInputStream(struct.socket.getInputStream());
             listen(struct);
-        } catch (IOException  | ClassNotFoundException e) {
+        } catch (IOException  e) {
             if(e.getMessage()!=null)
                D.log(e.getMessage());
             e.printStackTrace();
@@ -59,12 +59,22 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     }
 
     @Override
-    public void listen(SocketStruct struct) throws IOException, ClassNotFoundException {
-        while(struct.socket!=null) {
+    public void listen(SocketStruct struct){
+        while(!externalShutdown&&!struct.socket.isClosed()) {
             D.log("listening...");
             // read the list of messages from the socket
-            ChannelObject chObject = (ChannelObject) struct.objectInputStream.readObject();
-            handleIncomingObject(chObject);
+            ChannelObject chObject = null;
+            try {
+                chObject = (ChannelObject) struct.objectInputStream.readObject();
+                handleIncomingObject(chObject);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+                break;
+            } catch (IOException e) {
+                e.printStackTrace();
+                break;
+            }
+
         }
     }
 
@@ -95,20 +105,15 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
         try {
             if (struct != null) {
                 if (struct.objectInputStream != null) {
-
                     struct.objectInputStream.close();
                 }
                 if (struct.objectOutputStream != null) {
-                    struct.objectOutputStream.reset();
-                    struct.objectOutputStream.flush();
                     struct.objectOutputStream.close();
-
                 }
                 if (struct.socket != null)
                     struct.socket.close();
-                struct.socket = null;
-                System.gc();
 
+                externalShutdown=true;
             }
             } catch(IOException e){
                 e.printStackTrace();

@@ -128,6 +128,7 @@ public class HostModel extends BaseModel {
         D.log("Model stopped");
         if(   network.getServerSocketWrapper().controllerSocket!=null) {
             network.getServerSocketWrapper().controllerSocket.shutdown();
+            network.getServerSocketWrapper().audioSocket.shutdown();
             try {
                 network.getServerSocketWrapper().controllerSocket.join();
             } catch (InterruptedException e) {
