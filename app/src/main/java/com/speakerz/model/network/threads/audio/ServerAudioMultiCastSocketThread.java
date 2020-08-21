@@ -227,7 +227,6 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             ClientDatagramStruct newClient = null;
             try {
                 //on the server side the client gets a designated port number.
