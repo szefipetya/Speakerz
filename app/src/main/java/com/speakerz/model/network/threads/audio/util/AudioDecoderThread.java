@@ -76,6 +76,11 @@ public class AudioDecoderThread {
        startPlay(currentFile,audioType);
     }
 
+    public AudioTrack getAudioTrack() {
+        return audioTrack;
+    }
+
+    AudioTrack audioTrack=null;
     AUDIO audioType=AUDIO.NONE;
     public void startPlay(File file, AUDIO audioType) throws IOException {
         this.audioType=audioType;
@@ -119,7 +124,8 @@ D.log("PLAYING MP3 ");
                TransformAF.channel(metaDto.channels),
                 AudioFormat.ENCODING_PCM_16BIT);
 
-        AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
+
+         audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
                 metaDto.sampleRate,
                 TransformAF.channel(metaDto.channels),
                 AudioFormat.ENCODING_PCM_16BIT,
@@ -172,6 +178,7 @@ D.log("PLAYING MP3 ");
             while(0<(i=bis.read(byte1024,0,packsize))){
 
              //   D.log(String.valueOf(i));
+                if(audioTrack==null||eosReceived){return;}
                 audioTrack.write(byte1024,0,i);
                 AudioPacket pack=new AudioPacket(i,byte1024);
 
@@ -186,14 +193,6 @@ D.log("PLAYING MP3 ");
             //audioTrack.write(bytes, 0, bytes.length);
             bitStream.closeFrame();
         }
-
-        if(eosReceived){
-            audioTrack.stop();
-
-            audioTrack.release();
-        }
-
-
     }
 
 
@@ -216,7 +215,7 @@ String checknull(String in){
     private void playWAV(File file){
         D.log("stream started");
         BufferedInputStream bis = null;
-        AudioTrack at = createWavAudioTrack(file);
+         audioTrack = createWavAudioTrack(file);
         try {
 
             DatagramPacket dp;
@@ -230,10 +229,10 @@ String checknull(String in){
             FileInputStream fin = new FileInputStream(file);
             DataInputStream dis = new DataInputStream(fin);
 
-            at.play();
+            audioTrack.play();
             MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
             while ((i = dis.read(buffer, 0, bufferSize)) > -1) {
-                at.write(buffer, 0, i);
+                audioTrack.write(buffer, 0, i);
                 AudioPacket pack=new AudioPacket(i,buffer);
 
                 AudioTrackBufferUpdateEvent.invoke(new EventArgs1<AudioPacket>( self,pack));
@@ -491,9 +490,7 @@ AudioMetaDto metaDto=new AudioMetaDto();
                 }
             }
         }
-        if(eosReceived){
-            audioTrack.stop();
-        }
+
 
         mDecoder.stop();
         mDecoder.release();
@@ -509,6 +506,11 @@ AudioMetaDto metaDto=new AudioMetaDto();
 
     public void stop() {
         eosReceived = true;
+        if(audioTrack!=null){
+            audioTrack.stop();
+            audioTrack.release();
+            audioTrack = null;
+        }
     }
 
     private class PcmPackageStructure{

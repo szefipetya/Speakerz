@@ -183,8 +183,9 @@ public class MusicPlayerModel{
 
 
     // starting song by Uri
-    public void start(Context context, Uri uri){
-        try {
+    public void startONE(Context context, Uri uri){
+
+            D.log("---START FROM UI");
            // mediaPlayer.stop();
          /*   if(mediaPlayer != null) mediaPlayer.reset();
             mediaPlayer = null;
@@ -204,15 +205,14 @@ public class MusicPlayerModel{
             mediaPlayer.start();*/
 
             //HostModel is registered for this event, so we pass the File
-             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
+             //playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
 
-            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_STOP,new File(uri.getPath()),null));
+            //ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_STOP,new File(uri.getPath()),null));
 
             ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_PLAY,new File(uri.getPath()),null));
 
-            playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
-        }
-        catch (Exception e){}
+          //  playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
+
     }
 
     // Starting song by resId
@@ -241,7 +241,7 @@ public class MusicPlayerModel{
             currentPlayingIndex = songIndex;
             //int resId = context.getResources().getIdentifier(songNameQueue.get(songIndex), "raw", context.getPackageName());
             //start(context, resId);
-            start(context,Uri.parse(this.songQueue.get(songIndex).getData()));
+            startONE(context,Uri.parse(this.songQueue.get(songIndex).getData()));
             playedSongName = songNameQueue.get(songIndex);
         }
         else{

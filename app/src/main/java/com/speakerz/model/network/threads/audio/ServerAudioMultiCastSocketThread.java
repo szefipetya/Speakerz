@@ -50,8 +50,12 @@ import org.apache.commons.lang3.SerializationUtils;
 public class ServerAudioMultiCastSocketThread extends Thread {
 
     public void playAudioStreamFromLocalStorage(final File file){
-        //decoder.stop();
+
         synchronized(locker) {
+            decoder.stop();
+           // decoder.getAudioTrack().stop();
+          //  decoder.getAudioTrack().release();
+
             D.log("SONG PLAYING");
             songpicked=true;
             currentFile=file;
@@ -121,21 +125,34 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             @Override
             public void run() {
                 try {
-                    try {
-                        while(!recieverSocket.isClosed())
+
+                        while (!recieverSocket.isClosed()) {
                             synchronized(locker) {
-                                while(! songpicked) {
-                                    locker.wait();
-                                }
-                                songpicked=false;
+                            D.log("waiting for audio pick.");
+                            while (!songpicked) {
+                                locker.wait();
+                            }
+                            songpicked = false;
+                            D.log("got a new request");
+
                                 D.log("MP3 IS PLAYING");
                                 //getFileByResId(R.raw.tobu_wav,"target.wav")
-                                decoder.startPlay(currentFile,AUDIO.MP3);
-                            }
-                    } catch (InterruptedException e) {
-                        D.log("startPlayDecoder thread interrupted");
+                        }
+                            Thread t=new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        decoder.startPlay(currentFile, AUDIO.MP3);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+                            t.setPriority(Thread.MAX_PRIORITY);
+                            t.start();
                     }
-                } catch (IOException e) {
+
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 //  yt.play("TW9d8vYrVFQ");

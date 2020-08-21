@@ -17,12 +17,12 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.speakerz.debug.D;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
 
-import java.lang.reflect.Field;
 import java.util.List;
 
 public class MusicPlayer extends Activity {
@@ -164,7 +164,8 @@ public class MusicPlayer extends Activity {
                 // Retrieve the resource id of the selected song
                // int resID = getResources().getIdentifier(model.songNameQueue.get(i),"raw",getPackageName());
                 // Starting song
-                model.start(model.context,Uri.parse(model.songQueue.get(i).getData()));
+                D.log("VIEWMODEL START");
+                model.startONE(model.context,Uri.parse(model.songQueue.get(i).getData()));
             }
         });
 
