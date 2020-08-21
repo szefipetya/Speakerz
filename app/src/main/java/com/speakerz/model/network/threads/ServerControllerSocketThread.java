@@ -89,8 +89,6 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                 D.log("Exception message: " + ex.getMessage());
             else
                 D.log("null");
-
-            shutdown();
         }
     }
 

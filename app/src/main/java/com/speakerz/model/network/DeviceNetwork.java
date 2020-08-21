@@ -169,7 +169,6 @@ boolean firstStart=true;
         hostConnectionConfig.wps.setup = WpsInfo.PBC;
 
         hostConnectionConfig.groupOwnerIntent=0;
-        PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
             connectWithPermissionGranted();
     }
 

@@ -74,6 +74,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     }
 
     public void shutdown() {
+        decoder.stop();
         if(recieverSocket!=null)
         recieverSocket.close();
         for(ClientDatagramStruct ds: clients){
@@ -87,7 +88,6 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         public ClientDatagramStruct(DatagramSocket socket, InetAddress address, int port) {
             this.address = address;
             this.clientPort = port;
-
             this.socket = socket;
 
         }
@@ -239,6 +239,11 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
             //the new clients recieve the meta info from the server
             //and their designated port number to listen on for the audio data
+            /*try {
+                newClient.socket.setSoTimeout(4000);
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }*/
             clients.add(newClient);
             if(recentAudioMetaDto!=null)
             synchronized (clients) {

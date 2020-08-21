@@ -133,7 +133,7 @@ D.log("PLAYING MP3 ");
         Header frame = null;
         int framesReaded = 0;
         boolean l=false;
-        while (true) {
+        while (!eosReceived) {
                      try {
                 if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
                     D.log("readed tha whole music");

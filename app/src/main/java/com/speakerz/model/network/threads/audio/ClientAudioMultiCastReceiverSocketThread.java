@@ -64,8 +64,10 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     public ClientAudioMultiCastReceiverSocketThread() {
         try {
             //create the infoSocket to send request for a port and the audio meta
-            infoSocket = new DatagramSocket(8050);
-
+            infoSocket = new DatagramSocket(null);
+            infoSocket.setReuseAddress(true);
+            infoSocket.setBroadcast(true);
+            infoSocket.bind(new InetSocketAddress(8050));
         //    infoSocket.setReuseAddress(true);
 
 
