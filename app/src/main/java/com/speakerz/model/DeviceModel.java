@@ -4,17 +4,9 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.wifi.p2p.WifiP2pManager;
 
-import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
-import com.speakerz.model.network.BaseNetwork;
 import com.speakerz.model.network.DeviceNetwork;
-import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
-import com.speakerz.model.network.Serializable.body.GetSongListBody;
-import com.speakerz.model.network.Serializable.body.PutSongRequestBody;
-import com.speakerz.model.network.Serializable.body.content.SongItem;
-import com.speakerz.model.network.Serializable.enums.SUBTYPE;
-import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
@@ -22,9 +14,7 @@ import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.List;
 
 public class DeviceModel extends BaseModel {
     DeviceNetwork network;

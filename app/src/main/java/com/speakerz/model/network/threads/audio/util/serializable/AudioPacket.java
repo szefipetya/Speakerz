@@ -7,7 +7,7 @@ public class AudioPacket implements Serializable {
         this.size = size;
         this.data = data;
     }
-
+    public int packageNumber;
     public int size;
     public byte[] data;
 }

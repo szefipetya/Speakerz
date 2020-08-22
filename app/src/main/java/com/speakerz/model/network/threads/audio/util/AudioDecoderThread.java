@@ -27,6 +27,8 @@ import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -39,10 +41,11 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.speakerz.debug.D;
+import com.speakerz.model.network.Serializable.body.audio.content.AUDIO;
+import com.speakerz.model.network.Serializable.body.audio.content.AudioMetaDto;
 import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
-import com.speakerz.util.EventArgs2;
 
 import org.apache.commons.lang3.SerializationUtils;
 
@@ -68,12 +71,14 @@ public class AudioDecoderThread {
 
     private volatile boolean eosReceived;
     private int mSampleRate = 0;
-    public Event<EventArgs1<AudioPacket>> AudioTrackBufferUpdateEvent=new Event<>();
-    public Event<EventArgs1<AudioMetaDto>> MetaDtoReadyEvent =new Event<>();
+   // public Event<EventArgs1<AudioPacket>> AudioTrackBufferUpdateEvent=  new Event<>();
+    //public Event<EventArgs1<AudioMetaDto>> MetaDtoReadyEvent =new Event<>();
 
-    public void startPlay(String path, AUDIO audioType) throws IOException {
+
+    AudioMetaDto metaDto=new AudioMetaDto();
+    public void startPlay(String path, AUDIO audioType,DECODER_MODE mode) throws IOException {
         currentFile=new File(path);
-       startPlay(currentFile,audioType);
+       startPlay(currentFile,audioType,mode);
     }
 
     public AudioTrack getAudioTrack() {
@@ -82,7 +87,7 @@ public class AudioDecoderThread {
 
     AudioTrack audioTrack=null;
     AUDIO audioType=AUDIO.NONE;
-    public void startPlay(File file, AUDIO audioType) throws IOException {
+    public void startPlay(File file, AUDIO audioType,DECODER_MODE mode) throws IOException {
         this.audioType=audioType;
         eosReceived = false;
         currentFile=file;
@@ -91,17 +96,17 @@ public class AudioDecoderThread {
         }else if(audioType==AUDIO.WAV){
             playWAV(file);
         }else if(audioType==AUDIO.MP3){
-            playMP3(file);
+            playMP3(file,mode);
         }
 
     }
 
     public volatile boolean isPlaying=false;
+    public AtomicInteger actualPackageNumber=new AtomicInteger(0);
 
 
 
-
-    private void playMP3(File file) throws IOException {
+    private void playMP3(File file,DECODER_MODE mode) throws IOException {
         eosReceived=false;
        // Create a jlayer Decoder instance.
 D.log("PLAYING MP3 ");
@@ -133,11 +138,14 @@ D.log("PLAYING MP3 ");
                 AudioTrack.MODE_STREAM);
 
       //  Decode the mp3 BitStream data by Decoder and feed the outcoming PCM chunks to AudioTrack.
-    audioTrack.play();
+
+            audioTrack.play();
+
         final int READ_THRESHOLD = 2147483647;
 
         Header frame = null;
         int framesReaded = 0;
+
         boolean l=false;
         while (!eosReceived) {
                      try {
@@ -160,37 +168,10 @@ D.log("PLAYING MP3 ");
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.asShortBuffer().put(pcmChunk);
             byte[] bytes = buffer.array();
-            int packsize=2048;
-            if(!l){
-                l=true;
-                AudioPacket pack=new AudioPacket(packsize,new byte[packsize]);
-                byte[] data= SerializationUtils.serialize(pack);
-                D.log("serialized pack length to send: "+String.valueOf(data.length));
-                metaDto.packageSize=data.length;
-                MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
-                D.log("converted size: "+String.valueOf(metaDto.packageSize));
-                D.log("original package size: "+ String.valueOf(bytes.length));
-            }
-            ByteArrayInputStream bis=new ByteArrayInputStream(bytes);
-            byte[] byte1024=new byte[packsize];
-            int i=0;
-            int counter=0;
-            while(0<(i=bis.read(byte1024,0,packsize))){
-
-             //   D.log(String.valueOf(i));
-                if(audioTrack==null||eosReceived){return;}
-                audioTrack.write(byte1024,0,i);
-                AudioPacket pack=new AudioPacket(i,byte1024);
-
-                AudioTrackBufferUpdateEvent.invoke(new EventArgs1<AudioPacket>(self,pack));
-                counter++;
-            }
+            audioTrack.write(bytes, 0, bytes.length);
+            actualPackageNumber.addAndGet(1);
 
 
-         //  D.log("writed:"+bytes.length);
-
-
-            //audioTrack.write(bytes, 0, bytes.length);
             bitStream.closeFrame();
         }
     }
@@ -230,12 +211,12 @@ String checknull(String in){
             DataInputStream dis = new DataInputStream(fin);
 
             audioTrack.play();
-            MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
+          //  MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
             while ((i = dis.read(buffer, 0, bufferSize)) > -1) {
                 audioTrack.write(buffer, 0, i);
                 AudioPacket pack=new AudioPacket(i,buffer);
 
-                AudioTrackBufferUpdateEvent.invoke(new EventArgs1<AudioPacket>( self,pack));
+              //  AudioTrackBufferUpdateEvent.invoke(new EventArgs1<AudioPacket>( self,pack));
                 // D.log("pack sent");
             }
             i++;
@@ -285,7 +266,7 @@ String checknull(String in){
 
         return at;
     }
-AudioMetaDto metaDto=new AudioMetaDto();
+
     /////
     private void playM4A_AAC(String path){
 
@@ -418,7 +399,7 @@ AudioMetaDto metaDto=new AudioMetaDto();
         metaDto.bitsPerSample=16;
         metaDto.sampleRate=mSampleRate;
         metaDto.packageSize=info.size ==0?4096:info.size;
-        MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
+      //  MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
 
         AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
                 mSampleRate,
@@ -478,7 +459,7 @@ AudioMetaDto metaDto=new AudioMetaDto();
                         audioTrack.write(chunk, info.offset, info.offset + info.size); // AudioTrack write data
                         AudioPacket pack=new AudioPacket(info.offset + info.size,chunk);
 
-                        AudioTrackBufferUpdateEvent.invoke(new EventArgs1<AudioPacket>( self,pack));
+                      //  AudioTrackBufferUpdateEvent.invoke(new EventArgs1<AudioPacket>( self,pack));
                         mDecoder.releaseOutputBuffer(outIndex, false);
                         break;
                 }
