@@ -4,9 +4,11 @@ import com.speakerz.model.network.threads.SocketStruct;
 
 public class ClientSocketStructWrapper {
   public ClientSocketStructWrapper(){
-      infoSocket=new SocketStruct();
+      receiverInfoSocket =new SocketStruct();
+      senderInfoSocket =new SocketStruct();
       dataSocket=new SocketStruct();
    }
-   public SocketStruct infoSocket;
+   public SocketStruct receiverInfoSocket;
+   public SocketStruct senderInfoSocket;
    public SocketStruct dataSocket;
 }

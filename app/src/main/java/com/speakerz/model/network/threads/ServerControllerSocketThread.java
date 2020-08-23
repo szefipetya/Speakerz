@@ -61,8 +61,8 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                 }
                 final SocketStruct struct = new SocketStruct();
                 struct.socket = socket;
-                struct.objectInputStream = new ObjectInputStream(socket.getInputStream());
                 struct.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                struct.objectInputStream = new ObjectInputStream(socket.getInputStream());
                 recentStruct=struct;
                 socketList.add(struct);
                 writeWelcome(struct);

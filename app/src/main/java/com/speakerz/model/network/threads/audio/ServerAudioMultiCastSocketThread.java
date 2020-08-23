@@ -1,7 +1,6 @@
 package com.speakerz.model.network.threads.audio;
 
 import android.content.Context;
-import android.media.AudioTrack;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.ChannelObject;
@@ -32,20 +31,13 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.SocketException;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
-
-import org.apache.commons.lang3.SerializationUtils;
-
 
 
 public class ServerAudioMultiCastSocketThread extends Thread {
@@ -113,7 +105,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             public void run() {
                 try {
 
-                        while (!receiverSocket.isClosed()) {
+                        while (!receiverServerSocket.isClosed()) {
                             synchronized(locker) {
                             D.log("waiting for audio pick.");
                             while (!songpicked) {
@@ -163,14 +155,10 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     public void sendAudioMeta(ClientSocketStructWrapper client) {
         AudioMetaDto dto = decoder.getAudioMeta();
         dto.port = currentClientPort;
-        byte[] dtoBytes = null;
-        dtoBytes = SerializationUtils.serialize(dto);
-
         try {
-            ObjectOutputStream out=new ObjectOutputStream(client.infoSocket.socket.getOutputStream());
-          out.writeObject(
-                    new ChannelObject(new AudioMetaBody(dto), TYPE.AUDIO_META)
-            );
+
+          client.senderInfoSocket.objectOutputStream.writeObject(new ChannelObject(new AudioMetaBody(dto), TYPE.AUDIO_META));
+            client.senderInfoSocket.objectOutputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -182,8 +170,9 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     ///
     private InetAddress address;
 
-    private ServerSocket receiverSocket;
-    private ServerSocket dataSocket;
+    private ServerSocket receiverServerSocket;
+    private ServerSocket senderServerSocket;
+    private ServerSocket rdataServerSocket;
 
     private boolean running;
     private byte[] buf = new byte[256];
@@ -193,13 +182,18 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     public ServerAudioMultiCastSocketThread() {
 
         try {
-            receiverSocket = new ServerSocket();
-            receiverSocket.setReuseAddress(true);
-            receiverSocket.bind(new InetSocketAddress(address,9050));
 
-            dataSocket = new ServerSocket();
-            dataSocket.setReuseAddress(true);
-            dataSocket.bind(new InetSocketAddress(address,9060));
+            senderServerSocket = new ServerSocket();
+            senderServerSocket.setReuseAddress(true);
+            senderServerSocket.bind(new InetSocketAddress(address,9050));
+
+            receiverServerSocket = new ServerSocket();
+            receiverServerSocket.setReuseAddress(true);
+            receiverServerSocket.bind(new InetSocketAddress(address,9060));
+
+            rdataServerSocket = new ServerSocket();
+            rdataServerSocket.setReuseAddress(true);
+            rdataServerSocket.bind(new InetSocketAddress(address,9070));
 
 
         } catch (SocketException e) {
@@ -237,23 +231,27 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     }
 
     int currentClientPort = 8100;
-    private void listen(SocketStruct struct) {
-        while (!struct.socket.isClosed()) {
+    private void listen(ClientSocketStructWrapper struct) {
+        while (!struct.receiverInfoSocket.socket.isClosed()) {
             try {
-                ChannelObject inObject = (ChannelObject) struct.objectInputStream.readObject();
-               if(inObject.TYPE==TYPE.AUDIO_CONTROL) {
+                ChannelObject inObject = (ChannelObject) struct.receiverInfoSocket.objectInputStream.readObject();
+                D.log("got something");
+               if(inObject.TYPE==TYPE.AUDIO_CONTROL_SERVER) {
+
                     AudioControlBody body = (AudioControlBody) inObject.body;
                     if(body.getContent().flag==AUDIO_CONTROL.SYNC_ACTUAL_PACKAGE) {
-                        D.log("recieved packet");
-                        if (body.getContent().flag == AUDIO_CONTROL.SYNC_ACTUAL_PACKAGE) {
+                        D.log("recieved sync on server");
+
                             AudioControlBody body1 = new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.SYNC_ACTUAL_PACKAGE));
                             body1.getContent().number=decoder.actualPackageNumber.get();
-                            struct.objectOutputStream.writeObject(new ChannelObject(body1,TYPE.AUDIO_CONTROL));
-                        }
+                            struct.senderInfoSocket.objectOutputStream.writeObject(new ChannelObject(body1,TYPE.AUDIO_CONTROL_CLIENT));
+                            struct.senderInfoSocket.objectOutputStream.flush();
+                            D.log("sync info  sent back");
                     }
 
-                }
-                D.log("ClientAudioThread: received wrong package");
+                }else {
+                   D.log("ClientAudioThread: received wrong package");
+               }
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
@@ -265,24 +263,42 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
 
 
-        while (!receiverSocket.isClosed()) {
+        while (!receiverServerSocket.isClosed()) {
             final ClientSocketStructWrapper newClient=new ClientSocketStructWrapper();
             try {
 
                 D.log("accepting client 1");
-                receiverSocket.setSoTimeout(1000000);
-                newClient.infoSocket.socket = receiverSocket.accept();
+                newClient.receiverInfoSocket.socket = receiverServerSocket.accept();
+
+                newClient.receiverInfoSocket.objectOutputStream = new ObjectOutputStream(newClient.receiverInfoSocket.socket.getOutputStream());
+                D.log("output k");
+                newClient.receiverInfoSocket.objectInputStream = new ObjectInputStream(newClient.receiverInfoSocket.socket.getInputStream());
+                D.log("input k");
 
 
                 D.log("accepting client 2");
-                dataSocket.setSoTimeout(1000000);
-                newClient.dataSocket.socket = dataSocket.accept();
-                clients.add(newClient);
-                D.log("yeeeeey");
-                newClient.dataSocket.objectOutputStream=new ObjectOutputStream(newClient.dataSocket.socket.getOutputStream());
-                newClient.infoSocket.objectInputStream = new ObjectInputStream(newClient.infoSocket.socket.getInputStream());
-                newClient.infoSocket.objectOutputStream = new ObjectOutputStream(newClient.infoSocket.socket.getOutputStream());
+                newClient.senderInfoSocket.socket = senderServerSocket.accept();
 
+                newClient.senderInfoSocket.objectOutputStream = new ObjectOutputStream(newClient.senderInfoSocket.socket.getOutputStream());
+                D.log("output k");
+                newClient.senderInfoSocket.objectInputStream = new ObjectInputStream(newClient.senderInfoSocket.socket.getInputStream());
+                D.log("input k");
+
+                D.log("accepting client 3");
+                newClient.dataSocket.socket = rdataServerSocket.accept();
+                D.log("socket k");
+
+                D.log("socket k");
+                newClient.dataSocket.objectOutputStream=new ObjectOutputStream(newClient.dataSocket.socket.getOutputStream());
+                D.log("output k");
+                newClient.dataSocket.objectInputStream=new ObjectInputStream(newClient.dataSocket.socket.getInputStream());
+                D.log("input k");
+
+
+                //OUTPUTSTREAM FIRST
+
+
+                clients.add(newClient);
 
                 D.log("client added!!!!");
             } catch (IOException e) {
@@ -298,16 +314,16 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                 e.printStackTrace();
             }*/
 
-            if(recentAudioMetaDto!=null)
-            synchronized (clients) {
-                D.log("client added");
 
+
+                D.log("client added");
+            if(recentAudioMetaDto!=null)
                 sendAudioMeta(newClient);
-            }
+
             Thread t=new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    listen(newClient.infoSocket);
+                    listen(newClient);
                 }
             });
             t.start();
@@ -349,6 +365,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                         try {
                           //  D.log("" + "sent" + args.arg1().packageNumber);
                             tmpClient.dataSocket.objectOutputStream.writeObject(args.arg1());
+                            tmpClient.dataSocket.objectOutputStream.flush();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -378,9 +395,9 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
     public void shutdown() {
         decoder.stop();
-        if(receiverSocket !=null) {
+        if(receiverServerSocket !=null) {
             try {
-                receiverSocket.close();
+                receiverServerSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();e.printStackTrace();
             }
@@ -388,7 +405,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         for(ClientSocketStructWrapper ds: clients){
             if(ds!=null){
                 try {
-                    ds.infoSocket.socket.close();
+                    ds.receiverInfoSocket.socket.close();
                     ds.dataSocket.socket.close();
                 } catch (IOException e) {
                     e.printStackTrace();

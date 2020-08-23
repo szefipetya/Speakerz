@@ -171,7 +171,6 @@ D.log("PLAYING MP3 ");
             audioTrack.write(bytes, 0, bytes.length);
             actualPackageNumber.addAndGet(1);
 
-
             bitStream.closeFrame();
         }
     }
