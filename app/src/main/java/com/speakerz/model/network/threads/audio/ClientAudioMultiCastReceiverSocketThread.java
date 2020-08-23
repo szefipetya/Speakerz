@@ -63,6 +63,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     public ClientAudioMultiCastReceiverSocketThread() {
 
     }
+    int syncLagOffsetInPackages=0;
 
     Runnable playAudioRunnable=new Runnable() {
         @Override
@@ -72,7 +73,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
             Iterator itr= bufferQueue.iterator();
             while (itr.hasNext()) {
                 AudioPacket packet=(AudioPacket)itr.next();
-                if(packet.packageNumber>=actualAudioPackage) {
+                if(packet.packageNumber>=actualAudioPackage+syncLagOffsetInPackages) {
                     at.write(packet.data, 0, packet.data.length);
                 }
             }
@@ -114,8 +115,9 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                             t.start();
                             D.log("thread started");
                     }
-                }
+                }else {
                     D.log("ClientAudioThread: received wrong package");
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
@@ -259,7 +261,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
         D.log("receiving data packets:");
         ///buf = new byte[metaDto.packageSize];
         D.log("package size: "+metaDto.packageSize);
-
+        int i=0;
         boolean playStarted=false;
         while (!wrapper.dataSocket.socket.isClosed()) {
             try {
@@ -270,11 +272,15 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                // D.log("audiopacket, size:"+audioPacket.size);
                // AudioPacket packet=(AudioPacket)e.getValue();
                // at.write(packet.data, 0,packet.size);
-               // D.log(""+packet.packageNumber+",i: "+i);
-                if(packet.packageNumber==800){
+                D.log(""+packet.packageNumber+",i: "+i);
+                //packet.packageNumber-metaDto.actualBufferedPackageNumber
+                if(i>=200 &&!playStarted){
+                    D.log("buffer size is over 400");
+                    playStarted=true;
                     AudioControlDto dto =new AudioControlDto(AUDIO_CONTROL.SYNC_ACTUAL_PACKAGE);
                     send(wrapper.senderInfoSocket,new ChannelObject(new AudioControlBody(dto),TYPE.AUDIO_CONTROL_SERVER));
                 }
+                i++;
 
                 //buf=new byte[metaDto.packageSize];
             } catch (IOException e) {

@@ -220,7 +220,6 @@ public class SpeakerzService extends Service {
     public void onDestroy() {
         serviceHandler.stopService("terminated by system");
         D.log("onDestroy");
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
         super.onDestroy();
     }
 
@@ -229,7 +228,6 @@ public class SpeakerzService extends Service {
     public void onTaskRemoved(Intent rootIntent) {
         D.log("ontaskRemoved");
         serviceHandler.stopService("terminated by user");
-       // Toast.makeText(this, "user extit.", Toast.LENGTH_SHORT).show();
 
         //STOP SERVICE OR WHATEVER YOU WANT
         super.onTaskRemoved(rootIntent);

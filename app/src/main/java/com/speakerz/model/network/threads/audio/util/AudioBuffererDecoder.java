@@ -19,6 +19,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javazoom.jl.decoder.Bitstream;
@@ -37,6 +40,8 @@ public class AudioBuffererDecoder {
     private int mSampleRate = 0;
     public Event<EventArgs1<AudioPacket>> AudioTrackBufferUpdateEvent;
     public Event<EventArgs1<AudioMetaDto>> MetaDtoReadyEvent;
+
+    public final Queue<AudioPacket> bufferQueue=new ConcurrentLinkedQueue<>();
 
     AudioBuffererDecoder self=this;
 
@@ -65,8 +70,11 @@ public class AudioBuffererDecoder {
 
     }
 
+    public AtomicBoolean isDecodingReady=new AtomicBoolean(false);
+public AtomicInteger actualBufferedPackageNumber=new AtomicInteger(0);
+public AtomicInteger maxPackageNumber=new AtomicInteger(0);
     private void playMP3(File file,DECODER_MODE mode) throws IOException {
-        int i=0;
+
         eosReceived=false;
         // Create a jlayer Decoder instance.
         D.log("PLAYING MP3 ");
@@ -82,7 +90,6 @@ public class AudioBuffererDecoder {
         InputStream mp3Source =new FileInputStream(file);
         Bitstream bitStream = new Bitstream(mp3Source);
 
-        // Create an AudioTrack instance.
         final int READ_THRESHOLD = 2147483647;
 
         Header frame = null;
@@ -93,6 +100,12 @@ public class AudioBuffererDecoder {
             try {
                 if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
                     D.log("readed tha whole music");
+                    D.log("max pack size: "+actualBufferedPackageNumber.get());
+                 maxPackageNumber.set(actualBufferedPackageNumber.get());
+                    isDecodingReady.set(true);
+                    synchronized (bufferQueue){
+                        bufferQueue.notify();
+                    }
                     break;
                 }
 
@@ -110,22 +123,28 @@ public class AudioBuffererDecoder {
             ByteBuffer buffer = ByteBuffer.allocate(pcmChunk.length * 2);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.asShortBuffer().put(pcmChunk);
+
             byte[] bytes = buffer.array();
 
                 if(!l){
                     l=true;
                     metaDto.packageSize=bytes.length;
-                    MetaDtoReadyEvent.invoke(new EventArgs1<AudioMetaDto>(self,metaDto));
+                    MetaDtoReadyEvent.invoke(new EventArgs1<>(self,metaDto));
                     D.log("converted size: "+String.valueOf(metaDto.packageSize));
                     D.log("original package size: "+ String.valueOf(bytes.length));
                 }
 
                 AudioPacket pack=new AudioPacket(bytes.length,bytes);
-                pack.packageNumber=i;
-                AudioTrackBufferUpdateEvent.invoke(new EventArgs1<>(self,pack));
+                pack.packageNumber=actualBufferedPackageNumber.get();
+                bufferQueue.add(pack);
+                synchronized (bufferQueue){
+                    bufferQueue.notify();
+                }
+
+            //  AudioTrackBufferUpdateEvent.invoke(new EventArgs1<>(self,pack));
              //   D.log("Event sent."+i);
 
-            i++;
+            actualBufferedPackageNumber.addAndGet(1);
 
             bitStream.closeFrame();
         }

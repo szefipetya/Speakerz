@@ -20,6 +20,8 @@
     <!-- register singleton App class-->
     <!-- Persistent activities-->
     <application
+        android:hardwareAccelerated="false"
+        android:largeHeap="true"
         android:persistent="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"

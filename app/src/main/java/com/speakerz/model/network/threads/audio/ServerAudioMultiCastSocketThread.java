@@ -36,6 +36,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -154,6 +155,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
     public void sendAudioMeta(ClientSocketStructWrapper client) {
         AudioMetaDto dto = decoder.getAudioMeta();
+        dto.actualBufferedPackageNumber=decoder.actualPackageNumber.get();
         dto.port = currentClientPort;
         try {
 
@@ -317,8 +319,16 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
 
                 D.log("client added");
-            if(recentAudioMetaDto!=null)
+            if(recentAudioMetaDto!=null) {
                 sendAudioMeta(newClient);
+                Thread t=new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        sendAudioFromBuffer(newClient);
+                    }
+                });
+                t.start();
+            }
 
             Thread t=new Thread(new Runnable() {
                 @Override
@@ -333,6 +343,51 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
     }
 
+    void sendAudioFromBuffer(ClientSocketStructWrapper struct) {
+        Iterator<AudioPacket> itr = decoderBufferer.bufferQueue.iterator();
+
+        // hasNext() returns true if the queue has more elements
+        int liveplayPackageNumber = decoder.actualPackageNumber.get();
+        D.log("LIVE PLAY PACK NUMBER." + liveplayPackageNumber);
+        int actualReadedPackNumber = 0;
+            while (actualReadedPackNumber <= decoderBufferer.maxPackageNumber.get() || decoderBufferer.maxPackageNumber.get() == 0) {
+
+                  //the buffered decoder is not finished yet
+                if(decoderBufferer.maxPackageNumber.get()==0) {
+                    synchronized (decoderBufferer.bufferQueue) {
+                            try {
+                                D.log("waiting for notify");
+                                //decoderbufferer will notify us, when a new package is added to the queue
+                                decoderBufferer.bufferQueue.wait();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                    }
+                }
+
+                D.log("----");
+                if(itr.hasNext()) {
+                    AudioPacket packet = itr.next();
+                    try {
+                        actualReadedPackNumber = packet.packageNumber;
+                        if(actualReadedPackNumber>=liveplayPackageNumber) {
+                            struct.dataSocket.objectOutputStream.writeObject(packet);
+                            struct.dataSocket.objectOutputStream.flush();
+                            D.log("packet" + packet.packageNumber + " sent");
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }else{
+                    break;
+                }
+
+            }
+
+       // }
+
+
+    }
 
 
 
@@ -342,9 +397,17 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             @Override
             public void action(EventArgs1<AudioMetaDto> args) {
                     recentAudioMetaDto = args.arg1();
-                    //sending tha packet to all the clients
-                for (ClientSocketStructWrapper tmpClient : clients) {
+                 D.log("sending meta to clients.");
+                for (final ClientSocketStructWrapper tmpClient : clients) {
                     sendAudioMeta(tmpClient);
+                    Thread t=new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            D.log("sending buffered audio");
+                            sendAudioFromBuffer(tmpClient);
+                        }
+                    });
+                    t.start();
                     //  D.log("Packet:" + i + " sent to" + tmpClient.address.getHostAddress() + ":" + tmpClient.clientPort);
                 }
 
@@ -352,7 +415,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                 }
 
         });
-        decoderBufferer.AudioTrackBufferUpdateEvent.addListener(new EventListener<EventArgs1<AudioPacket>>() {
+       /* decoderBufferer.AudioTrackBufferUpdateEvent.addListener(new EventListener<EventArgs1<AudioPacket>>() {
             @Override
             public void action(EventArgs1<AudioPacket> args) {
 
@@ -373,7 +436,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                 }
 
             }
-        });
+        });*/
     }
 
 //GETTER & SETTER

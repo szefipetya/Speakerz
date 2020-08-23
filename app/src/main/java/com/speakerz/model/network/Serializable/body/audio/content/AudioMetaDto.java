@@ -14,4 +14,5 @@ public class AudioMetaDto implements Serializable {
     public int packageSize;
     public  String title;
     public  String album;
+    public int actualBufferedPackageNumber;
 }
