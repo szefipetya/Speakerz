@@ -10,23 +10,53 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.speakerz.R;
+import com.speakerz.model.Song;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
-    private ArrayList<Item> mItemList;
+    private List<Song> mItemList;
     private OnItemClickListener mLisener;
     private int size;
 
-    public interface OnItemClickListener {
-        void onItemClick(int position);
-        void onDeleteClick(int position);
+
+    public Adapter(List<Song> exampleList) {
+        mItemList = exampleList;
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
         mLisener = listener;
     }
 
+    @Override
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item, parent, false);
+        ViewHolder evh = new ViewHolder(v, mLisener);
+        return evh;
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, int position) {
+        Song currentItem = mItemList.get(position);
+        holder.mImageView.setImageResource(R.drawable.ic_song);
+        holder.mTextView1.setText(currentItem.getTitle());
+        holder.mTextView2.setText(currentItem.getArtist());
+    }
+
+    @Override
+    public int getItemCount() {
+        return mItemList.size();
+    }
+    public int getSize() {
+        return mItemList.size();
+    }
+
+
+    public interface OnItemClickListener {
+        void onItemClick(int position);
+        void onDeleteClick(int position);
+    }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public ImageView mImageView;
@@ -64,33 +94,6 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
                 }
             });
         }
-    }
-
-    public Adapter(ArrayList<Item> exampleList) {
-        mItemList = exampleList;
-    }
-
-    @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item, parent, false);
-        ViewHolder evh = new ViewHolder(v, mLisener);
-        return evh;
-    }
-
-    @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        Item currentItem = mItemList.get(position);
-        holder.mImageView.setImageResource(currentItem.getImageResource());
-        holder.mTextView1.setText(currentItem.getText1());
-        holder.mTextView2.setText(currentItem.getText2());
-    }
-
-    @Override
-    public int getItemCount() {
-        return mItemList.size();
-    }
-    public int getSize() {
-        return mItemList.size();
     }
 }
 

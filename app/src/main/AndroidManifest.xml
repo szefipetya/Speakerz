@@ -36,6 +36,7 @@
         <activity android:name="com.speakerz.Options" />
         <activity android:name="com.speakerz.Join" />
         <activity android:name="com.speakerz.MusicPlayer"/>
+        <activity android:name="com.speakerz.view.PlayerRecyclerActivity"/>
         <activity android:name="com.speakerz.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

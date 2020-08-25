@@ -50,9 +50,7 @@ public class PlayerRecyclerActivity extends AppCompatActivity {
 
         // Configure RecyclerView
         recyclerViewFab=new RecyclerView_FAB(self);
-        recyclerViewFab.createItemList();
-        recyclerViewFab.buildRecyclerView();
-        recyclerViewFab.setButtons();
+
 
         // Configure menu
         menu=new TopMenu(self);
