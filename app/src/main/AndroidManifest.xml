@@ -11,12 +11,10 @@
     <uses-permission android:required="true" android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-
     <uses-permission android:name="android.permission.UPDATE_DEVICE_STATS"
         tools:ignore="ProtectedPermissions" />
-
-    <!-- Optional: only required for FILE payloads -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
     <!-- register singleton App class-->
     <!-- Persistent activities-->
     <application
@@ -33,19 +31,17 @@
         <service android:name="com.speakerz.SpeakerzService"
             android:stopWithTask="false"
             />
+
         <activity android:name="com.speakerz.Create" />
         <activity android:name="com.speakerz.Options" />
         <activity android:name="com.speakerz.Join" />
         <activity android:name="com.speakerz.MusicPlayer"/>
+        <activity android:name="com.speakerz.view.PlayerRecyclerActivity"/>
         <activity android:name="com.speakerz.MainActivity">
-
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
     </application>
-
 </manifest>

@@ -203,7 +203,7 @@ public class SpeakerzService extends Service {
      * runs in the same process as its clients, we don't need to deal with IPC.
      */
     public class LocalBinder extends Binder {
-        SpeakerzService getService() {
+        public SpeakerzService getService() {
             // Return this instance of LocalService so clients can call public methods
             return  SpeakerzService.this;
         }
