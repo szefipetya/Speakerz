@@ -18,6 +18,10 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        vectorDrawables {
+            useSupportLibrary true
+        }
     }
 
     buildTypes {
@@ -26,12 +30,20 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
 }
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation 'androidx.recyclerview:recyclerview-selection:1.0.0'
+    implementation 'androidx.cardview:cardview:1.0.0'
+
+    //Rounded Image View
+    implementation 'com.makeramen:roundedimageview:2.3.0'
+
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'com.google.android.material:material:1.1.0'
     implementation files('jar/tritonus-share-0.3.7-2.jar')
     implementation files('jar/jl1.0.1.jar')
   //  implementation fileTree(dir: 'jar', include: ['*.aar', '*.jar'], exclude: [])
