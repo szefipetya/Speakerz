@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.speakerz.R;
+import com.speakerz.model.MusicPlayerModel;
 
 import java.util.ArrayList;
 
@@ -136,5 +137,13 @@ public class RecyclerView_FAB  {
                 }
             }
         });
+    }
+
+    public void initModel(MusicPlayerModel model) {
+
+    }
+
+    public void releaseModel() {
+
     }
 }

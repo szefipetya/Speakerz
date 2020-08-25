@@ -7,18 +7,15 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.speakerz.R;
+import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.view.ExtendedPlayerActivity;
 
 public class BottomMusicPlayer {
     AppCompatActivity activity;
-
     TextView titleSongTV;
-
-
-
     TextView detailsTV;
+    MusicPlayerModel mpModel = null;
 
-    //PILL ELMENTEM DINYÉÉRT
   public   BottomMusicPlayer(AppCompatActivity activity){
         this.activity = activity;
     }
@@ -42,4 +39,18 @@ public class BottomMusicPlayer {
     }
 
 
+    public void initModel(MusicPlayerModel model) {
+        if(mpModel != null) throw new RuntimeException("A MusicPlayerModel is already registered");
+        mpModel = model;
+        // TODO: register events
+
+    }
+
+    public void releaseModel() {
+        if(mpModel != null){
+            // TODO: unregister events
+
+            mpModel = null;
+        }
+    }
 }
