@@ -28,6 +28,7 @@ import java.net.Socket;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
@@ -71,27 +72,31 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
             D.log("starting playback at"+actualAudioPackage);
             at.play();
             Iterator itr= bufferQueue.iterator();
-            while (itr.hasNext()) {
+            while (itr.hasNext()&&!swapSong.get()) {
                 AudioPacket packet=(AudioPacket)itr.next();
                 if(packet.packageNumber>=actualAudioPackage+syncLagOffsetInPackages) {
                     at.write(packet.data, 0, packet.data.length);
                 }
             }
+            at.stop();
+            swapSong.set(false);
+            bufferQueue.clear();
+            send(wrapper.senderInfoSocket,new ChannelObject(new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.EOF_RECEIVED)),TYPE.AUDIO_CONTROL_SERVER));
         }
     };
+    AtomicBoolean swapSong=new AtomicBoolean(false);
     int actualAudioPackage=0;
 
 
     private void listen(SocketStruct struct) {
-        D.log("audio sync listen called");
         while (!struct.socket.isClosed()) {
             try {
-                D.log("listening for meta or sync.");
                 ChannelObject inObject = (ChannelObject) struct.objectInputStream.readObject();
                 D.log("got something");
                 if (inObject.TYPE == TYPE.AUDIO_META) {
                     final AudioMetaBody body = (AudioMetaBody) inObject.body;
-                    D.log("recieved packet");
+                    D.log("recieved meta packet");
+                    //a sync csak a handle után jöhet
                     Thread t=new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -104,11 +109,12 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                         }
                     });
                     t.start();
-                }if(inObject.TYPE==TYPE.AUDIO_CONTROL_CLIENT) {
+                }else if(inObject.TYPE==TYPE.AUDIO_CONTROL_CLIENT) {
                     AudioControlBody body = (AudioControlBody) inObject.body;
                     D.log("recieved packet");
                     if(body.getContent().flag==AUDIO_CONTROL.SYNC_ACTUAL_PACKAGE){
                         D.log("sync packet!!!");
+                            //make sure, that she song will start.
                             actualAudioPackage=body.getContent().number;
                             D.log("actual audio pack set to"+actualAudioPackage);
                             Thread t=new Thread(playAudioRunnable);
@@ -142,8 +148,6 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                 wrapper.dataSocket.socket=new Socket();
                 wrapper.dataSocket.socket.setReuseAddress(true);
 
-
-
                 D.log("datasocket connecting...");
                 wrapper.senderInfoSocket.socket.connect(new InetSocketAddress(address, 9060));
 
@@ -153,10 +157,6 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                 D.log("output k");
                 wrapper.senderInfoSocket.objectInputStream=new ObjectInputStream(wrapper.senderInfoSocket.socket.getInputStream());
                 D.log("input k");
-
-
-
-
 
                 D.log("infoSocket connecting...");
                 wrapper.receiverInfoSocket.socket.connect(new InetSocketAddress(address, 9050));
@@ -191,26 +191,6 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
        // packet =new DatagramPacket(buf, buf.length);
         listen(wrapper.receiverInfoSocket);
 
-      /*  try {
-
-            ChannelObject inObject=(ChannelObject)wrapper.infoSocket.objectInputStream.readObject();
-            if(inObject.TYPE==TYPE.AUDIO_META) {
-                AudioMetaBody body = (AudioMetaBody) inObject.body;
-                //listen
-
-                D.log("recieved meta packet");
-                //continue this thread with handleing buffer data
-               at = createAudioTrack(body.getContent());
-                handleAudioPackets(at);
-
-
-            }else
-                D.log("ClientAudioThread: received wrong package");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }*/
 
 
     }
@@ -267,6 +247,11 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
             try {
 
                 AudioPacket packet=(AudioPacket) wrapper.dataSocket.objectInputStream.readObject();
+                if(packet.data.length==0){
+                    swapSong.set(true);
+
+                    break;
+                }
                 /////
                 bufferQueue.add(packet);
                // D.log("audiopacket, size:"+audioPacket.size);
@@ -274,8 +259,8 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                // at.write(packet.data, 0,packet.size);
                 D.log(""+packet.packageNumber+",i: "+i);
                 //packet.packageNumber-metaDto.actualBufferedPackageNumber
-                if(i>=200 &&!playStarted){
-                    D.log("buffer size is over 400");
+                if(i>=100 &&!playStarted){
+                    D.log("buffer size is over 100");
                     playStarted=true;
                     AudioControlDto dto =new AudioControlDto(AUDIO_CONTROL.SYNC_ACTUAL_PACKAGE);
                     send(wrapper.senderInfoSocket,new ChannelObject(new AudioControlBody(dto),TYPE.AUDIO_CONTROL_SERVER));
@@ -296,6 +281,8 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
 
     }
+
+
 
         public void shutdown() {
         if(wrapper.receiverInfoSocket.socket!=null){
