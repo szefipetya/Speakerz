@@ -50,6 +50,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             swapSong.set(true);
             currentFile=file;
             locker.notify();
+            resumeAudioStream();
         }
     }
     File currentFile=null;
@@ -62,9 +63,15 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         }
     }
     public void resumeAudioStream(){
+        D.log("resume");
+        synchronized (decoder.isPaused){
+            decoder.isPaused.set(false);
+            decoder.isPaused.notify();
+        }
     }
     public void pauseAudioStream() {
-
+        D.log("pause");
+        decoder.isPaused.set(true);
     }
 
 
@@ -355,13 +362,11 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                     D.log("break");
                     break;
                 }
-
-
                   //the buffered decoder is not finished yet
                 if(decoderBufferer.maxPackageNumber.get()==0) {
                     synchronized (decoderBufferer.bufferQueue) {
                             try {
-                                D.log("waiting for notify");
+                             //   D.log("waiting for notify");
                                 //decoderbufferer will notify us, when a new package is added to the queue
                                 decoderBufferer.bufferQueue.wait();
                             } catch (InterruptedException e) {
@@ -370,7 +375,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                     }
                 }
 
-                D.log("----");
+               // D.log("----");
                 if(itr.hasNext()) {
                     AudioPacket packet = itr.next();
                     try {
@@ -378,7 +383,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                         if(actualReadedPackNumber>=liveplayPackageNumber) {
                             struct.dataSocket.objectOutputStream.writeObject(packet);
                             struct.dataSocket.objectOutputStream.flush();
-                            D.log("packet" + packet.packageNumber + " sent");
+                           // D.log("packet" + packet.packageNumber + " sent");
                         }
                     } catch (IOException e) {
                         e.printStackTrace();

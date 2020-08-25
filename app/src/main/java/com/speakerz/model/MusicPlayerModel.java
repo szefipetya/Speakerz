@@ -233,10 +233,7 @@ public class MusicPlayerModel{
 
     // Starting song from songQueue by index
     public void start(int songIndex){
-       if(isPlaying){
-           isPlaying=false;
-           ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_STOP,null,null));
-       }
+           ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_RESUME,null,null));
         if(songNameQueue.size() > 0 && songIndex < songNameQueue.size()) {
             currentPlayingIndex = songIndex;
             //int resId = context.getResources().getIdentifier(songNameQueue.get(songIndex), "raw", context.getPackageName());
@@ -251,13 +248,13 @@ public class MusicPlayerModel{
     }
 
     // Start paused playing
-    boolean isPlaying=false;
+    boolean isPlaying=true;
     public void start(){
-        if(isPlaying==false){
+
             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
             isPlaying=true;
             ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_RESUME,null,null));
-        }
+
 
        /* if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
             mediaPlayer.start();
@@ -272,11 +269,10 @@ public class MusicPlayerModel{
 
     // pauses media player if exists
     public void pause(){
-        if(isPlaying) {
             isPlaying=false;
             ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self, MP_EVT.SONG_PAUSE, null, null));
             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
-        }
+
         /*if(mediaPlayer != null) {
             mediaPlayer.pause();
             playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
@@ -285,7 +281,7 @@ public class MusicPlayerModel{
 
     // Toggles pause and start state of player
     public void togglePause(){
-        if(isPlaying())
+        if(isPlaying)
             pause();
         else
             start();
