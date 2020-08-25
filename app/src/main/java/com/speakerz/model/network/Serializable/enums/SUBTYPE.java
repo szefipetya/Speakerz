@@ -5,5 +5,6 @@ public enum SUBTYPE {
     MP_GET_LIST,
     MP_SEND_LIST,
     MP_DEL_SONG,
-    META_GET_SRV_INFO
+    META_GET_SRV_INFO,
+    AUDIO_SEND_META,NONE
 }

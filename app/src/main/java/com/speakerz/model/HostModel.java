@@ -10,17 +10,17 @@ import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.*;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
-import com.speakerz.model.network.Serializable.body.GetSongListBody;
-import com.speakerz.model.network.Serializable.body.PutSongRequestBody;
-import com.speakerz.model.network.Serializable.body.content.SongItem;
+import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
+import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.content.SongItem;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
-import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -70,6 +70,18 @@ public class HostModel extends BaseModel {
                     }
 
                 }
+                if(args.arg1()==MP_EVT.SONG_PLAY){
+                    network.getServerSocketWrapper().audioSocket.playAudioStreamFromLocalStorage((File)args.arg2());
+                }
+                if(args.arg1()==MP_EVT.SONG_STOP){
+                    network.getServerSocketWrapper().audioSocket.stopAudioStream();
+                }
+                if(args.arg1()==MP_EVT.SONG_PAUSE){
+                    network.getServerSocketWrapper().audioSocket.pauseAudioStream();
+                }
+                if(args.arg1()==MP_EVT.SONG_RESUME){
+                    network.getServerSocketWrapper().audioSocket.resumeAudioStream();
+                }
             }
         });
     }
@@ -116,6 +128,7 @@ public class HostModel extends BaseModel {
         D.log("Model stopped");
         if(   network.getServerSocketWrapper().controllerSocket!=null) {
             network.getServerSocketWrapper().controllerSocket.shutdown();
+            network.getServerSocketWrapper().audioSocket.shutdown();
             try {
                 network.getServerSocketWrapper().controllerSocket.join();
             } catch (InterruptedException e) {

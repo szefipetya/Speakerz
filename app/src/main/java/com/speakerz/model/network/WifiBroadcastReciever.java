@@ -181,5 +181,6 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
         wifiP2pManager.clearLocalServices(channel,null);
         wifiP2pManager.cancelConnect(channel,null);
         wifiP2pManager.removeGroup(channel,null);
+
     }
 }

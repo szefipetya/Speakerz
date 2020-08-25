@@ -57,33 +57,6 @@ public class AudioMetaInfo {
         D.log("sample rate: " + String.valueOf(audioHeader.getSampleRate()));
         final String encodingType = audioHeader.getEncodingType();
         D.log("encodingType: " + encodingType);
-
-
-        audioTag = audioFile.getTag().or(NullTag.INSTANCE);
-
-        final String title = audioTag.getValue(FieldKey.TITLE).or("");
-        D.log("title: " + title);
-        if ("".equals(title)) {
-            if (audioTag == NullTag.INSTANCE) {
-                // there was no tag. set a new default tag for the file type
-                audioTag = audioFile.setNewDefaultTag();
-            }
-        }
-
-        try {
-            audioTag.setField(FieldKey.TITLE, "My New Title");
-            audioFile.save();
-        } catch (FieldDataInvalidException e) {
-            e.printStackTrace();
-        } catch (CannotWriteException e) {
-            e.printStackTrace();
-        }
-
-
-        final ImmutableSet<FieldKey> supportedFields = audioTag.getSupportedFields();
-        if (supportedFields.contains(FieldKey.COVER_ART)) {
-            System.out.println("File type supports Artwork");
-        }
     }
 
     //GETTER and SETTER

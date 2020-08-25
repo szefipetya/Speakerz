@@ -35,6 +35,7 @@ public abstract class BaseModel {
 
 
         //inject Events to MusicPLayerModel
+
         musicPlayerModel.SongDownloadedEvent=SongDownloadedEvent;
         musicPlayerModel.MusicPlayerActionEvent=this.MusicPlayerActionEvent;
 

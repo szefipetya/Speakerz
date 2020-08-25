@@ -32,17 +32,31 @@ import java.util.List;
 public class DeviceNetwork extends BaseNetwork {
 
 ClientSocketWrapper clientSocketWrapper =new ClientSocketWrapper();
-Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
+boolean firstStart=true;
     public DeviceNetwork(WifiBroadcastReciever reciever) {
+
         super(reciever);
         clientSocketWrapper.controllerSocket = new ClientControllerSocketThread();
         clientSocketWrapper.audioSocket = new ClientAudioMultiCastReceiverSocketThread();
-        subscribeSocketEvents();
         reciever.HostAddressAvailableEvent.addListener(new EventListener<HostAddressEventArgs>() {
             @Override
             public void action(HostAddressEventArgs args) {
                 if(!args.isHost()) {
+                    if(!firstStart) {
+                        clientSocketWrapper.controllerSocket.shutdown();
+                        clientSocketWrapper.audioSocket.shutdown();
 
+
+                        ClientControllerSocketThread tmp = new ClientControllerSocketThread();
+                        tmp.MusicPlayerActionEvent = clientSocketWrapper.controllerSocket.MusicPlayerActionEvent;
+                        tmp.MetaInfoReceivedEvent = clientSocketWrapper.controllerSocket.MetaInfoReceivedEvent;
+                        clientSocketWrapper.controllerSocket = tmp;
+
+                        ClientAudioMultiCastReceiverSocketThread tmp2 = new ClientAudioMultiCastReceiverSocketThread();
+                        clientSocketWrapper.audioSocket = tmp2;
+                        D.log("its not the first start.");
+                    }
+                    firstStart = false;
                     clientSocketWrapper.controllerSocket.setAddress(args.getAddress());
                     clientSocketWrapper.controllerSocket.start();
 
@@ -52,10 +66,6 @@ Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
                 }
             }
         });
-
-    }
-
-    private void subscribeSocketEvents(){
 
     }
 
@@ -159,8 +169,7 @@ Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
         hostConnectionConfig.wps.setup = WpsInfo.PBC;
 
         hostConnectionConfig.groupOwnerIntent=0;
-        PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
-
+            connectWithPermissionGranted();
     }
 
     public void connect(int i) {
@@ -176,17 +185,7 @@ Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
     @SuppressLint("MissingPermission")
     public void connectWithPermissionGranted(){
         hostConnectionConfig.groupOwnerIntent=0;
-      /*  reciever.getWifiP2pManager().cancelConnect(reciever.getChannel(), new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                connectWithClearedPending();
-            }
 
-            @Override
-            public void onFailure(int i) {
-                connectWithClearedPending();
-            }
-        });*/
         connectWithClearedPending();
 
     }

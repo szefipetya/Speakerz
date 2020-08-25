@@ -2,12 +2,10 @@ package com.speakerz.model.network.threads;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.body.Body;
-import com.speakerz.model.network.Serializable.body.GetServerInfoBody;
-import com.speakerz.model.network.Serializable.body.GetSongListBody;
+import com.speakerz.model.network.Serializable.body.controller.GetServerInfoBody;
+import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.ChannelObject;
-import com.speakerz.model.network.Serializable.body.PutSongRequestBody;
-import com.speakerz.model.network.Serializable.body.content.ServerInfo;
-import com.speakerz.model.network.Serializable.enums.SUBTYPE;
+import com.speakerz.model.network.Serializable.body.controller.content.ServerInfo;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
@@ -23,6 +21,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.util.LinkedList;
 
 public class ServerControllerSocketThread extends Thread implements SocketThread{
+
     LinkedList<SocketStruct> socketList=new LinkedList<>();
 
     public ServerSocket getServerSocket() {
@@ -35,6 +34,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     public Event<EventArgs1<Body>> MusicPlayerActionEvent =null;
     public Event<EventArgs1<Body>> MetaInfoEvent = null;
 
+    volatile boolean externalShutdown=false;
 
 
 
@@ -53,8 +53,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
             //waiting for someone
             D.log("server running");
 
-            while(dataSocket!=null&&!dataSocket.isClosed()) {
-                ServerSocketChannel channel =  dataSocket.getChannel();
+            while(!externalShutdown) {
                 final Socket socket = dataSocket.accept();
                 if(socket == null){
                     D.log("nonblocking");
@@ -62,8 +61,8 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                 }
                 final SocketStruct struct = new SocketStruct();
                 struct.socket = socket;
-                struct.objectInputStream = new ObjectInputStream(socket.getInputStream());
                 struct.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                struct.objectInputStream = new ObjectInputStream(socket.getInputStream());
                 recentStruct=struct;
                 socketList.add(struct);
                 writeWelcome(struct);
@@ -75,55 +74,18 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                 new Thread() {
                     @Override
                     public void run() {
-                        try {
                             // az új szál külön hallgatja az objektumot.
                             listen(struct);
-                        } catch (IOException e) {
-                            // Váratlan IO hiba a kapcsolat során
-                            // - Socket és streamek lezárása
-                            // - Socket struck eltávolítás
-                            e.printStackTrace();
-                            try {
-                                struct.objectInputStream.close();
-                            }
-                            catch (IOException e2) {}
-                            try {
-                                struct.objectOutputStream.close();
-                            }
-                            catch (IOException e2) {}
-                            try {
-                                struct.socket.close();
-                            }
-                            catch (IOException e2) {}
-                            socketList.remove(struct);
-
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
-                            if (e.getMessage() != null) {
-                                D.log(e.getMessage());
-                            } else D.log("[null_message]");
-                        }
                     }
                 }.start();
             }
 
-
-            //InputStreamReader in = new InputStreamReader(socket.getInputStream());
-            //BufferedReader bf=new BufferedReader(in);
-
-         //   String str=bf.readLine();
-           // D.log("client says: "+ str);
-            // create a DataInputStream so we can read data from it.
-
-            shutdown();
         }catch (IOException ex){
             ex.printStackTrace();
             if(ex.getMessage()!=null)
                 D.log("Exception message: " + ex.getMessage());
             else
                 D.log("null");
-
-            shutdown();
         }
     }
 
@@ -138,24 +100,39 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     }
 
     @Override
-     public void listen(SocketStruct struct) throws IOException, ClassNotFoundException {
+     public void listen(SocketStruct struct) {
         // read the list of messages from the socket
-         while (dataSocket!=null) {
+         while (dataSocket!=null&&!externalShutdown) {
              if(struct.socket.isConnected()&&!struct.socket.isClosed()) {
                  recentStruct=struct;
                  D.log("listening...");
 
-                 handleIncomingObject((ChannelObject) struct.objectInputStream.readObject());
+                 try {
+                     handleIncomingObject((ChannelObject) struct.objectInputStream.readObject());
+                 } catch (IOException e) {
+                     e.printStackTrace();
+                     try {
+                         struct.objectInputStream.close();
+                     }
+                     catch (IOException e2) {}
+                     try {
+                         struct.objectOutputStream.close();
+                     }
+                     catch (IOException e2) {}
+                     try {
+                         struct.socket.close();
+                     }
+                     catch (IOException e2) {}
+                     socketList.remove(struct);
+                     break;
+                 } catch (ClassNotFoundException e) {
+                     e.printStackTrace();
+                 }
              }
              else{
                  break;
              }
          }
-        try {
-            currentThread().join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
     }
 
@@ -199,11 +176,9 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     @Override
     public void handleIncomingObject(ChannelObject chObject) throws IOException {
         D.log("server: got an object: "+chObject.TYPE);
+
         if(chObject.TYPE== TYPE.MP){
             MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,chObject.body));
-
-
-
             D.log(" server: MusicPlayerActionEvent Happened: ");
 
         }
@@ -219,16 +194,12 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                     s.objectOutputStream.close();
                 if(s.socket!=null)
                     s.socket.close();
-                s=null;
             }
             if(dataSocket!=null){
                 dataSocket.close();
-                dataSocket=null;
             }
 
-            System.gc();
-           // currentThread().join();
-
+            externalShutdown=true;
         } catch (IOException e) {
             e.printStackTrace();
             D.log(e.getMessage());

@@ -1,4 +1,11 @@
 apply plugin: 'com.android.application'
+
+ext {
+    artifact = 'libaums'
+    bintrayName = 'libaums'
+    libraryVersion = '0.5.5'
+}
+
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.0"
@@ -28,7 +35,6 @@ dependencies {
     implementation files('jar/tritonus-share-0.3.7-2.jar')
     implementation files('jar/jl1.0.1.jar')
   //  implementation fileTree(dir: 'jar', include: ['*.aar', '*.jar'], exclude: [])
-    implementation files('jar/mp3spi1.9.5/MpegAudioSPI1.9.5/mp3spi1.9.5.jar')
     implementation files('jar\\jaad-0.8.4.jar')
     implementation files('jar\\YoutubeDecoder-1.0.jar')
 
