@@ -20,7 +20,7 @@ import com.speakerz.view.recyclerview.RecyclerView_FAB;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class PlayerRecyclerActivity extends AppCompatActivity {
     RecyclerView_FAB recyclerViewFab;
     TopMenu menu;
     BottomMusicPlayer bottomPlayer;
