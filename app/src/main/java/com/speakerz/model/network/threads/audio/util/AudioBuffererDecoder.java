@@ -36,7 +36,7 @@ public class AudioBuffererDecoder {
     private MediaExtractor mExtractor;
     private MediaCodec mDecoder;
 
-    private volatile boolean eosReceived;
+    private AtomicBoolean eosReceived=new AtomicBoolean(false);
     private int mSampleRate = 0;
     public Event<EventArgs1<AudioPacket>> AudioTrackBufferUpdateEvent;
     public Event<EventArgs1<AudioMetaDto>> MetaDtoReadyEvent;
@@ -60,7 +60,7 @@ public class AudioBuffererDecoder {
     AUDIO audioType=AUDIO.NONE;
     public void startPlay(File file, AUDIO audioType,DECODER_MODE mode) throws IOException {
         this.audioType=audioType;
-        eosReceived = false;
+        eosReceived.set(false);
         currentFile=file;
 
 
@@ -70,12 +70,13 @@ public class AudioBuffererDecoder {
 
     }
 
-    public AtomicBoolean isDecodingReady=new AtomicBoolean(false);
 public AtomicInteger actualBufferedPackageNumber=new AtomicInteger(0);
 public AtomicInteger maxPackageNumber=new AtomicInteger(0);
-    private void playMP3(File file,DECODER_MODE mode) throws IOException {
 
-        eosReceived=false;
+    private void playMP3(File file,DECODER_MODE mode) throws IOException {
+        actualBufferedPackageNumber.set(0);
+        maxPackageNumber.set(0);
+        eosReceived.set(false);
         // Create a jlayer Decoder instance.
         D.log("PLAYING MP3 ");
         Decoder decoder = new Decoder();
@@ -96,13 +97,12 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
         int framesReaded = 0;
 
         boolean l=false;
-        while (!eosReceived) {
+        while (!eosReceived.get()) {
             try {
                 if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
                     D.log("readed tha whole music");
                     D.log("max pack size: "+actualBufferedPackageNumber.get());
                  maxPackageNumber.set(actualBufferedPackageNumber.get());
-                    isDecodingReady.set(true);
                     synchronized (bufferQueue){
                         bufferQueue.notify();
                     }
@@ -148,8 +148,30 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
 
             bitStream.closeFrame();
         }
+            if(eosReceived.get()){
+                synchronized (playStoppedLocker) {
+                    playStoppedLocker.notify();
+                }
+            }
+
     }
 
+   final public Object playStoppedLocker=new Object();
 
+    public void stop() throws InterruptedException {
+        eosReceived.set(true);
+        //if it's zero it means, that the file is not yet readed.
+        if(maxPackageNumber.get()==0) {
+            synchronized (playStoppedLocker) {
+                D.log("waiting for buffererdecoder to stop");
+                playStoppedLocker.wait(500);
+                D.log(" buffererdecoder stopped");
 
+            }
+        }
+        actualBufferedPackageNumber.set(0);
+        maxPackageNumber.set(0);
+        bufferQueue.clear();
+
+    }
 }

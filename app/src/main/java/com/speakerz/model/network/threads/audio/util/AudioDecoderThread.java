@@ -27,7 +27,9 @@ import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import android.media.AudioFormat;
@@ -66,6 +68,7 @@ import static android.os.FileUtils.copy;
  */
 public class AudioDecoderThread {
     private static final int TIMEOUT_US = 1000;
+    public final AtomicBoolean isPaused=new AtomicBoolean(false);
     private MediaExtractor mExtractor;
     private MediaCodec mDecoder;
 
@@ -101,19 +104,20 @@ public class AudioDecoderThread {
 
     }
 
-    public volatile boolean isPlaying=false;
-    public AtomicInteger actualPackageNumber=new AtomicInteger(0);
+   public AtomicInteger actualPackageNumber=new AtomicInteger(0);
+    public AtomicBoolean isPlaying=new AtomicBoolean(false);
 
 
 
     private void playMP3(File file,DECODER_MODE mode) throws IOException {
         eosReceived=false;
+        actualPackageNumber.set(0);
+        isPlaying.set(true);
        // Create a jlayer Decoder instance.
-D.log("PLAYING MP3 ");
-                Decoder decoder = new Decoder();
+        D.log("PLAYING MP3 ");
+        Decoder decoder = new Decoder();
 
        // Create a jlayer BitStream instance of a given mp3 source.
-
         AudioMetaInfo metaInfo=new AudioMetaInfo(file) ;
         metaDto.sampleRate=metaInfo.getAudioHeader().getSampleRate();
         metaDto.channels=(short)metaInfo.getAudioHeader().getChannelCount();
@@ -123,8 +127,6 @@ D.log("PLAYING MP3 ");
         Bitstream bitStream = new Bitstream(mp3Source);
 
        // Create an AudioTrack instance.
-
-
         final int minBufferSize = AudioTrack.getMinBufferSize( metaDto.sampleRate,
                TransformAF.channel(metaDto.channels),
                 AudioFormat.ENCODING_PCM_16BIT);
@@ -138,19 +140,26 @@ D.log("PLAYING MP3 ");
                 AudioTrack.MODE_STREAM);
 
       //  Decode the mp3 BitStream data by Decoder and feed the outcoming PCM chunks to AudioTrack.
-
-            audioTrack.play();
+        audioTrack.play();
 
         final int READ_THRESHOLD = 2147483647;
-
         Header frame = null;
         int framesReaded = 0;
-
-        boolean l=false;
         while (!eosReceived) {
+            if(isPaused.get()){
+                synchronized (isPaused){
+                    try {
+                        isPaused.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
                      try {
                 if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
                     D.log("readed tha whole music");
+
                     break;
                 }
 
@@ -173,21 +182,32 @@ D.log("PLAYING MP3 ");
 
             bitStream.closeFrame();
         }
+        isPlaying.set(false);
+
+        synchronized (playStoppedLocker) {
+            playStoppedLocker.notify();
+        }
     }
 
+    public void stop() throws InterruptedException {
+        eosReceived = true;
+        if(isPlaying.get()) {
 
+            synchronized (playStoppedLocker) {
+                D.log("waiting for player to stop");
+                playStoppedLocker.wait();
+                D.log(" player stopped");
+
+            }
+            audioTrack.stop();
+            audioTrack.release();
+        }
+
+    }
+
+final public Object playStoppedLocker=new Object();
 
     File currentFile=null;
-
-
-String checknull(String in){
-    if(in==null)
-        return "null";
-    else return in;
-}
-
-
-
     public AudioMetaDto getAudioMeta(){
           return metaDto;
     }
@@ -316,12 +336,6 @@ String checknull(String in){
 
         new Thread(AACDecoderAndPlayRunnable).start();
     }
-
-
-
-
-
-
     /**
      * The code profile, Sample rate, channel Count is used to
      * produce the AAC Codec SpecificData.
@@ -409,9 +423,7 @@ String checknull(String in){
         audioTrack.play();
 
         while (!eosReceived) {
-            while(!isPlaying){
 
-            }
             int inIndex = mDecoder.dequeueInputBuffer(TIMEOUT_US);
             if (inIndex >= 0) {
                 ByteBuffer buffer = inputBuffers[inIndex];
@@ -479,23 +491,11 @@ String checknull(String in){
         mExtractor.release();
         mExtractor = null;
 
-        audioTrack.stop();
-        audioTrack.release();
-        audioTrack = null;
+
     }
 
-    public void stop() {
-        eosReceived = true;
-        if(audioTrack!=null){
-            audioTrack.stop();
-            audioTrack.release();
-            audioTrack = null;
-        }
-    }
 
-    private class PcmPackageStructure{
 
-        int[] bufferSizes;
-    }
+
 
 }
