@@ -55,8 +55,8 @@ public class MusicPlayer extends Activity {
         public void action(EventArgs1<Boolean> args) {
             if(args.arg1()){
                 // configure seekbar when media is started
-                totalTime = model.mediaPlayer.getDuration();
-                seekBar.setMax(totalTime);
+                //totalTime = model.mediaPlayer.getDuration();
+                //seekBar.setMax(totalTime);
             }
             buttonPlay.setText(args.arg1() ? "Stop" : "Start");
             playSong = args.arg1();
@@ -116,8 +116,8 @@ public class MusicPlayer extends Activity {
                     if(model == null) return;
 
                     if (fromUser) {
-                        model.mediaPlayer.seekTo(progress);
-                        MusicPlayer.this.seekBar.setProgress(progress);
+                       // model.mediaPlayer.seekTo(progress);
+                        //MusicPlayer.this.seekBar.setProgress(progress);
                     }
                     else{
                         MusicPlayer.this.seekBar.setProgress(progress);
@@ -165,7 +165,7 @@ public class MusicPlayer extends Activity {
                // int resID = getResources().getIdentifier(model.songNameQueue.get(i),"raw",getPackageName());
                 // Starting song
                 D.log("VIEWMODEL START");
-                model.startONE(model.context,Uri.parse(model.songQueue.get(i).getData()));
+               // model.startONE(model.context,Uri.parse(model.songQueue.get(i).getData()));
             }
         });
 
@@ -175,7 +175,7 @@ public class MusicPlayer extends Activity {
                 //Uri myUri = Uri.parse(model.audioList.get(i).getData());
                 //model.start(model.context, Uri.parse(model.audioList.get(i).getData()));
                 model.songNameQueue.add(model.audioList.get(i).getTitle());
-                model.songQueue.add(model.audioList.get(i));
+               // model.songQueue.add(model.audioList.get(i));
 
                 songViewLA.notifyDataSetChanged();
                 System.out.println(model.songNameQueue.size());

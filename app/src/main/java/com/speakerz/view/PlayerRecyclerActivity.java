@@ -56,9 +56,7 @@ public class PlayerRecyclerActivity extends AppCompatActivity {
         menu=new TopMenu(self);
 
         // Configure BottomPlayer
-        bottomPlayer =new BottomMusicPlayer(self);
-        bottomPlayer.setButtons();
-        bottomPlayer.addListeners();
+        bottomPlayer = new BottomMusicPlayer(self);
     }
 
     private ServiceConnection srvConn = new ServiceConnection() {

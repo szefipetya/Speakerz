@@ -13,6 +13,10 @@ import androidx.recyclerview.widget.RecyclerView;;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.speakerz.R;
 import com.speakerz.model.MusicPlayerModel;
+import com.speakerz.model.Song;
+import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs2;
+import com.speakerz.util.EventListener;
 
 import java.util.ArrayList;
 
@@ -38,6 +42,14 @@ public class RecyclerView_FAB  {
         buildRecyclerView();
         initButtons();
     }
+
+    final EventListener<EventArgs2<Song, Integer>> songAddedListener = new EventListener<EventArgs2<Song, Integer>>() {
+        @Override
+        public void action(EventArgs2<Song, Integer> args) {
+            if(mAdapter == null) return;
+            mAdapter.notifyItemInserted(args.arg2());
+        }
+    };
 
     public void insertItem(int position, String from, int pic) {
         itemList.add(new Item(pic, from + ": New Item at position: " + (position), "Artist"));
@@ -98,10 +110,9 @@ public class RecyclerView_FAB  {
         mLibraryFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                int position = model.songQueue.size();
-                //insertItem(position, "Library", R.drawable.ic_song);
-                model.songQueue.add(model.audioList.get(position));
-                mAdapter.notifyItemInserted(position);
+                int position = model.getSongQueue().size();
+
+                model.addSong(model.audioList.get(position));
 
                 mLibraryFab.setVisibility(View.INVISIBLE);
                 mYoutubeFab.setVisibility(View.INVISIBLE);
@@ -127,13 +138,12 @@ public class RecyclerView_FAB  {
     }
 
     public void initModel(final MusicPlayerModel model) {
-        mAdapter = new Adapter(model.songQueue);
+        mAdapter = new Adapter(model.getSongQueue());
         mRecyclerView.setAdapter(mAdapter);
         mAdapter.setOnItemClickListener(new Adapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
-
-                model.startONE(model.context, Uri.parse(model.songQueue.get(position).getData()));
+                model.startONE(model.context, Uri.parse(model.getSongQueue().get(position).getData()));
             }
 
             @Override
@@ -141,11 +151,16 @@ public class RecyclerView_FAB  {
                 removeItem(position);
             }
         });
-
+        model.songAddedEvent.addListener(songAddedListener);
         this.model = model;
     }
 
     public void releaseModel() {
+        mRecyclerView.setAdapter(null);
+        mAdapter.setOnItemClickListener(null);
+        model.songAddedEvent.addListener(songAddedListener);
 
+        mAdapter = null;
+        model = null;
     }
 }

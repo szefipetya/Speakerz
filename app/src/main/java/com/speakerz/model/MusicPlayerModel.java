@@ -22,6 +22,9 @@ import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
 import java.io.File;
+import java.util.AbstractList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
@@ -48,10 +51,9 @@ public class MusicPlayerModel{
     //TODO NEED A LITTLE BIT MORE SPECIFIC DATATYPE
     //I REQUEST SongItem...
     public List<String> songNameQueue = new LinkedList<>(); // the name of the Songs we want to play
-    public List<Song> songQueue = new LinkedList<>(); // the Songs we want to play as Song files.
+    private List<Song> songQueue = new LinkedList<>(); // the Songs we want to play as Song files.
     public ArrayList<Song> audioList = new ArrayList<Song>(); // all music in the phone
     public ArrayList<String> audioNameList = new ArrayList<String>(); // names of all the songs for the view
-    public MediaPlayer mediaPlayer;
     public Context context;
     private Song activeSong;
     public String playedSongName;
@@ -60,14 +62,19 @@ public class MusicPlayerModel{
     // Events
     public final Event<EventArgs1<Boolean>> playbackStateChanged = new Event<>();
     public final Event<EventArgs2<Integer, Integer>> playbackDurationChanged = new Event<>();
-
-    //From Model
-    //comes as external dependency from model
+    public final Event<EventArgs2<Song, Integer>> songAddedEvent = new Event<>();
     public Event<EventArgs1<Body>> MusicPlayerActionEvent;
-    //common communation channel with model.
     public Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
-
     public Event<EventArgs1<String>> SongDownloadedEvent;
+
+    public List<Song> getSongQueue(){
+        return Collections.unmodifiableList(songQueue);
+    }
+
+    public void addSong(Song song){
+        songQueue.add(song);
+        songAddedEvent.invoke(new EventArgs2<Song, Integer>(this, song, songQueue.size()));
+    }
 
 
     public void subscribeEventsFromModel(){
@@ -107,47 +114,12 @@ public class MusicPlayerModel{
     }
 
 
-    // Listeners
-    MediaPlayer.OnCompletionListener completionListener = new MediaPlayer.OnCompletionListener() {
-        @Override
-        public void onCompletion(MediaPlayer mediaPlayer) {
-            startNext();
-        }
-    };
-
-    // thread to sync playback durations
-    Thread durationUpdateThread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-           /* try{
-                int _current = -1, _total = -1;
-                while(true){
-                    if(mediaPlayer != null && mediaPlayer.isPlaying()) {
-                        int current = mediaPlayer.getCurrentPosition();
-                        int total = mediaPlayer.getDuration();
-
-                        if(_current != current || _total != total){
-                            _current = current;
-                            _total = total;
-                            playbackDurationChanged.invoke(new EventArgs2<Integer, Integer>(self, _current, _total));
-                        }
-                    }
-                    Thread.sleep(250);
-                }
-            }
-            catch (InterruptedException e) { }*/
-        }
-    });
-
     public MusicPlayerModel(Context context,Event<PermissionCheckEventArgs> permEvt) {
         this.context = context;
         this.PermissionCheckEvent=permEvt;
-        mediaPlayer = new MediaPlayer();
-        durationUpdateThread.start();
 
         // Event handler to start next song automatically
 
-        mediaPlayer.setOnCompletionListener(completionListener);
 
       //  playFromAudioStream();
       //  InputStream is =context.getResources().openRawResource(R.raw.passion_aac);
@@ -160,15 +132,11 @@ public class MusicPlayerModel{
     // Close music player services
     public void close(){
         stop();
-        durationUpdateThread.interrupt();
     }
 
     // Stop playing
     public void stop(){
-        if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-            mediaPlayer.stop();
-            playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
-        }
+        // TODO stop music
     }
 
     public void startNext(){
@@ -184,99 +152,39 @@ public class MusicPlayerModel{
 
     // starting song by Uri
     public void startONE(Context context, Uri uri){
-
-            D.log("---START FROM UI");
-           // mediaPlayer.stop();
-         /*   if(mediaPlayer != null) mediaPlayer.reset();
-            mediaPlayer = null;
-
-            mediaPlayer = new MediaPlayer();
-            try {
-                mediaPlayer.setDataSource(context,uri);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                mediaPlayer.prepare();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            mediaPlayer.setOnCompletionListener(completionListener);
-            mediaPlayer.start();*/
-
-            //HostModel is registered for this event, so we pass the File
-             //playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
-
-            //ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_STOP,new File(uri.getPath()),null));
-
-            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_PLAY,new File(uri.getPath()),null));
-
-          //  playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
-
+        D.log("---START FROM UI");
+        ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_PLAY,new File(uri.getPath()),null));
     }
 
-    // Starting song by resId
-   /* public void start(Context context, int resId){
-        try {
-            mediaPlayer.stop();
-            playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
-            if(mediaPlayer != null) mediaPlayer.reset();
-            mediaPlayer = null;
-
-            mediaPlayer = MediaPlayer.create(context, resId);
-            mediaPlayer.setOnCompletionListener(completionListener);
-            mediaPlayer.start();
-            playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
-        }
-        catch (Exception e){}
-    }*/
-
-    // Starting song from songQueue by index
     public void start(int songIndex){
-           ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_RESUME,null,null));
+        ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_RESUME,null,null));
         if(songNameQueue.size() > 0 && songIndex < songNameQueue.size()) {
             currentPlayingIndex = songIndex;
-            //int resId = context.getResources().getIdentifier(songNameQueue.get(songIndex), "raw", context.getPackageName());
-            //start(context, resId);
+
             startONE(context,Uri.parse(this.songQueue.get(songIndex).getData()));
             playedSongName = songNameQueue.get(songIndex);
         }
         else{
             System.out.println("nincstöbb zene a listában");
-
         }
     }
 
     // Start paused playing
     boolean isPlaying=true;
     public void start(){
-
-            playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
-            isPlaying=true;
-            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_RESUME,null,null));
-
-
-       /* if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
-            mediaPlayer.start();
-
-        }*/
+        playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
+        isPlaying=true;
+        ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_RESUME,null,null));
     }
 
     // returns true is media player exists and playing media
     public boolean isPlaying(){
-        return mediaPlayer != null && mediaPlayer.isPlaying();
+        return false; // TODO
     }
 
     // pauses media player if exists
     public void pause(){
-            isPlaying=false;
-            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self, MP_EVT.SONG_PAUSE, null, null));
-            playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
-
-        /*if(mediaPlayer != null) {
-            mediaPlayer.pause();
-            playbackStateChanged.invoke(new EventArgs1<Boolean>(this, false));
-        }*/
+        ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self, MP_EVT.SONG_PAUSE, null, null));
     }
 
     // Toggles pause and start state of player
