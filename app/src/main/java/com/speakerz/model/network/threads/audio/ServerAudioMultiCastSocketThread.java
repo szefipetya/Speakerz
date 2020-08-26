@@ -51,6 +51,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             currentFile=file;
             locker.notify();
             resumeAudioStream();
+
         }
     }
     File currentFile=null;
@@ -117,9 +118,11 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                             D.log("waiting for audio pick.");
                             while (!swapSong.get()) {
                                 locker.wait();
+                                D.log("waiting ui notify clicked");
                             }
                                 swapSong.set(false);
                         }
+
                         //megvárjuk, ameddig az összeskliensnek elküld egy 0 byte-os csomagot, ezzel jelezve a stream végét.
                         if(isSongInPlay.get()) {
                             for (ClientSocketStructWrapper cli : clients) {
@@ -134,7 +137,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                             decoder.stop();
 
                         }
-
+                            D.log("starting threads");
                             Thread t=new Thread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -159,8 +162,8 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                             });
 
                             t2.start();
-                            isSongInPlay.set(true);
 
+                            isSongInPlay.set(true);
                         }
 
                 } catch (InterruptedException e) {

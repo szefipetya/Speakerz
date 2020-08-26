@@ -148,6 +148,9 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
 
             bitStream.closeFrame();
         }
+        synchronized (bufferQueue){
+            bufferQueue.notify();
+        }
             if(eosReceived.get()){
                 synchronized (playStoppedLocker) {
                     playStoppedLocker.notify();

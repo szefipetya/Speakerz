@@ -257,9 +257,9 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                // D.log("audiopacket, size:"+audioPacket.size);
                // AudioPacket packet=(AudioPacket)e.getValue();
                // at.write(packet.data, 0,packet.size);
-         //       D.log(""+packet.packageNumber+",i: "+i);
+               // D.log(""+packet.packageNumber+",i: "+i);
                 //packet.packageNumber-metaDto.actualBufferedPackageNumber
-                if(i>=100 &&!playStarted){
+                if(i>=300 &&!playStarted){
                     D.log("buffer size is over 100");
                     playStarted=true;
                     AudioControlDto dto =new AudioControlDto(AUDIO_CONTROL.SYNC_ACTUAL_PACKAGE);
