@@ -71,6 +71,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             decoder.isPaused.notify();
         }
     }
+
     public void pauseAudioStream() {
         sendAll(new ChannelObject(new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.PAUSE_SONG)),TYPE.AUDIO_CONTROL_CLIENT));
         D.log("pause");
