@@ -65,12 +65,14 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     }
     public void resumeAudioStream(){
         D.log("resume");
+        sendAll(new ChannelObject(new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.RESUME_SONG)),TYPE.AUDIO_CONTROL_CLIENT));
         synchronized (decoder.isPaused){
             decoder.isPaused.set(false);
             decoder.isPaused.notify();
         }
     }
     public void pauseAudioStream() {
+        sendAll(new ChannelObject(new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.PAUSE_SONG)),TYPE.AUDIO_CONTROL_CLIENT));
         D.log("pause");
         decoder.isPaused.set(true);
     }
@@ -127,10 +129,15 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                         if(isSongInPlay.get()) {
                             for (ClientSocketStructWrapper cli : clients) {
                                 cli.eofSongReached = true;
-                                if (cli.isClientInStream) {
-                                    synchronized (cli.eofReceivedFromClientLocker) {
-                                        cli.eofReceivedFromClientLocker.wait();
+                                if(cli.isBuffering) {
+                                    synchronized (cli.eofSongReachedLocker) {
+                                        cli.eofSongReachedLocker.notify();
                                     }
+                                }else{
+                                  cli.dataSocket.objectOutputStream.writeObject(new AudioPacket(0,new byte[0]));
+                                }
+                                synchronized (cli.eofReceivedFromClientLocker) {
+                                    cli.eofReceivedFromClientLocker.wait();
                                 }
                             }
                             decoderBufferer.stop();
@@ -142,7 +149,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                                 @Override
                                 public void run() {
                                     try {
-                                        decoder.startPlay(currentFile, AUDIO.MP3, DECODER_MODE.PLAY);
+                                        decoder.startPlay(currentFile, AUDIO.MP3);
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
@@ -166,7 +173,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                             isSongInPlay.set(true);
                         }
 
-                } catch (InterruptedException e) {
+                } catch (InterruptedException | IOException e) {
                     e.printStackTrace();
                 }
                 //  yt.play("TW9d8vYrVFQ");
@@ -352,6 +359,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         int actualReadedPackNumber = 0;
         struct.isClientInStream=true;
         struct.eofSongReached=false;
+        struct.isBuffering=true;
             while ((actualReadedPackNumber <= decoderBufferer.maxPackageNumber.get() || decoderBufferer.maxPackageNumber.get() == 0)) {
                 if(struct.eofSongReached){
                     try {
@@ -363,7 +371,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                     }
 
                     D.log("break");
-                    break;
+                    return;
                 }
                   //the buffered decoder is not finished yet
                 if(decoderBufferer.maxPackageNumber.get()==0) {
@@ -377,7 +385,6 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                             }
                     }
                 }
-
                // D.log("----");
                 if(itr.hasNext()) {
                     AudioPacket packet = itr.next();
@@ -396,10 +403,8 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                 }
 
             }
-
+            struct.isBuffering=false;
        // }
-
-
     }
 
 

@@ -12,7 +12,6 @@ public class AudioMetaDto implements Serializable {
     public  short bitsPerSample;
 
     public int packageSize;
-    public  String title;
-    public  String album;
+  //Song object
     public int actualBufferedPackageNumber;
 }

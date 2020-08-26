@@ -53,12 +53,6 @@ public abstract class BaseModel {
 
     public abstract BaseNetwork getNetwork();
 
-  /*  public List<String> getSongList() {
-        return songList;
-    }*/
-
- //   protected List<String> songList=new ArrayList<>();
-
     public MusicPlayerModel getMusicPlayerModel(){return musicPlayerModel;}
 
     private Boolean AreUiEventsSubscribed=false;

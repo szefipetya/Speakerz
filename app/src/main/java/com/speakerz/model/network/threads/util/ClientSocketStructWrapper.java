@@ -5,6 +5,7 @@ import com.speakerz.model.network.threads.SocketStruct;
 public class ClientSocketStructWrapper {
     public Boolean isClientInStream=false;
     public Boolean eofSongReached=false;
+    public final Object eofSongReachedLocker=new Object();
     public Boolean isBuffering=false;
   final  public Object eofReceivedFromClientLocker =new Object();
 

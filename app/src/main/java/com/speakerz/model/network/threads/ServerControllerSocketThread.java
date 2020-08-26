@@ -164,6 +164,11 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
 
         }
     }
+    public void send(SocketStruct struct ,ChannelObject channelObject) throws IOException{
+            recentStruct.objectOutputStream.writeObject(channelObject);
+            recentStruct.objectOutputStream.flush();
+
+    }
 
     public void sendAll(ChannelObject chObject) throws IOException {
         for(SocketStruct s : socketList){
@@ -178,6 +183,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
         D.log("server: got an object: "+chObject.TYPE);
 
         if(chObject.TYPE== TYPE.MP){
+
             MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,chObject.body));
             D.log(" server: MusicPlayerActionEvent Happened: ");
 

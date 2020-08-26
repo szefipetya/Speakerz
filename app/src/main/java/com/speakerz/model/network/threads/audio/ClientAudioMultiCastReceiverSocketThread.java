@@ -75,6 +75,16 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
             while (itr.hasNext()&&!swapSong.get()) {
                 AudioPacket packet=(AudioPacket)itr.next();
                 if(packet.packageNumber>=actualAudioPackage+syncLagOffsetInPackages) {
+                    if(isPaused.get()){
+                        synchronized (isPausedLocker){
+                            try {
+                                //wait until ispausedLocker is notified to resume the song.
+                                isPausedLocker.wait();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
                     at.write(packet.data, 0, packet.data.length);
                 }
             }
@@ -86,6 +96,8 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     };
     AtomicBoolean swapSong=new AtomicBoolean(false);
     int actualAudioPackage=0;
+    AtomicBoolean isPaused=new AtomicBoolean(false);
+    final Object isPausedLocker=new Object();
 
 
     private void listen(SocketStruct struct) {
@@ -120,6 +132,14 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                             Thread t=new Thread(playAudioRunnable);
                             t.start();
                             D.log("thread started");
+                    }else if(body.getContent().flag==AUDIO_CONTROL.RESUME_SONG){
+                        isPaused.set(false);
+                        synchronized (isPausedLocker) {
+                            isPausedLocker.notify();
+                        }
+                    }else if(body.getContent().flag==AUDIO_CONTROL.PAUSE_SONG){
+                        isPaused.set(true);
+
                     }
                 }else {
                     D.log("ClientAudioThread: received wrong package");

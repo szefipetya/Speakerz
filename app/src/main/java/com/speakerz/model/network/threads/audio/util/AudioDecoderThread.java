@@ -79,9 +79,9 @@ public class AudioDecoderThread {
 
 
     AudioMetaDto metaDto=new AudioMetaDto();
-    public void startPlay(String path, AUDIO audioType,DECODER_MODE mode) throws IOException {
+    public void startPlay(String path, AUDIO audioType) throws IOException {
         currentFile=new File(path);
-       startPlay(currentFile,audioType,mode);
+       startPlay(currentFile,audioType);
     }
 
     public AudioTrack getAudioTrack() {
@@ -90,7 +90,7 @@ public class AudioDecoderThread {
 
     AudioTrack audioTrack=null;
     AUDIO audioType=AUDIO.NONE;
-    public void startPlay(File file, AUDIO audioType,DECODER_MODE mode) throws IOException {
+    public void startPlay(File file, AUDIO audioType) throws IOException {
         this.audioType=audioType;
         eosReceived = false;
         currentFile=file;
@@ -99,7 +99,7 @@ public class AudioDecoderThread {
         }else if(audioType==AUDIO.WAV){
             playWAV(file);
         }else if(audioType==AUDIO.MP3){
-            playMP3(file,mode);
+            playMP3(file);
         }
 
     }
@@ -109,7 +109,7 @@ public class AudioDecoderThread {
 
 
 
-    private void playMP3(File file,DECODER_MODE mode) throws IOException {
+    private void playMP3(File file) throws IOException {
         eosReceived=false;
         actualPackageNumber.set(0);
         isPlaying.set(true);
@@ -155,7 +155,6 @@ public class AudioDecoderThread {
                     }
                 }
             }
-
                      try {
                 if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
                     D.log("readed tha whole music");
