@@ -36,8 +36,8 @@ public abstract class BaseModel {
     public abstract void stop();
 
     public String NickName = "placeholder";
-    public ArrayList<String> NickNames;
-    public HashMap<InetAddress,String> NickNames2;
+    //public ArrayList<String> NickNames;
+    public HashMap<String,String> NickNames;
 
     MusicPlayerModel musicPlayerModel;
     public Event<PermissionCheckEventArgs> PermissionCheckEvent;
@@ -47,6 +47,7 @@ public abstract class BaseModel {
     public volatile Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
     public volatile Event<EventArgs1<Body>> NameChangeEvent=new Event<>();
     public Event<EventArgs1<String>> SongDownloadedEvent=new Event<>();
+    Context context;
 
 
 
@@ -54,7 +55,9 @@ public abstract class BaseModel {
         this.PermissionCheckEvent=PermissionCheckEvent;
         musicPlayerModel = new MusicPlayerModel(context,this.PermissionCheckEvent);
         musicPlayerModel.setHost(isHost);
-
+        NickName = "placeholder";
+        NickNames= new HashMap<>();
+        this.context=context;
 
         //inject Events to MusicPLayerModel
 

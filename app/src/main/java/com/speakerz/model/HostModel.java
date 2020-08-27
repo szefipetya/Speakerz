@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.widget.Toast;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
@@ -42,6 +43,7 @@ public class HostModel extends BaseModel {
         subscribeMusicPlayerModelEvents();
         subscribeNetWorkEvents();
         network.getServerSocketWrapper().audioSocket.setContext(context);
+        NickNames.put("Host",this.NickName);
     }
 
     private void subscribeNetWorkEvents() {
@@ -52,10 +54,11 @@ public class HostModel extends BaseModel {
                 D.log("name:"+NickName);
                 D.log("NAME CHANGE HAPPEND.");
                 NickName = ((PutNameChangeRequestBody)args.arg1()).getContent().name;
-                D.log("name:"+NickName);
+                NickNames.put("Host",NickName);
+                Toast.makeText(context, "New name:"+NickNames.get("Host"), Toast.LENGTH_SHORT).show();
                 try {
                     network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.NAME));
-                    SongQueueUpdatedEvent.invoke(null);
+                    //SongQueueUpdatedEvent.invoke(null);
                     D.log("NameChange sent");
                 } catch (IOException e) {
                     D.log("could not send a single song to"+args.arg1().senderAddress+((SongItem)(args.arg1().getContent())).sender);
@@ -63,7 +66,6 @@ public class HostModel extends BaseModel {
 
             }
         });
-
     }
 
     private void subscribeMusicPlayerModelEvents() {
@@ -196,5 +198,6 @@ public class HostModel extends BaseModel {
     protected void injectNetworkDependencies() {
         network.getServerSocketWrapper().controllerSocket.MusicPlayerActionEvent=MusicPlayerActionEvent;
         network.getServerSocketWrapper().controllerSocket.MetaInfoEvent =MetaInfoReceivedEvent;
+        network.getServerSocketWrapper().controllerSocket.NameChangeEvent =NameChangeEvent;
     }
 }

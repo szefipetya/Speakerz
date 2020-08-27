@@ -3,10 +3,19 @@ package com.speakerz.model;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.speakerz.R;
+import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.DeviceNetwork;
+import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
+import com.speakerz.model.network.Serializable.body.controller.content.SongItem;
+import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
@@ -14,6 +23,7 @@ import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 
 public class DeviceModel extends BaseModel {
@@ -32,10 +42,26 @@ public class DeviceModel extends BaseModel {
         network.getClientSocketWrapper().audioSocket.SongDownloadedEvent=this.SongDownloadedEvent;
         network.getClientSocketWrapper().controllerSocket.MusicPlayerActionEvent=MusicPlayerActionEvent;
         network.getClientSocketWrapper().controllerSocket.MetaInfoReceivedEvent=MetaInfoReceivedEvent;
+        network.getClientSocketWrapper().controllerSocket.NameChangeEvent = NameChangeEvent;
     }
 
 
     private void subscribeNetworkEvents() {
+
+
+        NameChangeEvent.addListener(new EventListener<EventArgs1<Body>>() {
+
+            @Override
+            public void action(EventArgs1<Body> args) {
+                D.log("name:"+NickName);
+                D.log("NAME CHANGE HAPPEND.");
+                NickName = ((PutNameChangeRequestBody)args.arg1()).getContent().name;
+                NickNames.put("Host",NickName);
+                //Toast.makeText(context, "New name: "+NickNames.get("Host"), Toast.LENGTH_SHORT).show();
+                D.log("name:"+NickNames.get("Host"));
+
+            }
+        });
         //a network jelzi, hogy songObjectet kapott.
 
 

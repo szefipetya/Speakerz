@@ -11,16 +11,22 @@ import android.os.IBinder;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.HostModel;
 import com.speakerz.model.enums.EVT;
+import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
 import com.speakerz.view.PlayerRecyclerActivity;
 
@@ -231,6 +237,19 @@ public class Create extends Activity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create);
+
+        final EditText editName = (EditText) findViewById(R.id.edi);
+
+
+        Button nameChange = (Button) findViewById(R.id.temp);
+        nameChange.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View view){
+                NameItem item = new NameItem(editName.getText().toString(),"en");
+                PutNameChangeRequestBody body1 = new PutNameChangeRequestBody(null,item);
+                _service.getModel().NameChangeEvent.invoke(new EventArgs1<Body>(null,body1));
+            }
+
+        });
 
 
 

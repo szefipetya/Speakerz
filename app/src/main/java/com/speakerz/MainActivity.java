@@ -199,16 +199,6 @@ public class MainActivity extends Activity {
 
         });
 
-        Button nameChange = (Button) findViewById(R.id.temp);
-        nameChange.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View view){
-                Toast.makeText(getApplicationContext(), "Name Change selected", Toast.LENGTH_SHORT).show();
-                NameItem item = new NameItem("valaki","en");
-                PutNameChangeRequestBody body1 = new PutNameChangeRequestBody(null,item);
-                _service.getModel().NameChangeEvent.invoke(new EventArgs1<Body>(null,body1));
-            }
-
-        });
 
 
 
