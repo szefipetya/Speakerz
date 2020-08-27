@@ -59,6 +59,7 @@ public class PlayerRecyclerActivity extends AppCompatActivity {
         bottomPlayer =new BottomMusicPlayer(self);
         bottomPlayer.setButtons();
         bottomPlayer.addListeners();
+
     }
 
     private ServiceConnection srvConn = new ServiceConnection() {

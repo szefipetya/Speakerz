@@ -6,6 +6,10 @@ import java.io.Serializable;
 
 public class Song implements Serializable {
 
+    private Integer id;
+
+
+
     private String data;
     private String title;
     private String album;
@@ -16,6 +20,14 @@ public class Song implements Serializable {
         this.title = title;
         this.album = album;
         this.artist = artist;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public String getData() {

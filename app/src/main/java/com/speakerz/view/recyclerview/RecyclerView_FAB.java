@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.speakerz.R;
 import com.speakerz.model.MusicPlayerModel;
+import com.speakerz.model.Song;
 
 import java.util.ArrayList;
 
@@ -100,6 +101,8 @@ public class RecyclerView_FAB  {
             public void onClick(View view) {
                 int position = model.songQueue.size();
                 //insertItem(position, "Library", R.drawable.ic_song);
+
+                model.songAdded(model.audioList.get(position));
                 model.songQueue.add(model.audioList.get(position));
                 mAdapter.notifyItemInserted(position);
 
@@ -133,7 +136,9 @@ public class RecyclerView_FAB  {
             @Override
             public void onItemClick(int position) {
 
-                model.startONE(model.context, Uri.parse(model.songQueue.get(position).getData()));
+
+                model.startONE(model.context, Uri.parse(model.songQueue.get(position).getData()),model.songQueue.get(position).getId());
+
             }
 
             @Override

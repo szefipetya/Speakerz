@@ -2,6 +2,7 @@ package com.speakerz.view.components;
 
 import android.content.Intent;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,13 +16,15 @@ public class BottomMusicPlayer {
     TextView titleSongTV;
     TextView detailsTV;
     MusicPlayerModel mpModel = null;
+    private ImageButton playPauseButton;
 
-  public   BottomMusicPlayer(AppCompatActivity activity){
+    public  BottomMusicPlayer(AppCompatActivity activity){
         this.activity = activity;
     }
     public void setButtons(){
         titleSongTV= (TextView)activity.findViewById(R.id.titleSong);
         detailsTV=(TextView)activity.findViewById(R.id.details);
+        playPauseButton=(ImageButton)activity.findViewById(R.id.button_pause_play);
 
     }
 
@@ -39,9 +42,15 @@ public class BottomMusicPlayer {
     }
 
 
-    public void initModel(MusicPlayerModel model) {
+    public void initModel(final MusicPlayerModel model) {
         if(mpModel != null) throw new RuntimeException("A MusicPlayerModel is already registered");
         mpModel = model;
+        playPauseButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                model.togglePause();
+            }
+        });
         // TODO: register events
 
     }

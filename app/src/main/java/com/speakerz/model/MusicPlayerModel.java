@@ -9,17 +9,20 @@ import android.provider.MediaStore;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
+import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
-import com.speakerz.model.network.Serializable.body.controller.content.SongItem;
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
+import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
+import com.speakerz.util.ThreadSafeEvent;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -33,6 +36,7 @@ public class MusicPlayerModel{
 
 
     public Event<PermissionCheckEventArgs> PermissionCheckEvent=null;
+    public Integer currentSongId=1;
     private Boolean isHost;
     private Boolean asd;
 
@@ -63,7 +67,7 @@ public class MusicPlayerModel{
 
     //From Model
     //comes as external dependency from model
-    public Event<EventArgs1<Body>> MusicPlayerActionEvent;
+    public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
     //common communation channel with model.
     public Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
 
@@ -76,32 +80,53 @@ public class MusicPlayerModel{
             public void action(EventArgs1<Body> args) {
                 if(args.arg1().SUBTYPE()== SUBTYPE.MP_PUT_SONG){
                     D.log("recieved a song.");
-                    SongItem item=((PutSongRequestBody)args.arg1()).getContent();
-                    songNameQueue.add(item.title+ "\n"+item.sender);
+                    Song item=((PutSongRequestBody)args.arg1()).getContent();
+                    // kliens kapott egy zenét. be kéne tenni a listába.
                     ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object,Body>(self,MP_EVT.SEND_SONG,item,args.arg1()));
                 }
 
                 if(args.arg1().SUBTYPE()==SUBTYPE.MP_GET_LIST) {
 
                     if (isHost) {
-                        List<SongItem> tmp = new LinkedList<SongItem>();
-                        for (String str : songNameQueue) {
-                            //TODO: after a few rounds this becomes chaotic...
-                            tmp.add(new SongItem(str, " ", "link"));
-                        }
-                        //((GetSongListBody)args.arg1()).getContent();
-                        ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self, MP_EVT.SEND_LIST, tmp, args.arg1()));
+                        //host-ként elküldjük az egész songQueue-t
+                        D.log("songqueue sent");
+                        ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self, MP_EVT.SEND_LIST, songQueue, args.arg1()));
                     }else{
-                        //kliensként csak kiolvassuk
-                        songNameQueue.clear();
-                        for (SongItem item : ((List<SongItem>)((GetSongListBody)args.arg1()).getContent())) {
-                            songNameQueue.add(item.title+"\n"+item.sender);
-                        }
+                        //kliensként csak kiolvassuk a songqueue-t, mert az imént csatlakoztunk
 
+                        //frissítse a nézetet a model pls
+                        D.log("reading songqueue");
                         ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object,Body>(self,MP_EVT.SEND_LIST,null,null));
-
                     }
                 }
+                if(args.arg1().SUBTYPE()==SUBTYPE.MP_ACTION_EVT) {
+                    MusicPlayerActionBody body=(MusicPlayerActionBody) args.arg1();
+                    if(body.getEvt()==MP_EVT.SONG_CHANGED){
+                        Integer songId=(Integer)body.getContent();
+                        D.log("songId : "+songId);
+
+                    }else  if(body.getEvt()==MP_EVT.SONG_MAX_TIME_SECONDS){
+                        Long timeInSeconds=(Long)body.getContent();
+                        D.log("max time: "+timeInSeconds);
+
+                    }else  if(body.getEvt()==MP_EVT.SONG_ACT_TIME_SECONDS){
+                        //TODO, not implemented
+                        Long timeInSeconds=(Long)body.getContent();
+
+                    }else  if(body.getEvt()==MP_EVT.SONG_RESUME){
+                        D.log("resume evt");
+
+                    }else  if(body.getEvt()==MP_EVT.SONG_PAUSE){
+                        D.log("pause evt");
+
+                    }else  if(body.getEvt()==MP_EVT.SONG_EOF){
+                        D.log("eof evt");
+
+                        //akkor is kap eof-ot ha a szám változik.
+                    }
+
+                }
+
             }
         });
     }
@@ -183,7 +208,7 @@ public class MusicPlayerModel{
 
 
     // starting song by Uri
-    public void startONE(Context context, Uri uri){
+    public void startONE(Context context, Uri uri,Integer songId){
 
             D.log("---START FROM UI");
            // mediaPlayer.stop();
@@ -209,7 +234,7 @@ public class MusicPlayerModel{
 
             //ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_STOP,new File(uri.getPath()),null));
 
-            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_PLAY,new File(uri.getPath()),null));
+            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self,MP_EVT.SONG_CHANGED,new SongChangedInfo(new File(uri.getPath()),songId),null));
 
           //  playbackStateChanged.invoke(new EventArgs1<Boolean>(this, true));
 
@@ -238,7 +263,7 @@ public class MusicPlayerModel{
             currentPlayingIndex = songIndex;
             //int resId = context.getResources().getIdentifier(songNameQueue.get(songIndex), "raw", context.getPackageName());
             //start(context, resId);
-            startONE(context,Uri.parse(this.songQueue.get(songIndex).getData()));
+            startONE(context,Uri.parse(this.songQueue.get(songIndex).getData()),this.songQueue.get(songIndex).getId());
             playedSongName = songNameQueue.get(songIndex);
         }
         else{
@@ -329,5 +354,17 @@ public class MusicPlayerModel{
 
     public void loadAudio() {
         loadAudioWithPermission();
+    }
+
+    public void songAdded(Song song) {
+        song.setId(currentSongId++);
+        if(isHost){
+            //host code
+            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object,Body>(self,MP_EVT.SEND_SONG,song,null));
+
+        }else{
+            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object,Body>(self,MP_EVT.SEND_SONG,song,null));
+            //client code
+        }
     }
 }

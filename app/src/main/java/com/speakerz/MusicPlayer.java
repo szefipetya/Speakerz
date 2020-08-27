@@ -19,6 +19,10 @@ import android.widget.TextView;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.MusicPlayerModel;
+import com.speakerz.model.Song;
+import com.speakerz.model.network.Serializable.ChannelObject;
+import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
+import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
@@ -165,7 +169,7 @@ public class MusicPlayer extends Activity {
                // int resID = getResources().getIdentifier(model.songNameQueue.get(i),"raw",getPackageName());
                 // Starting song
                 D.log("VIEWMODEL START");
-                model.startONE(model.context,Uri.parse(model.songQueue.get(i).getData()));
+                model.startONE(model.context,Uri.parse(model.songQueue.get(i).getData()),model.songQueue.get(i).getId());
             }
         });
 
@@ -175,7 +179,11 @@ public class MusicPlayer extends Activity {
                 //Uri myUri = Uri.parse(model.audioList.get(i).getData());
                 //model.start(model.context, Uri.parse(model.audioList.get(i).getData()));
                 model.songNameQueue.add(model.audioList.get(i).getTitle());
+                Song song=model.audioList.get(i);
+                song.setId(currentSongId++);
                 model.songQueue.add(model.audioList.get(i));
+                model.songAdded(model.audioList.get(i));
+
 
                 songViewLA.notifyDataSetChanged();
                 System.out.println(model.songNameQueue.size());
@@ -196,7 +204,7 @@ public class MusicPlayer extends Activity {
 
 
 
-
+    Integer currentSongId=1;
 
     public void NextSong(int lastplayedsongnum, List<String> songQueue){
         model.startNext();
