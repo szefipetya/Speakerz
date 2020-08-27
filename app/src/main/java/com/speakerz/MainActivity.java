@@ -22,16 +22,24 @@ import android.os.IBinder;
 import android.os.StrictMode;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 
 import com.speakerz.SpeakerzService.LocalBinder;
 import com.speakerz.debug.D;
 import com.speakerz.model.DeviceModel;
+import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.enums.PERM;
 import com.speakerz.model.event.CommonModel_ViewEventHandler;
 import com.speakerz.model.network.DeviceNetwork;
+import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
+import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
+import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
 
@@ -40,6 +48,7 @@ public class MainActivity extends Activity {
     //REQUIRED_BEG MODEL
     SpeakerzService _service;
     boolean _isBounded;
+    Button nameChange;
 
     CommonModel_ViewEventHandler viewEventHandler;
 
@@ -64,7 +73,6 @@ public class MainActivity extends Activity {
             subscribePermissionEvents();
             _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.READ_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED));
             _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
-
 
         }
 
@@ -132,9 +140,13 @@ public class MainActivity extends Activity {
 
     }
     private void initAndStart(boolean isHost) {
+
         Intent intent = new Intent(this, SpeakerzService.class);
         intent.putExtra("isHost",isHost);
         this.startService(intent);
+
+
+
     }
 
 
@@ -186,6 +198,21 @@ public class MainActivity extends Activity {
             }
 
         });
+
+        Button nameChange = (Button) findViewById(R.id.temp);
+        nameChange.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View view){
+                Toast.makeText(getApplicationContext(), "Name Change selected", Toast.LENGTH_SHORT).show();
+                NameItem item = new NameItem("valaki","en");
+                PutNameChangeRequestBody body1 = new PutNameChangeRequestBody(null,item);
+                _service.getModel().NameChangeEvent.invoke(new EventArgs1<Body>(null,body1));
+            }
+
+        });
+
+
+
+
 
         gpsStatusCheck();
 

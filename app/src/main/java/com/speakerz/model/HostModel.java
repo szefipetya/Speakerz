@@ -11,12 +11,15 @@ import com.speakerz.model.network.*;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
+import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.Serializable.body.controller.content.SongItem;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
@@ -42,6 +45,24 @@ public class HostModel extends BaseModel {
     }
 
     private void subscribeNetWorkEvents() {
+        NameChangeEvent.addListener(new EventListener<EventArgs1<Body>>() {
+
+            @Override
+            public void action(EventArgs1<Body> args) {
+                D.log("name:"+NickName);
+                D.log("NAME CHANGE HAPPEND.");
+                NickName = ((PutNameChangeRequestBody)args.arg1()).getContent().name;
+                D.log("name:"+NickName);
+                try {
+                    network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.NAME));
+                    SongQueueUpdatedEvent.invoke(null);
+                    D.log("NameChange sent");
+                } catch (IOException e) {
+                    D.log("could not send a single song to"+args.arg1().senderAddress+((SongItem)(args.arg1().getContent())).sender);
+                }
+
+            }
+        });
 
     }
 
@@ -82,6 +103,8 @@ public class HostModel extends BaseModel {
                 if(args.arg1()==MP_EVT.SONG_RESUME){
                     network.getServerSocketWrapper().audioSocket.resumeAudioStream();
                 }
+
+
             }
         });
     }

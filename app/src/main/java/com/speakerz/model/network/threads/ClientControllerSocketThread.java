@@ -21,6 +21,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     //injection
    public Event<EventArgs1<Body>> MetaInfoReceivedEvent;
     public Event<EventArgs1<Body>> MusicPlayerActionEvent;
+    public Event<EventArgs1<Body>> NameChangeEvent;
     volatile boolean externalShutdown=false;
     public ClientControllerSocketThread(){
 
@@ -80,6 +81,11 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             MetaInfoReceivedEvent.invoke(new EventArgs1<Body>(this,chObject.body));
         }if(chObject.TYPE==TYPE.MP){
             MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this, chObject.body));
+        }
+        if(chObject.TYPE== TYPE.NAME){
+            NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+            D.log(" server: NameChange Happened: ");
+
         }
     }
 
