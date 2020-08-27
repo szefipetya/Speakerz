@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 
 public class AudioMetaDto implements Serializable {
+    public Integer songId;
  public int port;
 
    public short channels;
@@ -14,4 +15,5 @@ public class AudioMetaDto implements Serializable {
     public int packageSize;
   //Song object
     public int actualBufferedPackageNumber;
+    public Long maxTimeInSeconds;
 }

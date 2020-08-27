@@ -3,9 +3,13 @@ package com.speakerz.model.network.threads.audio;
 import android.content.Context;
 
 import com.speakerz.debug.D;
+import com.speakerz.model.SongChangedInfo;
+import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.Serializable.ChannelObject;
+import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.audio.AudioControlBody;
 import com.speakerz.model.network.Serializable.body.audio.AudioMetaBody;
+import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO_CONTROL;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioControlDto;
@@ -21,6 +25,7 @@ import com.speakerz.model.network.threads.util.ClientSocketStructWrapper;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
+import com.speakerz.util.ThreadSafeEvent;
 
 import java.io.File;
 
@@ -44,11 +49,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ServerAudioMultiCastSocketThread extends Thread {
 
-    public void playAudioStreamFromLocalStorage(final File file){
+    public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
+    private Integer currentSongId;
+    public void playAudioStreamFromLocalStorage(final SongChangedInfo info){
 
         synchronized(locker) {
             swapSong.set(true);
-            currentFile=file;
+
+            currentFile=info.file;
+            currentSongId=info.songId;
             locker.notify();
             resumeAudioStream();
 
@@ -66,6 +75,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     public void resumeAudioStream(){
         D.log("resume");
         sendAll(new ChannelObject(new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.RESUME_SONG)),TYPE.AUDIO_CONTROL_CLIENT));
+        MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_RESUME,null)));
         synchronized (decoder.isPaused){
             decoder.isPaused.set(false);
             decoder.isPaused.notify();
@@ -74,6 +84,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
     public void pauseAudioStream() {
         sendAll(new ChannelObject(new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.PAUSE_SONG)),TYPE.AUDIO_CONTROL_CLIENT));
+        MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_PAUSE,null)));
         D.log("pause");
         decoder.isPaused.set(true);
     }
@@ -93,6 +104,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
     private void init(){
         decoder=new AudioDecoderThread();
+        decoder.MusicPlayerActionEvent=MusicPlayerActionEvent;
         decoderBufferer =new AudioBuffererDecoder();
         AudioTrackBufferUpdateEvent=new Event<>();
         MetaDtoReadyEvent=new Event<>();
@@ -162,7 +174,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                                 @Override
                                 public void run() {
                                     try {
-                                        decoderBufferer.startPlay(currentFile, AUDIO.MP3,DECODER_MODE.STREAM);
+                                        decoderBufferer.startPlay(currentFile, AUDIO.MP3,currentSongId);
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
@@ -186,7 +198,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     }
 
     public void sendAudioMeta(ClientSocketStructWrapper client) {
-        AudioMetaDto dto = decoder.getAudioMeta();
+        AudioMetaDto dto =recentAudioMetaDto;
         dto.actualBufferedPackageNumber=decoder.actualPackageNumber.get();
         dto.port = currentClientPort;
         try {
@@ -417,6 +429,8 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             public void action(EventArgs1<AudioMetaDto> args) {
                     recentAudioMetaDto = args.arg1();
                  D.log("sending meta to clients.");
+                MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_CHANGED,args.arg1().songId)));
+                MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_MAX_TIME_SECONDS,args.arg1().maxTimeInSeconds)));
                 for (final ClientSocketStructWrapper tmpClient : clients) {
                     sendAudioMeta(tmpClient);
                     Thread t=new Thread(new Runnable() {

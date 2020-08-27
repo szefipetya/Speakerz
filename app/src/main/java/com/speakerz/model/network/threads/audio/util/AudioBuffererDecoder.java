@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,9 +48,9 @@ public class AudioBuffererDecoder {
 
     File currentFile=null;
     AudioMetaDto metaDto=new AudioMetaDto();
-    public void startPlay(String path, AUDIO audioType, DECODER_MODE mode) throws IOException {
+    public void startPlay(String path, AUDIO audioType, Integer songId) throws IOException {
         currentFile=new File(path);
-        startPlay(currentFile,audioType,mode);
+        startPlay(currentFile,audioType,songId);
     }
 
     public AudioTrack getAudioTrack() {
@@ -58,14 +59,14 @@ public class AudioBuffererDecoder {
 
     AudioTrack audioTrack=null;
     AUDIO audioType=AUDIO.NONE;
-    public void startPlay(File file, AUDIO audioType,DECODER_MODE mode) throws IOException {
+    public void startPlay(File file, AUDIO audioType,Integer songId) throws IOException {
         this.audioType=audioType;
         eosReceived.set(false);
         currentFile=file;
 
 
         if(audioType==AUDIO.MP3){
-            playMP3(file,mode);
+            playMP3(file,songId);
         }
 
     }
@@ -73,7 +74,7 @@ public class AudioBuffererDecoder {
 public AtomicInteger actualBufferedPackageNumber=new AtomicInteger(0);
 public AtomicInteger maxPackageNumber=new AtomicInteger(0);
 
-    private void playMP3(File file,DECODER_MODE mode) throws IOException {
+    private void playMP3(File file,Integer songId) throws IOException {
         actualBufferedPackageNumber.set(0);
         maxPackageNumber.set(0);
         eosReceived.set(false);
@@ -88,6 +89,8 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
         metaDto.channels=(short)metaInfo.getAudioHeader().getChannelCount();
         metaDto.bitrate=(short)metaInfo.getAudioHeader().getBitRate();
         metaDto.bitsPerSample=(short)metaInfo.getAudioHeader().getBitsPerSample();
+        metaDto.maxTimeInSeconds=(Long)metaInfo.getAudioHeader().getDuration(TimeUnit.SECONDS,false);
+        metaDto.songId=songId;
         InputStream mp3Source =new FileInputStream(file);
         Bitstream bitStream = new Bitstream(mp3Source);
 
@@ -129,6 +132,7 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
                 if(!l){
                     l=true;
                     metaDto.packageSize=bytes.length;
+
                     MetaDtoReadyEvent.invoke(new EventArgs1<>(self,metaDto));
                     D.log("converted size: "+String.valueOf(metaDto.packageSize));
                     D.log("original package size: "+ String.valueOf(bytes.length));

@@ -2,6 +2,7 @@ package com.speakerz.model.network.threads;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.controller.GetServerInfoBody;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.ChannelObject;
@@ -9,6 +10,7 @@ import com.speakerz.model.network.Serializable.body.controller.content.ServerInf
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.ThreadSafeEvent;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +33,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     ServerSocket dataSocket=null;
     ServerSocket requestSocket=null;
     //dependency injection
-    public Event<EventArgs1<Body>> MusicPlayerActionEvent =null;
+    public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent =null;
     public Event<EventArgs1<Body>> MetaInfoEvent = null;
 
     volatile boolean externalShutdown=false;
@@ -183,7 +185,6 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
         D.log("server: got an object: "+chObject.TYPE);
 
         if(chObject.TYPE== TYPE.MP){
-
             MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,chObject.body));
             D.log(" server: MusicPlayerActionEvent Happened: ");
 

@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.speakerz.model.network.BaseNetwork;
 import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
@@ -12,6 +13,7 @@ import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
+import com.speakerz.util.ThreadSafeEvent;
 
 
 public abstract class BaseModel {
@@ -22,7 +24,7 @@ public abstract class BaseModel {
     public Event<PermissionCheckEventArgs> PermissionCheckEvent;
 
     public volatile Event<EventArgs> SongQueueUpdatedEvent=new Event<>();
-    public volatile Event<EventArgs1<Body>> MusicPlayerActionEvent=new Event<>();
+    public volatile ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent=new ThreadSafeEvent<>();
     public volatile Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
     public Event<EventArgs1<String>> SongDownloadedEvent=new Event<>();
 

@@ -6,9 +6,12 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 
 import com.speakerz.debug.D;
+import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.Serializable.ChannelObject;
+import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.audio.AudioControlBody;
 import com.speakerz.model.network.Serializable.body.audio.AudioMetaBody;
+import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO_CONTROL;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioControlDto;
 import com.speakerz.model.network.Serializable.enums.TYPE;
@@ -18,6 +21,7 @@ import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
 import com.speakerz.model.network.threads.util.ClientSocketStructWrapper;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.ThreadSafeEvent;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -33,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
 
-
+    public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
     private boolean running;
     private byte[] buf = new byte[1024];
     private Context context;
@@ -88,9 +92,11 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                     at.write(packet.data, 0, packet.data.length);
                 }
             }
+
             at.stop();
             swapSong.set(false);
             bufferQueue.clear();
+            MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_EOF,null)));
             send(wrapper.senderInfoSocket,new ChannelObject(new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.EOF_RECEIVED)),TYPE.AUDIO_CONTROL_SERVER));
         }
     };
@@ -121,6 +127,9 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                         }
                     });
                     t.start();
+                    MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_CHANGED,body.getContent().songId)));
+                    MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_MAX_TIME_SECONDS,body.getContent().maxTimeInSeconds)));
+
                 }else if(inObject.TYPE==TYPE.AUDIO_CONTROL_CLIENT) {
                     AudioControlBody body = (AudioControlBody) inObject.body;
                     D.log("recieved packet");
@@ -137,9 +146,10 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                         synchronized (isPausedLocker) {
                             isPausedLocker.notify();
                         }
+                        MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_RESUME,null)));
                     }else if(body.getContent().flag==AUDIO_CONTROL.PAUSE_SONG){
                         isPaused.set(true);
-
+                        MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_PAUSE,null)));
                     }
                 }else {
                     D.log("ClientAudioThread: received wrong package");

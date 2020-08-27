@@ -1,18 +1,18 @@
 package com.speakerz.model.network.Serializable.body.controller;
 
+import com.speakerz.model.Song;
 import com.speakerz.model.network.Serializable.body.Body;
-import com.speakerz.model.network.Serializable.body.controller.content.SongItem;
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 
 import java.io.Serializable;
 
 public class PutSongRequestBody  extends Body implements Serializable {
 
-   public PutSongRequestBody( SongItem item){
-        songItem=item;
+   public PutSongRequestBody( Song item){
+        song=item;
     }
-   public PutSongRequestBody( String sender, SongItem item){
-        songItem=item;
+   public PutSongRequestBody( String sender, Song item){
+        song=item;
         this.senderAddress=sender;
     }
 
@@ -24,13 +24,13 @@ public class PutSongRequestBody  extends Body implements Serializable {
 
     @Override
     public void setContent(Object obj) {
-        songItem=(SongItem)obj;
+        song=(Song)obj;
     }
 
-    private SongItem songItem;
+    private Song song;
 
     @Override
-    public SongItem getContent() {
-        return songItem;
+    public Song getContent() {
+        return song;
     }
 }

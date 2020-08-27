@@ -43,11 +43,15 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.speakerz.debug.D;
+import com.speakerz.model.enums.MP_EVT;
+import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioMetaDto;
 import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.ThreadSafeEvent;
 
 import org.apache.commons.lang3.SerializationUtils;
 
@@ -69,6 +73,7 @@ import static android.os.FileUtils.copy;
 public class AudioDecoderThread {
     private static final int TIMEOUT_US = 1000;
     public final AtomicBoolean isPaused=new AtomicBoolean(false);
+    public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
     private MediaExtractor mExtractor;
     private MediaCodec mDecoder;
 
@@ -181,11 +186,14 @@ public class AudioDecoderThread {
 
             bitStream.closeFrame();
         }
+
         isPlaying.set(false);
 
         synchronized (playStoppedLocker) {
             playStoppedLocker.notify();
         }
+        MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_EOF,null)));
+
     }
 
     public void stop() throws InterruptedException {

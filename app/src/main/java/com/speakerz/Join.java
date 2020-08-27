@@ -18,13 +18,13 @@ import android.widget.Toast;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.DeviceModel;
+import com.speakerz.model.Song;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.ServerInfo;
-import com.speakerz.model.network.Serializable.body.controller.content.SongItem;
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.event.BooleanEventArgs;
@@ -314,7 +314,7 @@ public class Join extends Activity {
                     //song adding succesful (connection exists)
                     if (((DeviceNetwork) (_service.getModel().getNetwork())).getClientSocketWrapper().controllerSocket != null) {
                         if (((DeviceNetwork) (_service.getModel().getNetwork())).getClientSocketWrapper().controllerSocket.addNewSong(
-                                new ChannelObject(new PutSongRequestBody(new SongItem("test title:", android.os.Build.MODEL,"link")), TYPE.MP)
+                                new ChannelObject(new PutSongRequestBody(new Song("","Title","album","artist")), TYPE.MP)
                            )) {
                             Toast.makeText(selfActivity, "Song request sent.", Toast.LENGTH_SHORT).show();
                         } else {
