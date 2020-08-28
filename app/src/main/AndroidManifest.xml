@@ -14,6 +14,7 @@
     <uses-permission android:name="android.permission.UPDATE_DEVICE_STATS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
     <!-- register singleton App class-->
     <!-- Persistent activities-->

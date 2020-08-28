@@ -1,5 +1,7 @@
 package com.speakerz.model.network.threads;
 
+import android.widget.Toast;
+
 import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.ChannelObject;
@@ -23,6 +25,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     //injection
    public Event<EventArgs1<Body>> MetaInfoReceivedEvent;
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
+    public Event<EventArgs1<Body>> NameChangeEvent;
     volatile boolean externalShutdown=false;
     public ClientControllerSocketThread(){
 
@@ -83,11 +86,16 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
         }if(chObject.TYPE==TYPE.MP){
             MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,chObject.body));
         }
+        if(chObject.TYPE== TYPE.NAME){
+            NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+            D.log(" server: NameChange Happened: ");
+
+        }
     }
 
 
     //adds a new song to the party. returns true if the connection exists.
-    public boolean addNewSong(ChannelObject chobj) throws Exception{
+    public boolean send(ChannelObject chobj) throws Exception{
         if(struct.socket!=null)
         {
             chobj.body.senderAddress=struct.socket.getInetAddress().getHostAddress();
@@ -97,9 +105,12 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
         }else return false;
     }
 
+
     @Override
     public void shutdown(){
         try {
+
+
             if (struct != null) {
                 if (struct.objectInputStream != null) {
                     struct.objectInputStream.close();

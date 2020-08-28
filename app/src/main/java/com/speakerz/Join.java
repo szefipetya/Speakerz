@@ -313,8 +313,9 @@ public class Join extends Activity {
                 try {
                     //song adding succesful (connection exists)
                     if (((DeviceNetwork) (_service.getModel().getNetwork())).getClientSocketWrapper().controllerSocket != null) {
-                        if (((DeviceNetwork) (_service.getModel().getNetwork())).getClientSocketWrapper().controllerSocket.addNewSong(
-                                new ChannelObject(new PutSongRequestBody(new Song("","Title","album","artist")), TYPE.MP)
+                        if (((DeviceNetwork) (_service.getModel().getNetwork())).getClientSocketWrapper().controllerSocket.send(
+                                // TODO replace "alma" to UUID
+                            new ChannelObject(new PutSongRequestBody(new Song("","Title","album","artist", "alma")), TYPE.MP)
                            )) {
                             Toast.makeText(selfActivity, "Song request sent.", Toast.LENGTH_SHORT).show();
                         } else {

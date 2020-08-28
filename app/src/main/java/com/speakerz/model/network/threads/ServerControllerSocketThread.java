@@ -1,5 +1,7 @@
 package com.speakerz.model.network.threads;
 
+import android.widget.Toast;
+
 import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
@@ -35,6 +37,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     //dependency injection
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent =null;
     public Event<EventArgs1<Body>> MetaInfoEvent = null;
+    public Event<EventArgs1<Body>> NameChangeEvent=null;
 
     volatile boolean externalShutdown=false;
 
@@ -111,6 +114,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
 
                  try {
                      handleIncomingObject((ChannelObject) struct.objectInputStream.readObject());
+
                  } catch (IOException e) {
                      e.printStackTrace();
                      try {
@@ -189,7 +193,31 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
             D.log(" server: MusicPlayerActionEvent Happened: ");
 
         }
+
+        if(chObject.TYPE== TYPE.NAME){
+            NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+            D.log(" server: NameChange Happened: ");
+
+        }
     }
+
+    public void handleIncomingObject(SocketStruct struct,ChannelObject chObject) throws IOException {
+        D.log("server: got an object: "+chObject.TYPE);
+
+        struct.socket.getInetAddress();
+        if(chObject.TYPE== TYPE.MP){
+            MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+            D.log(" server: MusicPlayerActionEvent Happened: ");
+
+        }
+
+        if(chObject.TYPE== TYPE.NAME){
+            NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+            D.log(" server: NameChange Happened: ");
+
+        }
+    }
+
     @Override
     public void shutdown(){
         D.log("Closing server socket");
