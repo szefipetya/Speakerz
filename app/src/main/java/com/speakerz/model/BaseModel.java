@@ -2,6 +2,7 @@ package com.speakerz.model;
 
 import android.content.Context;
 
+import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.BaseNetwork;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
@@ -12,6 +13,7 @@ import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
+import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 import com.speakerz.util.ThreadSafeEvent;
 
@@ -28,7 +30,7 @@ public abstract class BaseModel {
     public final Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
     public final Event<EventArgs1<String>> SongDownloadedEvent=new Event<>();
     public final Event<PermissionCheckEventArgs> PermissionCheckEvent;
-
+    public final Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
 
 
     public BaseModel(Context context, WifiBroadcastReciever reciever, Boolean isHost, Event<PermissionCheckEventArgs> PermissionCheckEvent){

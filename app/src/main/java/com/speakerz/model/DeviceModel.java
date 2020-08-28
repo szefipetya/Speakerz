@@ -101,7 +101,7 @@ public class DeviceModel extends BaseModel {
     private void subscribeMusicPlayerModelEvents() {
 
 
-        musicPlayerModel.ModelCommunicationEvent.addListener(new EventListener<EventArgs3<MP_EVT, Object, Body>>() {
+        ModelCommunicationEvent.addListener(new EventListener<EventArgs3<MP_EVT, Object, Body>>() {
             @Override
             public void action(EventArgs3<MP_EVT, Object,Body> args) {
                 if(args.arg1()==MP_EVT.SEND_LIST){

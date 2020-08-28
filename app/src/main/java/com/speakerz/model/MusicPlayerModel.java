@@ -55,7 +55,6 @@ public class MusicPlayerModel{
     public final Event<EventArgs2<Integer, Integer>> playbackDurationChanged = new Event<>();
     public final Event<EventArgs2<Song, Integer>> songAddedEvent = new Event<>();
     public final Event<EventArgs2<Song, Integer>> songRemovedEvent = new Event<>();
-    public final Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
 
     // These events provided by Model
     /*private Event<EventArgs1<String>> SongDownloadedEvent;
@@ -213,7 +212,7 @@ public class MusicPlayerModel{
     }
 
     private void invokeModelCommunication(MP_EVT arg1, Object arg2, Body arg3){
-        ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self, arg1, arg2, arg3));
+        model.ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self, arg1, arg2, arg3));
     }
 
     //Load All Audio from the device To AudioList ( you will be bale to choose from these to add to the SongQueue
