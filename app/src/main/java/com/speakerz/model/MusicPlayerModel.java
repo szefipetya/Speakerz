@@ -39,6 +39,7 @@ public class MusicPlayerModel{
     // Context variables
     private final MusicPlayerModel self = this;
     private final Context context;
+    private final BaseModel model;
 
     // Playback managing variables
     public Integer currentSongId=1;
@@ -57,13 +58,60 @@ public class MusicPlayerModel{
     public final Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
 
     // These events provided by Model
-    public Event<EventArgs1<String>> SongDownloadedEvent;
-    public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
-    public Event<PermissionCheckEventArgs> PermissionCheckEvent;
+    /*private Event<EventArgs1<String>> SongDownloadedEvent;
+    private ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
+    private Event<PermissionCheckEventArgs> PermissionCheckEvent;*/
 
-    public MusicPlayerModel(Context context,Event<PermissionCheckEventArgs> permEvt) {
-        this.context = context;
-        this.PermissionCheckEvent=permEvt;
+    // Event handlers
+    EventListener<EventArgs1<Body>> musicPlayerActionListener = new EventListener<EventArgs1<Body>>() {
+        @Override
+        public void action(EventArgs1<Body> args) {
+            Body body = args.arg1();
+            switch (args.arg1().SUBTYPE()){
+                case MP_PUT_SONG:
+                    D.log("recieved a song.");
+                    Song song=((PutSongRequestBody)body).getContent();
+                    // kliens kapott egy zenét. be kéne tenni a listába.
+                    invokeModelCommunication(MP_EVT.SEND_SONG,song,body);
+                    break;
+                case MP_GET_LIST:
+                    if(isHost) invokeModelCommunication(MP_EVT.SEND_LIST, songQueue, body);
+                    else invokeModelCommunication(MP_EVT.SEND_LIST, null, null);
+                    break;
+                case MP_ACTION_EVT:
+                    Long timeInSeconds=(Long)body.getContent();
+                    switch (((MusicPlayerActionBody)body).getEvt()){
+                        case SONG_CHANGED:
+                            Integer songId=(Integer)body.getContent();
+                            D.log("songId : "+songId);
+                            break;
+                        case SONG_MAX_TIME_SECONDS:
+                            D.log("max time: "+timeInSeconds);
+                            break;
+                        case SONG_ACT_TIME_SECONDS:
+                            //TODO, not implemented
+                            break;
+                        case SONG_RESUME:
+                            D.log("resume evt");
+                            break;
+                        case SONG_PAUSE:
+                            D.log("pause evt");
+                            break;
+                        case SONG_EOF:
+                            D.log("eof evt");
+                            break;
+                    }
+            }
+        }
+    };
+
+    public MusicPlayerModel(BaseModel model, boolean isHost) {
+        this.model = model;
+        this.isHost = isHost;
+        this.context = model.getContext();
+
+        // Subscribe to model events
+        model.MusicPlayerActionEvent.addListener(musicPlayerActionListener);
     }
 
     // Getters
@@ -78,73 +126,28 @@ public class MusicPlayerModel{
         return songQueue.get(currentPlayingIndex);
     }
 
+    // Song managing functions
     public void addSong(Song song){
         song.setId(currentSongId++);
         songQueue.add(song);
-        // old songAdded code
-        if (isHost){
-            //host code
-            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object,Body>(self,MP_EVT.SEND_SONG,song,null));
 
-        }else{
-            ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object,Body>(self,MP_EVT.SEND_SONG,song,null));
-            //client code
-        }
-        songAddedEvent.invoke(new EventArgs2<Song, Integer>(this, song, songQueue.size()));
+        if (isHost) invokeModelCommunication(MP_EVT.SEND_SONG,song,null);
+        else invokeModelCommunication(MP_EVT.SEND_SONG,song,null);
+
+        songAddedEvent.invoke(new EventArgs2<>(this, song, songQueue.size()));
     }
 
     public void removeSong(Song song) {
         int i = songQueue.indexOf(song);
         if(i >= 0) {
             songQueue.remove(i);
-            songRemovedEvent.invoke(new EventArgs2<Song, Integer>(this, song, i));
+            songRemovedEvent.invoke(new EventArgs2<>(this, song, i));
         }
     }
 
 
 
     public void subscribeEventsFromModel(){
-        MusicPlayerActionEvent.addListener(new EventListener<EventArgs1<Body>>() {
-            @Override
-            public void action(EventArgs1<Body> args) {
-                Body body = args.arg1();
-                switch (args.arg1().SUBTYPE()){
-                    case MP_PUT_SONG:
-                        D.log("recieved a song.");
-                        Song song=((PutSongRequestBody)body).getContent();
-                        // kliens kapott egy zenét. be kéne tenni a listába.
-                        invokeModelCommunication(MP_EVT.SEND_SONG,song,body);
-                        break;
-                    case MP_GET_LIST:
-                        if(isHost) invokeModelCommunication(MP_EVT.SEND_LIST, songQueue, body);
-                        else invokeModelCommunication(MP_EVT.SEND_LIST, null, null);
-                        break;
-                    case MP_ACTION_EVT:
-                        Long timeInSeconds=(Long)body.getContent();
-                        switch (((MusicPlayerActionBody)body).getEvt()){
-                            case SONG_CHANGED:
-                                Integer songId=(Integer)body.getContent();
-                                D.log("songId : "+songId);
-                                break;
-                                case SONG_MAX_TIME_SECONDS:
-                                D.log("max time: "+timeInSeconds);
-                                break;
-                            case SONG_ACT_TIME_SECONDS:
-                                //TODO, not implemented
-                                break;
-                            case SONG_RESUME:
-                                D.log("resume evt");
-                                break;
-                            case SONG_PAUSE:
-                                D.log("pause evt");
-                                break;
-                            case SONG_EOF:
-                                D.log("eof evt");
-                                break;
-                        }
-                }
-            }
-        });
     }
 
 
@@ -207,15 +210,6 @@ public class MusicPlayerModel{
             pause();
         else
             start();
-    }
-
-    //Getter && Setter
-    public Boolean getHost() {
-        return isHost;
-    }
-
-    public void setHost(Boolean host) {
-        isHost = host;
     }
 
     private void invokeModelCommunication(MP_EVT arg1, Object arg2, Body arg3){

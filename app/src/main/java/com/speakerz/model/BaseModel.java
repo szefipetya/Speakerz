@@ -21,27 +21,20 @@ public abstract class BaseModel {
     public abstract void stop();
 
     MusicPlayerModel musicPlayerModel;
-    public Event<PermissionCheckEventArgs> PermissionCheckEvent;
+    private Context context;
 
-    public volatile Event<EventArgs> SongQueueUpdatedEvent=new Event<>();
-    public volatile ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent=new ThreadSafeEvent<>();
-    public volatile Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
-    public Event<EventArgs1<String>> SongDownloadedEvent=new Event<>();
+    public final Event<EventArgs> SongQueueUpdatedEvent=new Event<>();
+    public final ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent=new ThreadSafeEvent<>();
+    public final Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
+    public final Event<EventArgs1<String>> SongDownloadedEvent=new Event<>();
+    public final Event<PermissionCheckEventArgs> PermissionCheckEvent;
 
 
 
-    public BaseModel(Context context, WifiBroadcastReciever reciever,Boolean isHost, Event<PermissionCheckEventArgs> PermissionCheckEvent){
+    public BaseModel(Context context, WifiBroadcastReciever reciever, Boolean isHost, Event<PermissionCheckEventArgs> PermissionCheckEvent){
+        this.context = context;
         this.PermissionCheckEvent=PermissionCheckEvent;
-        musicPlayerModel = new MusicPlayerModel(context,this.PermissionCheckEvent);
-        musicPlayerModel.setHost(isHost);
-
-
-        //inject Events to MusicPLayerModel
-
-        musicPlayerModel.SongDownloadedEvent=SongDownloadedEvent;
-        musicPlayerModel.MusicPlayerActionEvent=this.MusicPlayerActionEvent;
-
-        musicPlayerModel.subscribeEventsFromModel();
+        musicPlayerModel = new MusicPlayerModel(this, isHost);
 
 
         reciever.WirelessStatusChanged.addListener(new EventListener<WirelessStatusChangedEventArgs>() {
@@ -68,5 +61,6 @@ public abstract class BaseModel {
     }
     protected abstract void injectNetworkDependencies();
 
+    public Context getContext() { return context; }
 
 }
