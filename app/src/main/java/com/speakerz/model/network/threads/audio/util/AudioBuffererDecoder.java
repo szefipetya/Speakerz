@@ -6,6 +6,8 @@ import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 
+import androidx.annotation.RequiresPermission;
+
 import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioMetaDto;
@@ -17,6 +19,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Queue;
@@ -100,6 +104,9 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
         int framesReaded = 0;
 
         boolean l=false;
+        short[] pcmChunk;
+        ByteBuffer buffer;
+        byte[] bytes;
         while (!eosReceived.get()) {
             try {
                 if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
@@ -122,12 +129,12 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
             } catch (DecoderException e) {
                 e.printStackTrace();
             }
-            short[] pcmChunk = sampleBuffer.getBuffer();
-            ByteBuffer buffer = ByteBuffer.allocate(pcmChunk.length * 2);
+            pcmChunk = sampleBuffer.getBuffer();
+            buffer = ByteBuffer.allocate(pcmChunk.length * 2);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.asShortBuffer().put(pcmChunk);
 
-            byte[] bytes = buffer.array();
+            bytes = buffer.array();
 
                 if(!l){
                     l=true;
@@ -149,6 +156,8 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
              //   D.log("Event sent."+i);
 
             actualBufferedPackageNumber.addAndGet(1);
+           buffer.clear();
+
 
             bitStream.closeFrame();
         }

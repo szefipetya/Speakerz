@@ -24,6 +24,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -74,6 +76,8 @@ public class AudioDecoderThread {
     private static final int TIMEOUT_US = 1000;
     public final AtomicBoolean isPaused=new AtomicBoolean(false);
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
+    public AtomicBoolean getSyncPackage=new AtomicBoolean(false);
+    public final Object getSyncPackageLocker=new Object();
     private MediaExtractor mExtractor;
     private MediaCodec mDecoder;
 
@@ -109,7 +113,7 @@ public class AudioDecoderThread {
 
     }
 
-   public AtomicInteger actualPackageNumber=new AtomicInteger(0);
+   public final AtomicInteger actualPackageNumber=new AtomicInteger(0);
     public AtomicBoolean isPlaying=new AtomicBoolean(false);
 
 
@@ -146,7 +150,8 @@ public class AudioDecoderThread {
 
       //  Decode the mp3 BitStream data by Decoder and feed the outcoming PCM chunks to AudioTrack.
         audioTrack.play();
-
+        byte[] bytes;
+        short[] pcmChunk;
         final int READ_THRESHOLD = 2147483647;
         Header frame = null;
         int framesReaded = 0;
@@ -176,14 +181,20 @@ public class AudioDecoderThread {
             } catch (DecoderException e) {
                 e.printStackTrace();
             }
-            short[] pcmChunk = sampleBuffer.getBuffer();
+            pcmChunk = sampleBuffer.getBuffer();
             ByteBuffer buffer = ByteBuffer.allocate(pcmChunk.length * 2);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.asShortBuffer().put(pcmChunk);
-            byte[] bytes = buffer.array();
+            bytes = buffer.array();
             audioTrack.write(bytes, 0, bytes.length);
+                synchronized (actualPackageNumber){
+                  actualPackageNumber.notify();
+                }
             actualPackageNumber.addAndGet(1);
 
+
+            Method cleanerMethod = null;
+            buffer.clear();
             bitStream.closeFrame();
         }
 
