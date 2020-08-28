@@ -63,6 +63,7 @@ public class MusicPlayerModel{
     public final Event<EventArgs1<Boolean>> playbackStateChanged = new Event<>();
     public final Event<EventArgs2<Integer, Integer>> playbackDurationChanged = new Event<>();
     public final Event<EventArgs2<Song, Integer>> songAddedEvent = new Event<>();
+    public final Event<EventArgs2<Song, Integer>> songRemovedEvent = new Event<>();
     public Event<EventArgs1<Body>> MusicPlayerActionEvent;
     public Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
     public Event<EventArgs1<String>> SongDownloadedEvent;
@@ -74,6 +75,14 @@ public class MusicPlayerModel{
     public void addSong(Song song){
         songQueue.add(song);
         songAddedEvent.invoke(new EventArgs2<Song, Integer>(this, song, songQueue.size()));
+    }
+
+    public void removeSong(Song song) {
+        int i = songQueue.indexOf(song);
+        if(i >= 0) {
+            songQueue.remove(i);
+            songRemovedEvent.invoke(new EventArgs2<Song, Integer>(this, song, i));
+        }
     }
 
 

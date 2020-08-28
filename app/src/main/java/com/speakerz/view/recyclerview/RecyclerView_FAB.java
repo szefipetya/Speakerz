@@ -49,6 +49,12 @@ public class RecyclerView_FAB  {
             if(mAdapter == null) return;
             mAdapter.notifyItemInserted(args.arg2());
         }
+    };    final EventListener<EventArgs2<Song, Integer>> songRemovedListener = new EventListener<EventArgs2<Song, Integer>>() {
+        @Override
+        public void action(EventArgs2<Song, Integer> args) {
+            if(mAdapter == null) return;
+            mAdapter.notifyItemRemoved(args.arg2());
+        }
     };
 
     public void insertItem(int position, String from, int pic) {
@@ -113,6 +119,7 @@ public class RecyclerView_FAB  {
                 int position = model.getSongQueue().size();
 
                 model.addSong(model.audioList.get(position));
+                isFabOpen = false;
 
                 mLibraryFab.setVisibility(View.INVISIBLE);
                 mYoutubeFab.setVisibility(View.INVISIBLE);
@@ -128,6 +135,7 @@ public class RecyclerView_FAB  {
             public void onClick(View view) {
                 int position = itemList.size();
                 insertItem(position, "Youtube", R.drawable.ic_youtube_bassline);
+                isFabOpen = false;
 
                 mLibraryFab.setVisibility(View.INVISIBLE);
                 mYoutubeFab.setVisibility(View.INVISIBLE);
@@ -148,17 +156,19 @@ public class RecyclerView_FAB  {
 
             @Override
             public void onDeleteClick(int position) {
-                removeItem(position);
+                model.removeSong(model.getSongQueue().get(position));
             }
         });
         model.songAddedEvent.addListener(songAddedListener);
+        model.songRemovedEvent.addListener(songRemovedListener);
         this.model = model;
     }
 
     public void releaseModel() {
         mRecyclerView.setAdapter(null);
         mAdapter.setOnItemClickListener(null);
-        model.songAddedEvent.addListener(songAddedListener);
+        model.songAddedEvent.removeListener(songAddedListener);
+        model.songRemovedEvent.removeListener(songRemovedListener);
 
         mAdapter = null;
         model = null;
