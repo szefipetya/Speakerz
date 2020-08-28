@@ -47,7 +47,7 @@ public class HostNetwork extends BaseNetwork {
    }
 
    private void startServerThread(InetAddress addr){
-      // serverSocketWrapper.controllerSocket.setAddress(addr);
+    //   serverSocketWrapper.controllerSocket.setAddress(addr);
             serverSocketWrapper.controllerSocket.start();
             serverSocketWrapper.audioSocket.setAddress(addr);
             serverSocketWrapper.audioSocket.start();

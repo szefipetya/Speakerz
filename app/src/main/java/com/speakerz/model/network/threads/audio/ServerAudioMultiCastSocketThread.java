@@ -150,6 +150,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                                     }
                                 }else{
                                   cli.dataSocket.objectOutputStream.writeObject(new AudioPacket(0,new byte[0]));
+                                  cli.dataSocket.objectOutputStream.flush();
                                 }
                                 synchronized (cli.eofReceivedFromClientLocker) {
                                     cli.eofReceivedFromClientLocker.wait(300);
@@ -491,13 +492,24 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         for(ClientSocketStructWrapper ds: clients){
             if(ds!=null){
                 try {
+                    ds.receiverInfoSocket.objectOutputStream.close();
+                    ds.receiverInfoSocket.objectInputStream.close();
+
                     ds.receiverInfoSocket.socket.close();
+
+                    ds.dataSocket.objectOutputStream.close();
+                    ds.dataSocket.objectInputStream.close();
                     ds.dataSocket.socket.close();
+
+                    ds.senderInfoSocket.objectOutputStream.close();
+                    ds.senderInfoSocket.objectInputStream.close();
+                    ds.senderInfoSocket.socket.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
+
     }
     File getFileByResId(int id, String targetFileName) {
         // D.log(path);

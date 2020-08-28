@@ -360,6 +360,17 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                 e.printStackTrace();
             }
         }
+            if(wrapper.senderInfoSocket.socket!=null){
+                try {
+                    wrapper.senderInfoSocket.objectOutputStream.close();
+                    wrapper.senderInfoSocket.objectInputStream.close();
+
+                    wrapper.senderInfoSocket.socket.close();
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         if(wrapper.dataSocket.socket!=null){
             try {
                 wrapper.dataSocket.objectOutputStream.close();
