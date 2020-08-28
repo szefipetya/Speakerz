@@ -153,7 +153,7 @@ public class RecyclerView_FAB  {
             public void onItemClick(int position) {
 
 
-                model.startONE(model.context, Uri.parse(model.getSongQueue().get(position).getData()),model.getSongQueue().get(position).getId());
+                model.startONE(model.getContext(), Uri.parse(model.getSongQueue().get(position).getData()),model.getSongQueue().get(position).getId());
 
             }
 

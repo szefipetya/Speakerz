@@ -36,49 +36,46 @@ import java.util.ArrayList;
 // Ha ráléptetjük egy zenére valamilyen módon és megnyomjuka start gombot onnantól jó megy
 
 public class MusicPlayerModel{
+    // Context variables
+    private final MusicPlayerModel self = this;
+    private final Context context;
 
-
-    public Event<PermissionCheckEventArgs> PermissionCheckEvent=null;
+    // Playback managing variables
     public Integer currentSongId=1;
-    private Boolean isHost;
-    private Boolean asd;
-
-
-
     private int currentPlayingIndex = 0;
-    public MusicPlayerModel self = this;
+    private Boolean isHost;
 
-    //TODO NEED A LITTLE BIT MORE SPECIFIC DATATYPE
-    //I REQUEST SongItem...
-    // Unnecessary, all data available in songQueue
-    //     public List<String> songNameQueue = new LinkedList<>(); // the name of the Songs we want to play
+    // Song lists
     private List<Song> songQueue = new LinkedList<>(); // the Songs we want to play as Song files.
-    private ArrayList<Song> audioList = new ArrayList<Song>(); // all music in the phone
-    // Unnecessary, all data available in audioList
-    //      public ArrayList<String> audioNameList = new ArrayList<String>(); // names of all the songs for the view
-    public Context context;
-    private Song activeSong;
-    private String mediaFile;
+    private ArrayList<Song> audioList = new ArrayList<>(); // all music in the phone
 
     // Events
     public final Event<EventArgs1<Boolean>> playbackStateChanged = new Event<>();
     public final Event<EventArgs2<Integer, Integer>> playbackDurationChanged = new Event<>();
     public final Event<EventArgs2<Song, Integer>> songAddedEvent = new Event<>();
     public final Event<EventArgs2<Song, Integer>> songRemovedEvent = new Event<>();
+    public final Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
 
-    //From Model
-    //comes as external dependency from model
-    public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
-    //common communation channel with model.
-    public Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
+    // These events provided by Model
     public Event<EventArgs1<String>> SongDownloadedEvent;
+    public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
+    public Event<PermissionCheckEventArgs> PermissionCheckEvent;
 
-    public List<Song> getSongQueue(){
-        return Collections.unmodifiableList(songQueue);
+    public MusicPlayerModel(Context context,Event<PermissionCheckEventArgs> permEvt) {
+        this.context = context;
+        this.PermissionCheckEvent=permEvt;
     }
 
-    public List<Song> getAudioList() {
-        return Collections.unmodifiableList(audioList);
+    // Getters
+    public List<Song> getSongQueue(){ return Collections.unmodifiableList(songQueue); }
+    public List<Song> getAudioList() { return Collections.unmodifiableList(audioList); }
+    public Context getContext() {return context; }
+    public Boolean isHost() { return isHost; }
+    public boolean isPlaying() {return false; }
+    public Song getCurrentSong() {
+        if (currentPlayingIndex < 0 || currentPlayingIndex >= songQueue.size())
+            return null;
+        return songQueue.get(currentPlayingIndex);
     }
 
     public void addSong(Song song){
@@ -104,11 +101,6 @@ public class MusicPlayerModel{
         }
     }
 
-    public Song getCurrentSong() {
-        if (currentPlayingIndex < 0 || currentPlayingIndex >= songQueue.size())
-            return null;
-        return songQueue.get(currentPlayingIndex);
-    }
 
 
     public void subscribeEventsFromModel(){
@@ -156,10 +148,7 @@ public class MusicPlayerModel{
     }
 
 
-    public MusicPlayerModel(Context context,Event<PermissionCheckEventArgs> permEvt) {
-        this.context = context;
-        this.PermissionCheckEvent=permEvt;
-    }
+
 
 
     // Close music player services
@@ -206,10 +195,6 @@ public class MusicPlayerModel{
         invokeModelCommunication(MP_EVT.SONG_RESUME, null, null);
     }
 
-    // returns true is media player exists and playing media
-    public boolean isPlaying(){
-        return false; // TODO
-    }
 
     // pauses media player if exists
     public void pause(){

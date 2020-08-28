@@ -150,7 +150,7 @@ public class MusicPlayer extends Activity {
         }*/
 
         // Connect Song Queue to list view UI component
-        songViewLA = new ArrayAdapter<Song>(model.context,  R.layout.list_item,model.getSongQueue());
+        songViewLA = new ArrayAdapter<Song>(model.getContext(),  R.layout.list_item,model.getSongQueue());
         playListView.setAdapter(songViewLA);
         songViewLA.setNotifyOnChange(true);
 
@@ -169,7 +169,7 @@ public class MusicPlayer extends Activity {
                // int resID = getResources().getIdentifier(model.songNameQueue.get(i),"raw",getPackageName());
                 // Starting song
                 D.log("VIEWMODEL START");
-                model.startONE(model.context,Uri.parse(model.getSongQueue().get(i).getData()),model.getSongQueue().get(i).getId());
+                model.startONE(model.getContext(),Uri.parse(model.getSongQueue().get(i).getData()),model.getSongQueue().get(i).getId());
             }
         });
 
