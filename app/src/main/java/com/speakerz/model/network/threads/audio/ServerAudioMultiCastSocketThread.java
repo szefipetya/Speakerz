@@ -41,6 +41,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -268,7 +269,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                             body1.getContent().number = decoder.actualPackageNumber.get();
                         }
 
-
+                            body1.getContent().timeInMilliSeconds=new Date().getTime()- struct.timeWhenConnected;
                             struct.senderInfoSocket.objectOutputStream.writeObject(new ChannelObject(body1,TYPE.AUDIO_CONTROL_CLIENT));
                             struct.senderInfoSocket.objectOutputStream.flush();
                             D.log("sync info  sent back");
@@ -306,6 +307,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                 D.log("output k");
                 newClient.receiverInfoSocket.objectInputStream = new ObjectInputStream(newClient.receiverInfoSocket.socket.getInputStream());
                 D.log("input k");
+                newClient.timeWhenConnected=new Date().getTime();
 
 
                 D.log("accepting client 2");

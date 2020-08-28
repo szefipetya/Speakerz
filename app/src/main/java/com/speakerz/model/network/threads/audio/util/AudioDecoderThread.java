@@ -18,19 +18,15 @@ package com.speakerz.model.network.threads.audio.util;
  */
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -51,11 +47,8 @@ import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioMetaDto;
 import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
-import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.ThreadSafeEvent;
-
-import org.apache.commons.lang3.SerializationUtils;
 
 import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.BitstreamException;
@@ -130,7 +123,6 @@ public class AudioDecoderThread {
         AudioMetaInfo metaInfo=new AudioMetaInfo(file) ;
         metaDto.sampleRate=metaInfo.getAudioHeader().getSampleRate();
         metaDto.channels=(short)metaInfo.getAudioHeader().getChannelCount();
-        metaDto.bitrate=(short)metaInfo.getAudioHeader().getBitRate();
         metaDto.bitsPerSample=(short)metaInfo.getAudioHeader().getBitsPerSample();
         InputStream mp3Source =new FileInputStream(file);
         Bitstream bitStream = new Bitstream(mp3Source);
@@ -280,7 +272,6 @@ final public Object playStoppedLocker=new Object();
         AudioMetaDto dto = new AudioMetaDto();
         dto.bitsPerSample = (short) info.getAudioHeader().getBitsPerSample();
         dto.channels = (short) info.getAudioHeader().getChannelCount();
-        dto.bitrate = (short) info.getAudioHeader().getBitRate();
         dto.sampleRate = info.getAudioHeader().getSampleRate();
         dto.packageSize=1024;
         return dto;

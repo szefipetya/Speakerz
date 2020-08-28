@@ -1,12 +1,8 @@
 package com.speakerz.model.network.threads.audio.util;
 
-import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
-
-import androidx.annotation.RequiresPermission;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO;
@@ -19,8 +15,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Queue;
@@ -91,9 +85,10 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
         AudioMetaInfo metaInfo=new AudioMetaInfo(file) ;
         metaDto.sampleRate=metaInfo.getAudioHeader().getSampleRate();
         metaDto.channels=(short)metaInfo.getAudioHeader().getChannelCount();
-        metaDto.bitrate=(short)metaInfo.getAudioHeader().getBitRate();
         metaDto.bitsPerSample=(short)metaInfo.getAudioHeader().getBitsPerSample();
         metaDto.maxTimeInSeconds=(Long)metaInfo.getAudioHeader().getDuration(TimeUnit.SECONDS,false);
+        metaDto.isBitRateVariable=metaInfo.getAudioHeader().isVariableBitRate();
+        metaDto.fullLengthInBytes=metaInfo.getAudioHeader().getAudioDataLength();
         metaDto.songId=songId;
         InputStream mp3Source =new FileInputStream(file);
         Bitstream bitStream = new Bitstream(mp3Source);
