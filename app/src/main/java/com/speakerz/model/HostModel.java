@@ -55,6 +55,7 @@ public class HostModel extends BaseModel {
                 D.log("NAME CHANGE HAPPEND.");
                 NickName = ((PutNameChangeRequestBody)args.arg1()).getContent().name;
                 NickNames.put("Host",NickName);
+                
                 Toast.makeText(context, "New name:"+NickNames.get("Host"), Toast.LENGTH_SHORT).show();
                 try {
                     network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.NAME));

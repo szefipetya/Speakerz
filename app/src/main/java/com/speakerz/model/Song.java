@@ -10,12 +10,18 @@ public class Song implements Serializable {
     private String title;
     private String album;
     private String artist;
+    private String owner;
 
-    public Song(String data, String title, String album, String artist) {
+    public Song(String data, String title, String album, String artist,String owner) {
         this.data = data;
         this.title = title;
         this.album = album;
         this.artist = artist;
+        this.owner = owner;
+    }
+
+    public String getOwner() {
+        return owner;
     }
 
     public String getData() {
@@ -49,4 +55,6 @@ public class Song implements Serializable {
     public void setArtist(String artist) {
         this.artist = artist;
     }
+
+
 }

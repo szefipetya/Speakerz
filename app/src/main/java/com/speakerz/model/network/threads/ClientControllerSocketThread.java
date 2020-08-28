@@ -93,7 +93,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
 
 
     //adds a new song to the party. returns true if the connection exists.
-    public boolean addNewSong(ChannelObject chobj) throws Exception{
+    public boolean send(ChannelObject chobj) throws Exception{
         if(struct.socket!=null)
         {
             chobj.body.senderAddress=struct.socket.getInetAddress().getHostAddress();
@@ -103,9 +103,12 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
         }else return false;
     }
 
+
     @Override
     public void shutdown(){
         try {
+
+
             if (struct != null) {
                 if (struct.objectInputStream != null) {
                     struct.objectInputStream.close();

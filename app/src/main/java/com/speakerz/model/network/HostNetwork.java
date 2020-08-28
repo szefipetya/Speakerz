@@ -98,6 +98,24 @@ public class HostNetwork extends BaseNetwork {
          }
       });
    }
+
+   @SuppressLint("MissingPermission")
+   public void advertiseMe(){
+       getReciever().getWifiP2pManager().discoverPeers(getReciever().getChannel(), new WifiP2pManager.ActionListener() {
+           @Override
+           public void onSuccess() {
+               D.log("advertising...");
+
+           }
+
+           @Override
+           public void onFailure(int i) {
+               D.log("advertising init failed");
+
+           }
+       });
+   }
+
    @SuppressLint("MissingPermission")
    public void removeGroupIfExists() {
     //  WifiP2pConfig config=new WifiP2pConfig();

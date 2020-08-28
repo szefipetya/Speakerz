@@ -1,6 +1,7 @@
 package com.speakerz.model;
 
 import android.content.Context;
+import android.telephony.TelephonyManager;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 
 
 public abstract class BaseModel {
@@ -36,6 +38,7 @@ public abstract class BaseModel {
     public abstract void stop();
 
     public String NickName = "placeholder";
+    public String deviceID= "";
     //public ArrayList<String> NickNames;
     public HashMap<String,String> NickNames;
 
@@ -56,6 +59,7 @@ public abstract class BaseModel {
         musicPlayerModel = new MusicPlayerModel(context,this.PermissionCheckEvent);
         musicPlayerModel.setHost(isHost);
         NickName = "placeholder";
+        deviceID = UUID.randomUUID().toString();
         NickNames= new HashMap<>();
         this.context=context;
 

@@ -321,7 +321,8 @@ public class MusicPlayerModel{
                 //Print the title of the song that it found.
 
                 // Save to audioList
-                audioList.add(new Song(data, title, album, artist));
+                //TODO: replace alma to unique identifier
+                audioList.add(new Song(data, title, album, artist,"alma"));
                 audioNameList.add(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)));
             }
         }
