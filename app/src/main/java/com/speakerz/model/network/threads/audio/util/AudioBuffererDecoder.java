@@ -1,7 +1,5 @@
 package com.speakerz.model.network.threads.audio.util;
 
-import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
@@ -87,9 +85,10 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
         AudioMetaInfo metaInfo=new AudioMetaInfo(file) ;
         metaDto.sampleRate=metaInfo.getAudioHeader().getSampleRate();
         metaDto.channels=(short)metaInfo.getAudioHeader().getChannelCount();
-        metaDto.bitrate=(short)metaInfo.getAudioHeader().getBitRate();
         metaDto.bitsPerSample=(short)metaInfo.getAudioHeader().getBitsPerSample();
         metaDto.maxTimeInSeconds=(Long)metaInfo.getAudioHeader().getDuration(TimeUnit.SECONDS,false);
+        metaDto.isBitRateVariable=metaInfo.getAudioHeader().isVariableBitRate();
+        metaDto.fullLengthInBytes=metaInfo.getAudioHeader().getAudioDataLength();
         metaDto.songId=songId;
         InputStream mp3Source =new FileInputStream(file);
         Bitstream bitStream = new Bitstream(mp3Source);
@@ -100,6 +99,9 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
         int framesReaded = 0;
 
         boolean l=false;
+        short[] pcmChunk;
+        ByteBuffer buffer;
+        byte[] bytes;
         while (!eosReceived.get()) {
             try {
                 if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
@@ -122,12 +124,12 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
             } catch (DecoderException e) {
                 e.printStackTrace();
             }
-            short[] pcmChunk = sampleBuffer.getBuffer();
-            ByteBuffer buffer = ByteBuffer.allocate(pcmChunk.length * 2);
+            pcmChunk = sampleBuffer.getBuffer();
+            buffer = ByteBuffer.allocate(pcmChunk.length * 2);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.asShortBuffer().put(pcmChunk);
 
-            byte[] bytes = buffer.array();
+            bytes = buffer.array();
 
                 if(!l){
                     l=true;
@@ -149,6 +151,8 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
              //   D.log("Event sent."+i);
 
             actualBufferedPackageNumber.addAndGet(1);
+           buffer.clear();
+
 
             bitStream.closeFrame();
         }

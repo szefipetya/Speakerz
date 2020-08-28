@@ -29,8 +29,11 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Queue;
+import java.util.Timer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -44,6 +47,8 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     //passes the file path to the mediaplayer
     public Event<EventArgs1<String>> SongDownloadedEvent;
     private ClientSocketStructWrapper wrapper=new ClientSocketStructWrapper();
+    private long actualSyncTimeOnServer=0;
+
     public Context getContext() {
         return context;
     }
@@ -76,9 +81,12 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
             D.log("starting playback at"+actualAudioPackage);
             at.play();
             Iterator itr= bufferQueue.iterator();
+            Boolean firstTimeFound=true;
             while (itr.hasNext()&&!swapSong.get()) {
                 AudioPacket packet=(AudioPacket)itr.next();
                 if(packet.packageNumber>=actualAudioPackage+syncLagOffsetInPackages) {
+
+
                     if(isPaused.get()){
                         synchronized (isPausedLocker){
                             try {
@@ -89,7 +97,23 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                             }
                         }
                     }
-                    at.write(packet.data, 0, packet.data.length);
+                    if(firstTimeFound){
+                        D.log("timeonServer: "+actualSyncTimeOnServer);
+                        long timeSinceConnected=new Date().getTime()-timeWhenConnected;
+                        long deltaTime=timeSinceConnected-actualSyncTimeOnServer;
+                        D.log("deltaTime in milliSec: "+deltaTime);
+                        long bytesPer1000ms=metaDto.sampleRate* metaDto.bitsPerSample/8;//1000 ms alatt ennyi byte megy le
+                        D.log("bytesPer1000ms: "+bytesPer1000ms);
+
+                        long offsetInBytes= (long)((float)deltaTime/1000* bytesPer1000ms);
+                        D.log("offset in bytes:"+offsetInBytes);
+
+                     //   byte[] filteredByteArray = Arrays.copyOfRange(packet.data, (int)offsetInBytes, (int)packet.data.length - (int)offsetInBytes);
+                        at.write(packet.data, 0, packet.data.length);
+                        firstTimeFound = false;
+                    }else {
+                        at.write(packet.data, 0, packet.data.length);
+                    }
                 }
             }
 
@@ -137,7 +161,9 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                         D.log("sync packet!!!");
                             //make sure, that she song will start.
                             actualAudioPackage=body.getContent().number;
+                            actualSyncTimeOnServer=body.getContent().timeInMilliSeconds;
                             D.log("actual audio pack set to"+actualAudioPackage);
+                            swapSong.set(false);
                             Thread t=new Thread(playAudioRunnable);
                             t.start();
                             D.log("thread started");
@@ -162,6 +188,8 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
         }
     }
 
+
+    long timeWhenConnected;
     AudioTrack at;
     @Override
     public void run() {
@@ -181,6 +209,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                 D.log("datasocket connecting...");
                 wrapper.senderInfoSocket.socket.connect(new InetSocketAddress(address, 9060));
 
+                timeWhenConnected=new Date().getTime();
                 D.log("DataSocket connected");
 
                 wrapper.senderInfoSocket.objectOutputStream=new ObjectOutputStream(wrapper.senderInfoSocket.socket.getOutputStream());
@@ -209,6 +238,8 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                 D.log("input k");
 
 
+
+
                 D.log("yeeeeeeeey");
 
             } catch (IOException e) {
@@ -232,9 +263,10 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
     this.metaDto=metaDto;
         D.log("channels: "+metaDto.channels);
-        D.log("bitsPerSample: "+metaDto.bitsPerSample);
-        D.log("bitrate: "+metaDto.bitrate);
-        D.log("samplerate: "+metaDto.sampleRate);
+        D.log("bitsPerSample: (bitSize/sample) "+metaDto.bitsPerSample);
+        D.log("samplerate (samples/second): "+metaDto.sampleRate);
+        D.log("isBitRateVariable: "+metaDto.isBitRateVariable);
+        D.log("bytes/1000mSec: "+metaDto.sampleRate*(metaDto.bitsPerSample/8));
 
         /*int minBufferSize = AudioTrack.getMinBufferSize(metaDto.sampleRate,
                 metaDto.channels == 2 ? AudioFormat.CHANNEL_OUT_STEREO : AudioFormat.CHANNEL_OUT_MONO,
@@ -266,6 +298,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     }
 
     Queue<AudioPacket> bufferQueue = new ConcurrentLinkedQueue<>();
+    int minBufferSizeToPlay=300;
     private void handleAudioPackets(final AudioTrack at) {
 
         D.log("receiving data packets:");
@@ -273,23 +306,24 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
         D.log("package size: "+metaDto.packageSize);
         int i=0;
         boolean playStarted=false;
+
         while (!wrapper.dataSocket.socket.isClosed()) {
             try {
 
                 AudioPacket packet=(AudioPacket) wrapper.dataSocket.objectInputStream.readObject();
-                if(packet.data.length==0){
+                if(packet.size==0){
                     swapSong.set(true);
-
+                    if(i<minBufferSizeToPlay) {
+                        bufferQueue.clear();
+                        MusicPlayerActionEvent.invoke(new EventArgs1<Body>("", new MusicPlayerActionBody(MP_EVT.SONG_EOF, null)));
+                        swapSong.set(false);
+                    }
                     break;
                 }
                 /////
                 bufferQueue.add(packet);
-               // D.log("audiopacket, size:"+audioPacket.size);
-               // AudioPacket packet=(AudioPacket)e.getValue();
-               // at.write(packet.data, 0,packet.size);
-               // D.log(""+packet.packageNumber+",i: "+i);
-                //packet.packageNumber-metaDto.actualBufferedPackageNumber
-                if(i>=300 &&!playStarted){
+
+                if(i>=minBufferSizeToPlay &&!playStarted){
                     D.log("buffer size is over 100");
                     playStarted=true;
                     AudioControlDto dto =new AudioControlDto(AUDIO_CONTROL.SYNC_ACTUAL_PACKAGE);
