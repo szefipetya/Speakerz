@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">RecyclerView + CardView</string>
+    <string name="app_name">SpeakerZ</string>
     <string name="title_activity_music_player">MusicPlayerActivity</string>
     <!--
     This string is used for square devices and overridden by hello_world in

@@ -1,7 +1,7 @@
 package com.speakerz.model.network.Serializable.body.controller;
 
+import com.speakerz.model.Song;
 import com.speakerz.model.network.Serializable.body.Body;
-import com.speakerz.model.network.Serializable.body.controller.content.SongItem;
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 
 import java.io.Serializable;
@@ -9,11 +9,11 @@ import java.util.List;
 
 public class GetSongListBody  extends Body implements  Serializable {
 
-    public GetSongListBody(List<SongItem> items){
+    public GetSongListBody(List<Song> items){
         list=items;
     }
 
-    public GetSongListBody(String sender, List<SongItem> items){
+    public GetSongListBody(String sender, List<Song> items){
         this.senderAddress=sender;
         list=items;
     }
@@ -26,13 +26,13 @@ public class GetSongListBody  extends Body implements  Serializable {
 
     @Override
     public void setContent(Object obj) {
-        list=(List<SongItem>)obj;
+        list=(List<Song>)obj;
     }
 
-    List<SongItem> list;
+    List<Song> list;
 
     @Override
-    public List<SongItem> getContent() {
+    public List<Song> getContent() {
         return list;
     }
 }

@@ -65,4 +65,5 @@ dependencies {
     implementation 'com.github.wseemann:FFmpegMediaMetadataRetriever-native:1.0.15'
     /*implementation 'org.apache.tika:tika-parsers:1.24.1'*/
 
+
 }

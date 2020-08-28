@@ -151,7 +151,10 @@ public class RecyclerView_FAB  {
         mAdapter.setOnItemClickListener(new Adapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
-                model.startONE(model.context, Uri.parse(model.getSongQueue().get(position).getData()));
+
+
+                model.startONE(model.context, Uri.parse(model.getSongQueue().get(position).getData()),model.getSongQueue().get(position).getId());
+
             }
 
             @Override

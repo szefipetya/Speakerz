@@ -2,7 +2,6 @@ package com.speakerz.view.components;
 
 import android.content.Intent;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -12,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.speakerz.R;
 import com.speakerz.debug.D;
 import com.speakerz.model.MusicPlayerModel;
-import com.speakerz.model.Song;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
@@ -97,6 +95,12 @@ public class BottomMusicPlayer {
         seekBar.setOnSeekBarChangeListener(seekBarChangeListener);
 
         playButton = (ImageButton) activity.findViewById(R.id.button_pause_play);
+        playButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mpModel.togglePause();
+            }
+        });
     }
 
 

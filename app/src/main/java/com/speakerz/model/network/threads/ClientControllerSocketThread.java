@@ -3,9 +3,11 @@ package com.speakerz.model.network.threads;
 import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.ChannelObject;
+import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.ThreadSafeEvent;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -20,7 +22,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
 
     //injection
    public Event<EventArgs1<Body>> MetaInfoReceivedEvent;
-    public Event<EventArgs1<Body>> MusicPlayerActionEvent;
+    public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
     volatile boolean externalShutdown=false;
     public ClientControllerSocketThread(){
 
@@ -79,7 +81,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
         if(chObject.TYPE== TYPE.META){
             MetaInfoReceivedEvent.invoke(new EventArgs1<Body>(this,chObject.body));
         }if(chObject.TYPE==TYPE.MP){
-            MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this, chObject.body));
+            MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,chObject.body));
         }
     }
 

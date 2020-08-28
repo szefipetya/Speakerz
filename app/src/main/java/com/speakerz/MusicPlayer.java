@@ -19,6 +19,10 @@ import android.widget.TextView;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.MusicPlayerModel;
+import com.speakerz.model.Song;
+import com.speakerz.model.network.Serializable.ChannelObject;
+import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
+import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
@@ -104,7 +108,7 @@ public class MusicPlayer extends Activity {
 
         buttonNext.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                NextSong(playedSongnum,model.songNameQueue);
+                NextSong();
                // System.out.println(playedSongnum);
             }
         });
@@ -146,13 +150,13 @@ public class MusicPlayer extends Activity {
         }*/
 
         // Connect Song Queue to list view UI component
-        songViewLA = new ArrayAdapter<String>(model.context,  R.layout.list_item,model.songNameQueue);
+        songViewLA = new ArrayAdapter<Song>(model.context,  R.layout.list_item,model.getSongQueue());
         playListView.setAdapter(songViewLA);
         songViewLA.setNotifyOnChange(true);
 
 
         // All audio file list
-        songLA = new ArrayAdapter<String>(this, R.layout.list_item, model.audioNameList);
+        songLA = new ArrayAdapter<Song>(this, R.layout.list_item, model.audioList);
         audioListView.setAdapter(songLA);
         songLA.setNotifyOnChange(true);
 
@@ -165,22 +169,15 @@ public class MusicPlayer extends Activity {
                // int resID = getResources().getIdentifier(model.songNameQueue.get(i),"raw",getPackageName());
                 // Starting song
                 D.log("VIEWMODEL START");
-               // model.startONE(model.context,Uri.parse(model.songQueue.get(i).getData()));
+                model.startONE(model.context,Uri.parse(model.getSongQueue().get(i).getData()),model.getSongQueue().get(i).getId());
             }
         });
 
         audioListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                //Uri myUri = Uri.parse(model.audioList.get(i).getData());
-                //model.start(model.context, Uri.parse(model.audioList.get(i).getData()));
-                model.songNameQueue.add(model.audioList.get(i).getTitle());
-               // model.songQueue.add(model.audioList.get(i));
-
-                songViewLA.notifyDataSetChanged();
-                System.out.println(model.songNameQueue.size());
-                //playListView.setAdapter(songViewLA);
-
+                Song song=model.audioList.get(i);
+                model.addSong(song);
             }
         });
 
@@ -196,9 +193,9 @@ public class MusicPlayer extends Activity {
 
 
 
+    Integer currentSongId=1;
 
-
-    public void NextSong(int lastplayedsongnum, List<String> songQueue){
+    public void NextSong(){
         model.startNext();
         songPlayed.setText(model.playedSongName);
 

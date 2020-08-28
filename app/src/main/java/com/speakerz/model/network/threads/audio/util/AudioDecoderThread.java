@@ -43,11 +43,15 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.speakerz.debug.D;
+import com.speakerz.model.enums.MP_EVT;
+import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioMetaDto;
 import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.ThreadSafeEvent;
 
 import org.apache.commons.lang3.SerializationUtils;
 
@@ -69,6 +73,7 @@ import static android.os.FileUtils.copy;
 public class AudioDecoderThread {
     private static final int TIMEOUT_US = 1000;
     public final AtomicBoolean isPaused=new AtomicBoolean(false);
+    public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
     private MediaExtractor mExtractor;
     private MediaCodec mDecoder;
 
@@ -79,9 +84,9 @@ public class AudioDecoderThread {
 
 
     AudioMetaDto metaDto=new AudioMetaDto();
-    public void startPlay(String path, AUDIO audioType,DECODER_MODE mode) throws IOException {
+    public void startPlay(String path, AUDIO audioType) throws IOException {
         currentFile=new File(path);
-       startPlay(currentFile,audioType,mode);
+       startPlay(currentFile,audioType);
     }
 
     public AudioTrack getAudioTrack() {
@@ -90,7 +95,7 @@ public class AudioDecoderThread {
 
     AudioTrack audioTrack=null;
     AUDIO audioType=AUDIO.NONE;
-    public void startPlay(File file, AUDIO audioType,DECODER_MODE mode) throws IOException {
+    public void startPlay(File file, AUDIO audioType) throws IOException {
         this.audioType=audioType;
         eosReceived = false;
         currentFile=file;
@@ -99,7 +104,7 @@ public class AudioDecoderThread {
         }else if(audioType==AUDIO.WAV){
             playWAV(file);
         }else if(audioType==AUDIO.MP3){
-            playMP3(file,mode);
+            playMP3(file);
         }
 
     }
@@ -109,7 +114,7 @@ public class AudioDecoderThread {
 
 
 
-    private void playMP3(File file,DECODER_MODE mode) throws IOException {
+    private void playMP3(File file) throws IOException {
         eosReceived=false;
         actualPackageNumber.set(0);
         isPlaying.set(true);
@@ -155,7 +160,6 @@ public class AudioDecoderThread {
                     }
                 }
             }
-
                      try {
                 if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
                     D.log("readed tha whole music");
@@ -182,11 +186,14 @@ public class AudioDecoderThread {
 
             bitStream.closeFrame();
         }
+
         isPlaying.set(false);
 
         synchronized (playStoppedLocker) {
             playStoppedLocker.notify();
         }
+        MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_EOF,null)));
+
     }
 
     public void stop() throws InterruptedException {

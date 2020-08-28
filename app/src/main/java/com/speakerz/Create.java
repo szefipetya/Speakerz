@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.HostModel;
+import com.speakerz.model.Song;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
@@ -34,7 +35,7 @@ public class Create extends Activity {
     boolean _isBounded;
     boolean _isRegisterRecieverConnected=false;
     ListView lvSongsList;
-    ArrayAdapter<String> songListAdapter=null;
+    ArrayAdapter<Song> songListAdapter=null;
 
     Integer SongListChangedEvent_EVT_ID=1;
     Integer WirelessStatusChanged_EVT_ID=2;
@@ -43,7 +44,7 @@ public class Create extends Activity {
     private void subscribeModel(final HostModel model) {
         D.log("events subscribed.");
         final Create selfActivity = this;
-        songListAdapter=new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1,model.getMusicPlayerModel().getSongNameQueue());
+        songListAdapter=new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1,model.getMusicPlayerModel().getSongQueue());
         songListAdapter.setNotifyOnChange(true);
         lvSongsList.setAdapter(songListAdapter);
 
@@ -67,7 +68,7 @@ public class Create extends Activity {
                             }
                             lvSongsList.invalidateViews();
                             D.log("dataset updated.");
-                            D.log("size: "+_service.getModel().getMusicPlayerModel().getSongNameQueue().size());
+                            D.log("size: "+_service.getModel().getMusicPlayerModel().getSongQueue().size());
                         }
                     };
                     RunnableFuture<Void> task = new FutureTask<>(run, null);

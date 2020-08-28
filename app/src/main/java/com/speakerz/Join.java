@@ -18,13 +18,13 @@ import android.widget.Toast;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.DeviceModel;
+import com.speakerz.model.Song;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.ServerInfo;
-import com.speakerz.model.network.Serializable.body.controller.content.SongItem;
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.event.BooleanEventArgs;
@@ -45,7 +45,7 @@ public class Join extends Activity {
     ListView lvPeersList;
     ListView lvSongsList;
     ArrayAdapter<String> peerListAdapter;
-    ArrayAdapter<String> songListAdapter = null;
+    ArrayAdapter<Song> songListAdapter = null;
     private final Integer PermissionCheckEvent_EVT_ID=10;
     private final Integer SongListChangedEvent_EVT_ID=11;
     private final Integer WirelessStatusChanged_EVT_ID=12;
@@ -68,7 +68,7 @@ public class Join extends Activity {
         lvSongsList = (ListView) findViewById(R.id.lv_song_list_test);
         lvPeersList = (ListView) findViewById(R.id.lv_peers);
         //_service.getModel().start();
-        songListAdapter = new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1, _service.getModel().getMusicPlayerModel().getSongNameQueue());
+        songListAdapter = new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1, _service.getModel().getMusicPlayerModel().getSongQueue());
         lvSongsList.setAdapter(songListAdapter);
 
         peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
@@ -115,7 +115,7 @@ public class Join extends Activity {
                         }
 
                         lvSongsList.invalidateViews();
-                        D.log("songList updated, size: "+_service.getModel().getMusicPlayerModel().getSongNameQueue().size());
+                        D.log("songList updated, size: "+_service.getModel().getMusicPlayerModel().getSongQueue().size());
                     }
                 };
                 RunnableFuture<Void> task = new FutureTask<>(run, null);
@@ -314,7 +314,7 @@ public class Join extends Activity {
                     //song adding succesful (connection exists)
                     if (((DeviceNetwork) (_service.getModel().getNetwork())).getClientSocketWrapper().controllerSocket != null) {
                         if (((DeviceNetwork) (_service.getModel().getNetwork())).getClientSocketWrapper().controllerSocket.addNewSong(
-                                new ChannelObject(new PutSongRequestBody(new SongItem("test title:", android.os.Build.MODEL,"link")), TYPE.MP)
+                                new ChannelObject(new PutSongRequestBody(new Song("","Title","album","artist")), TYPE.MP)
                            )) {
                             Toast.makeText(selfActivity, "Song request sent.", Toast.LENGTH_SHORT).show();
                         } else {

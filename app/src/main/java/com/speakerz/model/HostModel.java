@@ -12,7 +12,6 @@ import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
-import com.speakerz.model.network.Serializable.body.controller.content.SongItem;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
@@ -53,28 +52,24 @@ public class HostModel extends BaseModel {
             public void action(EventArgs3<MP_EVT, Object,Body> args) {
                 if(args.arg1()==MP_EVT.SEND_LIST){
                     try {
-                        network.getServerSocketWrapper().controllerSocket.send(args.arg3().senderAddress,new ChannelObject(new GetSongListBody((List<SongItem>)args.arg2()),TYPE.MP));
-                       // SongQueueUpdatedEvent.invoke(null);
+                        network.getServerSocketWrapper().controllerSocket.send(args.arg3().senderAddress,new ChannelObject(new GetSongListBody((List<Song>)args.arg2()),TYPE.MP));
                     } catch (IOException e) {
-                        D.log("could not send SongList. ");
+                        D.log("could not send SongQueue. ");
                         e.printStackTrace();
                     }
                 }
                 if(args.arg1()==MP_EVT.SEND_SONG){
                     try {
-                        network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutSongRequestBody((SongItem)args.arg2()),TYPE.MP));
+                        network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutSongRequestBody((Song)args.arg2()),TYPE.MP));
                         SongQueueUpdatedEvent.invoke(null);
                         D.log("song sent to clients");
                     } catch (IOException e) {
-                        D.log("could not send a single song to"+args.arg3().senderAddress+((SongItem)(args.arg3().getContent())).sender);
+                        D.log("could not send a single song");
                     }
 
                 }
-                if(args.arg1()==MP_EVT.SONG_PLAY){
-                    network.getServerSocketWrapper().audioSocket.playAudioStreamFromLocalStorage((File)args.arg2());
-                }
-                if(args.arg1()==MP_EVT.SONG_STOP){
-                    network.getServerSocketWrapper().audioSocket.stopAudioStream();
+                if(args.arg1()==MP_EVT.SONG_CHANGED){
+                    network.getServerSocketWrapper().audioSocket.playAudioStreamFromLocalStorage((SongChangedInfo)args.arg2());
                 }
                 if(args.arg1()==MP_EVT.SONG_PAUSE){
                     network.getServerSocketWrapper().audioSocket.pauseAudioStream();
@@ -172,6 +167,7 @@ public class HostModel extends BaseModel {
     @Override
     protected void injectNetworkDependencies() {
         network.getServerSocketWrapper().controllerSocket.MusicPlayerActionEvent=MusicPlayerActionEvent;
+        network.getServerSocketWrapper().audioSocket.MusicPlayerActionEvent=MusicPlayerActionEvent;
         network.getServerSocketWrapper().controllerSocket.MetaInfoEvent =MetaInfoReceivedEvent;
     }
 }
