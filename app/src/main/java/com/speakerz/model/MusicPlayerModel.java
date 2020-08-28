@@ -58,7 +58,6 @@ public class MusicPlayerModel{
     //      public ArrayList<String> audioNameList = new ArrayList<String>(); // names of all the songs for the view
     public Context context;
     private Song activeSong;
-    public String playedSongName;
     private String mediaFile;
 
     // Events
@@ -103,6 +102,12 @@ public class MusicPlayerModel{
             songQueue.remove(i);
             songRemovedEvent.invoke(new EventArgs2<Song, Integer>(this, song, i));
         }
+    }
+
+    public Song getCurrentSong() {
+        if (currentPlayingIndex < 0 || currentPlayingIndex >= songQueue.size())
+            return null;
+        return songQueue.get(currentPlayingIndex);
     }
 
 
@@ -154,15 +159,6 @@ public class MusicPlayerModel{
     public MusicPlayerModel(Context context,Event<PermissionCheckEventArgs> permEvt) {
         this.context = context;
         this.PermissionCheckEvent=permEvt;
-
-        // Event handler to start next song automatically
-
-
-      //  playFromAudioStream();
-      //  InputStream is =context.getResources().openRawResource(R.raw.passion_aac);
-      //  playFromAudioStreamDirectly(is);
-
-
     }
 
 
@@ -198,7 +194,6 @@ public class MusicPlayerModel{
         if(songQueue.size() > 0 && songIndex < songQueue.size()) {
             currentPlayingIndex = songIndex;
             startONE(context,Uri.parse(this.songQueue.get(songIndex).getData()),this.songQueue.get(songIndex).getId());
-            playedSongName = songQueue.get(songIndex).getTitle();
         }
         else{
             System.out.println("nincstöbb zene a listában");

@@ -197,7 +197,7 @@ public class MusicPlayer extends Activity {
 
     public void NextSong(){
         model.startNext();
-        songPlayed.setText(model.playedSongName);
+        songPlayed.setText(model.getCurrentSong().getTitle());
 
     }
 
