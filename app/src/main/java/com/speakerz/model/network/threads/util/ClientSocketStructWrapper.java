@@ -8,6 +8,7 @@ public class ClientSocketStructWrapper {
     public final Object eofSongReachedLocker=new Object();
     public Boolean isBuffering=false;
   final  public Object eofReceivedFromClientLocker =new Object();
+  public long timeWhenConnected;
 
   public ClientSocketStructWrapper(){
       receiverInfoSocket =new SocketStruct();

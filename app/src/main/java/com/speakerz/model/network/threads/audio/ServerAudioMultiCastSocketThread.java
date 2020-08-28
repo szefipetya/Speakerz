@@ -41,6 +41,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -59,7 +60,8 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             currentFile=info.file;
             currentSongId=info.songId;
             locker.notify();
-            resumeAudioStream();
+           // resumeAudioStream();
+
 
         }
     }
@@ -150,7 +152,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                                   cli.dataSocket.objectOutputStream.writeObject(new AudioPacket(0,new byte[0]));
                                 }
                                 synchronized (cli.eofReceivedFromClientLocker) {
-                                    cli.eofReceivedFromClientLocker.wait();
+                                    cli.eofReceivedFromClientLocker.wait(300);
                                 }
                             }
                             decoderBufferer.stop();
@@ -261,7 +263,13 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                         D.log("recieved sync on server");
 
                             AudioControlBody body1 = new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.SYNC_ACTUAL_PACKAGE));
-                            body1.getContent().number=decoder.actualPackageNumber.get();
+                        synchronized (decoder.actualPackageNumber) {
+                            decoder.actualPackageNumber.wait();
+
+                            body1.getContent().number = decoder.actualPackageNumber.get();
+                        }
+
+                            body1.getContent().timeInMilliSeconds=new Date().getTime()- struct.timeWhenConnected;
                             struct.senderInfoSocket.objectOutputStream.writeObject(new ChannelObject(body1,TYPE.AUDIO_CONTROL_CLIENT));
                             struct.senderInfoSocket.objectOutputStream.flush();
                             D.log("sync info  sent back");
@@ -282,6 +290,8 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -297,6 +307,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                 D.log("output k");
                 newClient.receiverInfoSocket.objectInputStream = new ObjectInputStream(newClient.receiverInfoSocket.socket.getInputStream());
                 D.log("input k");
+                newClient.timeWhenConnected=new Date().getTime();
 
 
                 D.log("accepting client 2");
@@ -378,13 +389,12 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                     try {
                         struct.dataSocket.objectOutputStream.writeObject(new AudioPacket(0,new byte[0]));
                         struct.dataSocket.objectOutputStream.flush();
-
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
 
                     D.log("break");
-                    return;
+                    break;
                 }
                   //the buffered decoder is not finished yet
                 if(decoderBufferer.maxPackageNumber.get()==0) {
@@ -392,7 +402,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                             try {
                              //   D.log("waiting for notify");
                                 //decoderbufferer will notify us, when a new package is added to the queue
-                                decoderBufferer.bufferQueue.wait();
+                                decoderBufferer.bufferQueue.wait(300);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
