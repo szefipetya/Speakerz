@@ -83,6 +83,12 @@ public class PlayerRecyclerActivity extends AppCompatActivity {
     };
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        // Bind to LocalService
+        unbindService(srvConn);
+    }
+
     protected void onStart() {
         super.onStart();
 
@@ -90,7 +96,6 @@ public class PlayerRecyclerActivity extends AppCompatActivity {
         Intent intent = new Intent(this, SpeakerzService.class);
         bindService(intent, srvConn, Context.BIND_AUTO_CREATE);
     }
-
 
     // David's stuff
     @Override

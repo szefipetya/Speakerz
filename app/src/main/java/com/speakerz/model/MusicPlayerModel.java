@@ -64,13 +64,14 @@ public class MusicPlayerModel{
                     else invokeModelCommunication(MP_EVT.SEND_LIST, null, null);
                     break;
                 case MP_ACTION_EVT:
-                    Integer timeInSeconds=(Integer)body.getContent();
                     switch (((MusicPlayerActionBody)body).getEvt()){
                         case SONG_CHANGED:
                             Integer songId=(Integer)body.getContent();
                             D.log("songId : "+songId);
                             break;
                         case SONG_MAX_TIME_SECONDS:
+                            Long timeInSeconds=(Long)body.getContent();
+
                             D.log("max time: "+timeInSeconds);
                             break;
                         case SONG_ACT_TIME_SECONDS:
