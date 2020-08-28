@@ -3,30 +3,21 @@ package com.speakerz.model;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.provider.MediaStore;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
-import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
-import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
-import com.speakerz.model.network.Serializable.enums.SUBTYPE;
-import com.speakerz.model.network.Serializable.enums.TYPE;
-import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
-import com.speakerz.util.ThreadSafeEvent;
 
 import java.io.File;
-import java.util.AbstractList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -56,11 +47,6 @@ public class MusicPlayerModel{
     public final Event<EventArgs2<Song, Integer>> songAddedEvent = new Event<>();
     public final Event<EventArgs2<Song, Integer>> songRemovedEvent = new Event<>();
 
-    // These events provided by Model
-    /*private Event<EventArgs1<String>> SongDownloadedEvent;
-    private ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
-    private Event<PermissionCheckEventArgs> PermissionCheckEvent;*/
-
     // Event handlers
     EventListener<EventArgs1<Body>> musicPlayerActionListener = new EventListener<EventArgs1<Body>>() {
         @Override
@@ -78,7 +64,7 @@ public class MusicPlayerModel{
                     else invokeModelCommunication(MP_EVT.SEND_LIST, null, null);
                     break;
                 case MP_ACTION_EVT:
-                    Long timeInSeconds=(Long)body.getContent();
+                    Integer timeInSeconds=(Integer)body.getContent();
                     switch (((MusicPlayerActionBody)body).getEvt()){
                         case SONG_CHANGED:
                             Integer songId=(Integer)body.getContent();
@@ -92,7 +78,7 @@ public class MusicPlayerModel{
                             break;
                         case SONG_RESUME:
                             D.log("resume evt");
-                            break;
+                        break;
                         case SONG_PAUSE:
                             D.log("pause evt");
                             break;
@@ -142,11 +128,6 @@ public class MusicPlayerModel{
             songQueue.remove(i);
             songRemovedEvent.invoke(new EventArgs2<>(this, song, i));
         }
-    }
-
-
-
-    public void subscribeEventsFromModel(){
     }
 
 
