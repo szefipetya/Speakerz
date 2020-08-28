@@ -109,7 +109,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                         D.log("offset in bytes:"+offsetInBytes);
 
                      //   byte[] filteredByteArray = Arrays.copyOfRange(packet.data, (int)offsetInBytes, (int)packet.data.length - (int)offsetInBytes);
-                        at.write(filteredByteArray, 0, filteredByteArray.length);
+                        at.write(packet.data, 0, packet.data.length);
                         firstTimeFound = false;
                     }else {
                         at.write(packet.data, 0, packet.data.length);
