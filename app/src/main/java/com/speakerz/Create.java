@@ -245,7 +245,7 @@ public class Create extends Activity {
         Button nameChange = (Button) findViewById(R.id.temp);
         nameChange.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-                NameItem item = new NameItem(editName.getText().toString(),"en");
+                NameItem item = new NameItem(editName.getText().toString(),"en",_service.getModel().deviceID);
                 PutNameChangeRequestBody body1 = new PutNameChangeRequestBody(null,item);
                 _service.getModel().NameChangeEvent.invoke(new EventArgs1<Body>(null,body1));
             }
