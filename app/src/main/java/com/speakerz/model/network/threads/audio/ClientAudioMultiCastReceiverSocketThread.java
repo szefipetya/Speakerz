@@ -138,6 +138,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                             //make sure, that she song will start.
                             actualAudioPackage=body.getContent().number;
                             D.log("actual audio pack set to"+actualAudioPackage);
+                            swapSong.set(false);
                             Thread t=new Thread(playAudioRunnable);
                             t.start();
                             D.log("thread started");
@@ -266,6 +267,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     }
 
     Queue<AudioPacket> bufferQueue = new ConcurrentLinkedQueue<>();
+    int minBufferSizeToPlay=300;
     private void handleAudioPackets(final AudioTrack at) {
 
         D.log("receiving data packets:");
@@ -273,23 +275,24 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
         D.log("package size: "+metaDto.packageSize);
         int i=0;
         boolean playStarted=false;
+
         while (!wrapper.dataSocket.socket.isClosed()) {
             try {
 
                 AudioPacket packet=(AudioPacket) wrapper.dataSocket.objectInputStream.readObject();
-                if(packet.data.length==0){
+                if(packet.size==0){
                     swapSong.set(true);
-
+                    if(i<minBufferSizeToPlay) {
+                        bufferQueue.clear();
+                        MusicPlayerActionEvent.invoke(new EventArgs1<Body>("", new MusicPlayerActionBody(MP_EVT.SONG_EOF, null)));
+                        swapSong.set(false);
+                    }
                     break;
                 }
                 /////
                 bufferQueue.add(packet);
-               // D.log("audiopacket, size:"+audioPacket.size);
-               // AudioPacket packet=(AudioPacket)e.getValue();
-               // at.write(packet.data, 0,packet.size);
-               // D.log(""+packet.packageNumber+",i: "+i);
-                //packet.packageNumber-metaDto.actualBufferedPackageNumber
-                if(i>=300 &&!playStarted){
+
+                if(i>=minBufferSizeToPlay &&!playStarted){
                     D.log("buffer size is over 100");
                     playStarted=true;
                     AudioControlDto dto =new AudioControlDto(AUDIO_CONTROL.SYNC_ACTUAL_PACKAGE);
