@@ -36,6 +36,7 @@ public class MusicPlayerModel{
     public Integer currentSongId=1;
     private int currentPlayingIndex = 0;
     private Boolean isHost;
+    boolean isPlaying=false;
 
     // Song lists
     private List<Song> songQueue = new LinkedList<>(); // the Songs we want to play as Song files.
@@ -77,13 +78,13 @@ public class MusicPlayerModel{
                             //TODO, not implemented
                             break;
                         case SONG_RESUME:
-                            D.log("resume evt");
-                        break;
-                        case SONG_PAUSE:
-                            D.log("pause evt");
+                            isPlaying = true;
+                            playbackStateChanged.invoke(new EventArgs1<>(this, true));
                             break;
+                        case SONG_PAUSE:
                         case SONG_EOF:
-                            D.log("eof evt");
+                            isPlaying = false;
+                            playbackStateChanged.invoke(new EventArgs1<>(this, false));
                             break;
                     }
             }
@@ -104,7 +105,7 @@ public class MusicPlayerModel{
     public List<Song> getAudioList() { return Collections.unmodifiableList(audioList); }
     public Context getContext() {return context; }
     public Boolean isHost() { return isHost; }
-    public boolean isPlaying() {return false; }
+    public boolean isPlaying() {return isPlaying; }
     public Song getCurrentSong() {
         if (currentPlayingIndex < 0 || currentPlayingIndex >= songQueue.size())
             return null;
@@ -173,7 +174,6 @@ public class MusicPlayerModel{
     }
 
     // Start paused playing
-    boolean isPlaying=true;
     public void start(){
         invokeModelCommunication(MP_EVT.SONG_RESUME, null, null);
     }
