@@ -118,7 +118,7 @@ public class RecyclerView_FAB  {
             public void onClick(View view) {
                 int position = model.getSongQueue().size();
 
-                model.addSong(model.audioList.get(position));
+                model.addSong(model.getAudioList().get(position));
                 isFabOpen = false;
 
                 mLibraryFab.setVisibility(View.INVISIBLE);

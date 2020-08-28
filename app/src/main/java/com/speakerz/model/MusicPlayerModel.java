@@ -53,7 +53,7 @@ public class MusicPlayerModel{
     // Unnecessary, all data available in songQueue
     //     public List<String> songNameQueue = new LinkedList<>(); // the name of the Songs we want to play
     private List<Song> songQueue = new LinkedList<>(); // the Songs we want to play as Song files.
-    public ArrayList<Song> audioList = new ArrayList<Song>(); // all music in the phone
+    private ArrayList<Song> audioList = new ArrayList<Song>(); // all music in the phone
     // Unnecessary, all data available in audioList
     //      public ArrayList<String> audioNameList = new ArrayList<String>(); // names of all the songs for the view
     public Context context;
@@ -76,6 +76,10 @@ public class MusicPlayerModel{
 
     public List<Song> getSongQueue(){
         return Collections.unmodifiableList(songQueue);
+    }
+
+    public List<Song> getAudioList() {
+        return Collections.unmodifiableList(audioList);
     }
 
     public void addSong(Song song){
