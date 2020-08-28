@@ -84,13 +84,13 @@ public class MusicPlayer extends Activity {
         setContentView(R.layout.activity_music_player);
 
         // connect ui elements
-        songPlayed= (TextView) findViewById(R.id.playedsong);
-        buttonBack = (Button) findViewById(R.id.back);
-        buttonPlay = (Button) findViewById(R.id.play);
-        buttonNext = (Button) findViewById(R.id.next);
-        seekBar = (SeekBar) findViewById(R.id.elapsedtime);
-        playListView = (ListView) findViewById(R.id.playlist);
-        audioListView = (ListView) findViewById(R.id.audiolist);
+        songPlayed = findViewById(R.id.playedsong);
+        buttonBack = findViewById(R.id.back);
+        buttonPlay = findViewById(R.id.play);
+        buttonNext = findViewById(R.id.next);
+        seekBar = findViewById(R.id.elapsedtime);
+        playListView = findViewById(R.id.playlist);
+        audioListView = findViewById(R.id.audiolist);
 
 
         // Register UI event handlers

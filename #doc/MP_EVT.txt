@@ -1,0 +1,15 @@
+MP_EVT.    
+    SONG_CHANGED,
+    SONG_RESUME,
+    SONG_PAUSE,
+    SONG_ACT_TIME_SECONDS,
+    SONG_MAX_TIME_SECONDS,
+    SONG_EOF
+
+SONG_ACT_TIME_SECONDS és SONG_MAX_TIME_SECONDS -nál Long-ra kell castolni a getContent()-et
+
+SONG_CHANGED
+a Song id-ét küldi el.
+Integer Típusra kell castolni a getContent()-et
+
+A többi az csak sima flag.
