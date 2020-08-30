@@ -250,10 +250,10 @@ public class Create extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create);
 
-     //   final EditText editName = (EditText) findViewById(R.id.edi);
+        final EditText editName = (EditText) findViewById(R.id.edi);
 
 
-      /*  Button nameChange = (Button) findViewById(R.id.temp);
+        Button nameChange = (Button) findViewById(R.id.temp);
         nameChange.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
                 NameItem item = new NameItem(editName.getText().toString(),"en",_service.getModel().deviceID);
@@ -261,7 +261,7 @@ public class Create extends Activity {
                 _service.getModel().NameChangeEvent.invoke(new EventArgs1<Body>(null,body1));
             }
 
-        });*/
+        });
 
 
 
