@@ -49,7 +49,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-   <!-- <EditText
+    <EditText
         android:focusedByDefault="false"
         android:id="@+id/edi"
         android:layout_width="143dp"
@@ -58,7 +58,7 @@
         android:layout_marginTop="208dp"
         android:inputType="text"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />-->
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/back"
