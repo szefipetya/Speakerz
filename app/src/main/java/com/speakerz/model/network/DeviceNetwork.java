@@ -12,6 +12,7 @@ import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 
 import com.speakerz.debug.D;
+import com.speakerz.model.DeviceModel;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.enums.PERM;
 import com.speakerz.model.network.Serializable.body.Body;
@@ -45,6 +46,7 @@ boolean firstStart=true;
                     if(!firstStart) {
                         clientSocketWrapper.controllerSocket.shutdown();
                         clientSocketWrapper.audioSocket.shutdown();
+                        clientSocketWrapper.audioSocket.stopPlayBack();
 
 
                         ClientControllerSocketThread tmp = new ClientControllerSocketThread();
@@ -53,13 +55,13 @@ boolean firstStart=true;
                         clientSocketWrapper.controllerSocket = tmp;
 
                         ClientAudioMultiCastReceiverSocketThread tmp2 = new ClientAudioMultiCastReceiverSocketThread();
+                        tmp2.MusicPlayerActionEvent=tmp.MusicPlayerActionEvent;
                         clientSocketWrapper.audioSocket = tmp2;
                         D.log("its not the first start.");
                     }
                     firstStart = false;
                     clientSocketWrapper.controllerSocket.setAddress(args.getAddress());
                     clientSocketWrapper.controllerSocket.start();
-
                     clientSocketWrapper.audioSocket.setAddress(args.getAddress());
                     clientSocketWrapper.audioSocket.start();
 
@@ -68,7 +70,7 @@ boolean firstStart=true;
         });
 
     }
-
+DeviceNetwork self=this;
     public void discoverPeers() {
        // PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this,PERM.ACCESS_COARSE_LOCATION,));
         PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,PackageManager.PERMISSION_GRANTED));

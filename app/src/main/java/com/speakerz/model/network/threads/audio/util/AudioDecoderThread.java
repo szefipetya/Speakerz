@@ -254,6 +254,7 @@ final public Object playStoppedLocker=new Object();
 
             //data end
         } catch (IOException e) {
+
             e.printStackTrace();
         } finally {
             if (bis != null) {

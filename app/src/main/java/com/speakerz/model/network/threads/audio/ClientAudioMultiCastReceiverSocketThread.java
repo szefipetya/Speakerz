@@ -9,11 +9,13 @@ import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.NetworkEventBody;
 import com.speakerz.model.network.Serializable.body.audio.AudioControlBody;
 import com.speakerz.model.network.Serializable.body.audio.AudioMetaBody;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO_CONTROL;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioControlDto;
+import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioMetaDto;
 import com.speakerz.model.network.threads.SocketStruct;
@@ -74,17 +76,21 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
     }
     int syncLagOffsetInPackages=0;
-
+    int packagesToSkipByDelta=0;
+    private int lastPackageOffsetByDelta=0;
+AtomicBoolean playbackStarted=new AtomicBoolean(false);
     Runnable playAudioRunnable=new Runnable() {
+
         @Override
         public void run() {
             D.log("starting playback at"+actualAudioPackage);
             at.play();
             Iterator itr= bufferQueue.iterator();
             Boolean firstTimeFound=true;
+            playbackStarted.set(true);
             while (itr.hasNext()&&!swapSong.get()) {
                 AudioPacket packet=(AudioPacket)itr.next();
-                if(packet.packageNumber>=actualAudioPackage+syncLagOffsetInPackages) {
+                if(packet.packageNumber>=actualAudioPackage) {
 
 
                     if(isPaused.get()){
@@ -107,27 +113,52 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
                         long offsetInBytes= (long)((float)deltaTime/1000* bytesPer1000ms);
                         D.log("offset in bytes:"+offsetInBytes);
+                        packagesToSkipByDelta=(int)offsetInBytes/metaDto.packageSize;
+                        lastPackageOffsetByDelta=(int)offsetInBytes%metaDto.packageSize;
 
-                     //   byte[] filteredByteArray = Arrays.copyOfRange(packet.data, (int)offsetInBytes, (int)packet.data.length - (int)offsetInBytes);
-                        at.write(packet.data, 0, packet.data.length);
+
+                        D.log("packagesToSkipByDelta: "+packagesToSkipByDelta);
+                        D.log("lastPackageOffsetByDelta: "+lastPackageOffsetByDelta);
+
+                        //   byte[] filteredByteArray = Arrays.copyOfRange(packet.data, (int)offsetInBytes, (int)packet.data.length - (int)offsetInBytes);
+
+                        int i=0;
+                        while(itr.hasNext()&&i<=packagesToSkipByDelta){
+                           itr.next();
+                            i++;
+                            D.log("skip");
+                        }
+                        if(itr.hasNext()){
+                            packet=(AudioPacket)itr.next();
+                            byte slicedBytes[]= Arrays.copyOfRange(packet.data, lastPackageOffsetByDelta, packet.data.length);
+                            D.log("sliced length:"+ slicedBytes.length);
+                            at.write(slicedBytes,0,slicedBytes.length);
+                        }
                         firstTimeFound = false;
                     }else {
                         at.write(packet.data, 0, packet.data.length);
                     }
                 }
             }
-
+            playbackStarted.set(false);
+            D.log("playback ended");
             at.stop();
             swapSong.set(false);
+
             bufferQueue.clear();
             MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_EOF,null)));
             send(wrapper.senderInfoSocket,new ChannelObject(new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.EOF_RECEIVED)),TYPE.AUDIO_CONTROL_SERVER));
+            synchronized (eofLocker){
+                eofLocker.notify();
+            }
         }
     };
+
     AtomicBoolean swapSong=new AtomicBoolean(false);
     int actualAudioPackage=0;
     AtomicBoolean isPaused=new AtomicBoolean(false);
     final Object isPausedLocker=new Object();
+    final Object eofLocker=new Object();
 
 
     private void listen(SocketStruct struct) {
@@ -139,12 +170,23 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                     final AudioMetaBody body = (AudioMetaBody) inObject.body;
                     D.log("recieved meta packet");
                     //a sync csak a handle után jöhet
+                    if(metaDto!=null&&playbackStarted.get()){
+                        swapSong.set(true);
+                       synchronized (eofLocker){
+                           try {
+                               eofLocker.wait();
+                           } catch (InterruptedException e) {
+                               e.printStackTrace();
+                           }
+                       }
+                    }
                     Thread t=new Thread(new Runnable() {
                         @Override
                         public void run() {
                             try {
                                 at = createAudioTrack(body.getContent());
                             } catch (IOException e) {
+
                                 e.printStackTrace();
                             }
                             handleAudioPackets(at);
@@ -182,6 +224,8 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                shutdown();
+                break;
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
@@ -194,7 +238,6 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     @Override
     public void run() {
         D.log("testbegins");
-
 
       //send a packet to the host to know about this client
             try {
@@ -298,7 +341,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     }
 
     Queue<AudioPacket> bufferQueue = new ConcurrentLinkedQueue<>();
-    int minBufferSizeToPlay=300;
+    int minBufferSizeToPlay=350;
     private void handleAudioPackets(final AudioTrack at) {
 
         D.log("receiving data packets:");
@@ -334,6 +377,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                 //buf=new byte[metaDto.packageSize];
             } catch (IOException e) {
                 e.printStackTrace();
+                break;
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
@@ -347,8 +391,12 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     }
 
 
+        public void stopPlayBack(){
+        swapSong.set(true);
 
+        }
         public void shutdown() {
+
         if(wrapper.receiverInfoSocket.socket!=null){
             try {
                 wrapper.receiverInfoSocket.objectOutputStream.close();
@@ -357,6 +405,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
                 wrapper.receiverInfoSocket.socket.close();
 
             } catch (IOException e) {
+
                 e.printStackTrace();
             }
         }
