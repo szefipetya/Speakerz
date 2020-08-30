@@ -28,6 +28,7 @@ import java.util.LinkedList;
 
 public class ServerControllerSocketThread extends Thread implements SocketThread{
 
+    public Event<EventArgs1<Exception>> ExceptionEvent;
     LinkedList<SocketStruct> socketList=new LinkedList<>();
 
     public ServerSocket getServerSocket() {

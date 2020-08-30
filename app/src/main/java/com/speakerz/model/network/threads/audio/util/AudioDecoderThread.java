@@ -50,6 +50,7 @@ import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.ThreadSafeEvent;
 
+import ealvatag.audio.exceptions.CannotReadException;
 import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.BitstreamException;
 import javazoom.jl.decoder.Decoder;
@@ -81,9 +82,9 @@ public class AudioDecoderThread {
 
 
     AudioMetaDto metaDto=new AudioMetaDto();
-    public void startPlay(String path, AUDIO audioType) throws IOException {
+    public void startPlay(String path) throws IOException, CannotReadException {
         currentFile=new File(path);
-       startPlay(currentFile,audioType);
+       startPlay(currentFile);
     }
 
     public AudioTrack getAudioTrack() {
@@ -92,29 +93,26 @@ public class AudioDecoderThread {
 
     AudioTrack audioTrack=null;
     AUDIO audioType=AUDIO.NONE;
-    public void startPlay(File file, AUDIO audioType) throws IOException {
+    public void startPlay(File file) throws IOException, CannotReadException {
         this.audioType=audioType;
         eosReceived = false;
         currentFile=file;
-        if(audioType==AUDIO.AAC||audioType==AUDIO.M4A){
-            playM4A_AAC(file.getAbsolutePath());
-        }else if(audioType==AUDIO.WAV){
-            playWAV(file);
-        }else if(audioType==AUDIO.MP3){
+        AudioMetaInfo metaInfo=new AudioMetaInfo(file) ;
+        if(metaInfo.getAudioHeader().getEncodingType()=="mp3") {
             playMP3(file);
         }
-
     }
+
 
    public final AtomicInteger actualPackageNumber=new AtomicInteger(0);
     public AtomicBoolean isPlaying=new AtomicBoolean(false);
 
 
 
-    private void playMP3(File file) throws IOException {
+    private void playMP3(File file) throws IOException, CannotReadException {
         eosReceived=false;
         actualPackageNumber.set(0);
-        isPlaying.set(true);
+
        // Create a jlayer Decoder instance.
         D.log("PLAYING MP3 ");
         Decoder decoder = new Decoder();
@@ -127,6 +125,7 @@ public class AudioDecoderThread {
         InputStream mp3Source =new FileInputStream(file);
         Bitstream bitStream = new Bitstream(mp3Source);
 
+        isPlaying.set(true);
        // Create an AudioTrack instance.
         final int minBufferSize = AudioTrack.getMinBufferSize( metaDto.sampleRate,
                TransformAF.channel(metaDto.channels),
@@ -205,7 +204,7 @@ public class AudioDecoderThread {
 
             synchronized (playStoppedLocker) {
                 D.log("waiting for player to stop");
-                playStoppedLocker.wait();
+                playStoppedLocker.wait(100);
                 D.log(" player stopped");
 
             }
@@ -222,7 +221,7 @@ final public Object playStoppedLocker=new Object();
           return metaDto;
     }
 
-    private void playWAV(File file){
+    private void playWAV(File file) throws CannotReadException {
         D.log("stream started");
         BufferedInputStream bis = null;
          audioTrack = createWavAudioTrack(file);
@@ -268,7 +267,7 @@ final public Object playStoppedLocker=new Object();
 
     }
 
-    public AudioMetaDto getAudioMetaDtoFromWavFile(File file) {
+    public AudioMetaDto getAudioMetaDtoFromWavFile(File file) throws CannotReadException {
         AudioMetaInfo info = new AudioMetaInfo(file);
         AudioMetaDto dto = new AudioMetaDto();
         dto.bitsPerSample = (short) info.getAudioHeader().getBitsPerSample();
@@ -278,7 +277,7 @@ final public Object playStoppedLocker=new Object();
         return dto;
     }
 
-    private AudioTrack createWavAudioTrack(File file) {
+    private AudioTrack createWavAudioTrack(File file) throws CannotReadException {
         AudioMetaInfo metaInfo = new AudioMetaInfo(file);
         //
         ///play wav

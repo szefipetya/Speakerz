@@ -52,10 +52,12 @@ boolean firstStart=true;
                         ClientControllerSocketThread tmp = new ClientControllerSocketThread();
                         tmp.MusicPlayerActionEvent = clientSocketWrapper.controllerSocket.MusicPlayerActionEvent;
                         tmp.MetaInfoReceivedEvent = clientSocketWrapper.controllerSocket.MetaInfoReceivedEvent;
+                        tmp.ExceptionEvent = clientSocketWrapper.controllerSocket.ExceptionEvent;
                         clientSocketWrapper.controllerSocket = tmp;
 
                         ClientAudioMultiCastReceiverSocketThread tmp2 = new ClientAudioMultiCastReceiverSocketThread();
                         tmp2.MusicPlayerActionEvent=tmp.MusicPlayerActionEvent;
+                        tmp2.ExceptionEvent=tmp.ExceptionEvent;
                         clientSocketWrapper.audioSocket = tmp2;
                         D.log("its not the first start.");
                     }

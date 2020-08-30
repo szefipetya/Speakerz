@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 public class ClientControllerSocketThread extends Thread implements SocketThread{
+    public Event<EventArgs1<Exception>> ExceptionEvent;
     SocketStruct struct;
     String hostAddress;
 
