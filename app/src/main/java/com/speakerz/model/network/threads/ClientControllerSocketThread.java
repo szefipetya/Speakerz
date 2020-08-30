@@ -5,7 +5,9 @@ import android.widget.Toast;
 import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.ChannelObject;
+import com.speakerz.model.network.Serializable.body.NetworkEventBody;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
+import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
@@ -35,6 +37,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     public void run() {
         try {
             D.log("client running");
+            externalShutdown=false;
             struct=new SocketStruct();
             struct.socket=new Socket();
             struct.socket.setReuseAddress(true);
@@ -54,6 +57,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
 
 
              shutdown();
+
         }
         //send and recieve
     }
@@ -72,6 +76,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
                 break;
             } catch (IOException e) {
                 e.printStackTrace();
+                shutdown();
                 break;
             }
 
@@ -96,7 +101,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
 
     //adds a new song to the party. returns true if the connection exists.
     public boolean send(ChannelObject chobj) throws Exception{
-        if(struct.socket!=null)
+        if(struct.socket!=null&&!struct.socket.isClosed())
         {
             chobj.body.senderAddress=struct.socket.getInetAddress().getHostAddress();
             struct.objectOutputStream.writeObject(chobj);
@@ -109,8 +114,9 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     @Override
     public void shutdown(){
         try {
+            externalShutdown=true;
 
-
+          //  send(new ChannelObject(new NetworkEventBody(struct.socket.getInetAddress().getHostAddress(), NET_EVT.DISCONNECT),TYPE.NET));
             if (struct != null) {
                 if (struct.objectInputStream != null) {
                     struct.objectInputStream.close();
@@ -121,12 +127,13 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
                 if (struct.socket != null)
                     struct.socket.close();
 
-                externalShutdown=true;
             }
             } catch(IOException e){
                 e.printStackTrace();
                 D.log(e.getMessage());
-            }
+            } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 

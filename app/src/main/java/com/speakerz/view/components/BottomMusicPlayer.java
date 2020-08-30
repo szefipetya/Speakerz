@@ -109,7 +109,7 @@ public class BottomMusicPlayer {
     }
 
     public void initModel(MusicPlayerModel model) {
-        if(mpModel != null) throw new RuntimeException("A MusicPlayerModel is already registered");
+       // if(mpModel != null) throw new RuntimeException("A MusicPlayerModel is already registered");
         mpModel = model;
         setPlayIcon(mpModel.isPlaying());
 
