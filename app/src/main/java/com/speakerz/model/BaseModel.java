@@ -30,7 +30,6 @@ public abstract class BaseModel {
 
     public String NickName = "placeholder";
     public String deviceID= "";
-    //public ArrayList<String> NickNames;
     public HashMap<String,String> NickNames;
 
     MusicPlayerModel musicPlayerModel;
