@@ -36,6 +36,7 @@ public class HostModel extends BaseModel {
         super(context, reciever,true,PermissionCheckEvent);
         network = new HostNetwork(reciever);
         network.PermissionCheckEvent=this.PermissionCheckEvent;
+        network.ExceptionEvent=this.ExceptionEvent;
         network.getReciever().setConnectivityManager(connectivityManager);
         injectNetworkDependencies();
 
@@ -189,7 +190,9 @@ public class HostModel extends BaseModel {
     protected void injectNetworkDependencies() {
         network.getServerSocketWrapper().controllerSocket.MusicPlayerActionEvent=MusicPlayerActionEvent;
         network.getServerSocketWrapper().audioSocket.MusicPlayerActionEvent=MusicPlayerActionEvent;
+        network.getServerSocketWrapper().audioSocket.ExceptionEvent=ExceptionEvent;
         network.getServerSocketWrapper().controllerSocket.MetaInfoEvent =MetaInfoReceivedEvent;
+        network.getServerSocketWrapper().controllerSocket.ExceptionEvent =ExceptionEvent;
         network.getServerSocketWrapper().controllerSocket.NameChangeEvent =NameChangeEvent;
     }
 }

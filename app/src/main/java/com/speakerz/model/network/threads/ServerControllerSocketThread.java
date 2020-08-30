@@ -4,11 +4,13 @@ import android.widget.Toast;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.NetworkEventBody;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.controller.GetServerInfoBody;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.controller.content.ServerInfo;
+import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
@@ -26,6 +28,7 @@ import java.util.LinkedList;
 
 public class ServerControllerSocketThread extends Thread implements SocketThread{
 
+    public Event<EventArgs1<Exception>> ExceptionEvent;
     LinkedList<SocketStruct> socketList=new LinkedList<>();
 
     public ServerSocket getServerSocket() {
@@ -33,19 +36,12 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     }
 
     ServerSocket dataSocket=null;
-    ServerSocket requestSocket=null;
     //dependency injection
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent =null;
     public Event<EventArgs1<Body>> MetaInfoEvent = null;
     public Event<EventArgs1<Body>> NameChangeEvent=null;
 
     volatile boolean externalShutdown=false;
-
-
-
-
-    InputStream inputStream;
-
     @Override
     public void run() {
         try{
@@ -91,6 +87,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                 D.log("Exception message: " + ex.getMessage());
             else
                 D.log("null");
+
         }
     }
 
@@ -114,28 +111,17 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
 
                  try {
                      handleIncomingObject((ChannelObject) struct.objectInputStream.readObject());
-
                  } catch (IOException e) {
                      e.printStackTrace();
-                     try {
-                         struct.objectInputStream.close();
-                     }
-                     catch (IOException e2) {}
-                     try {
-                         struct.objectOutputStream.close();
-                     }
-                     catch (IOException e2) {}
-                     try {
-                         struct.socket.close();
-                     }
-                     catch (IOException e2) {}
-                     socketList.remove(struct);
+                     closeClient(struct);
                      break;
                  } catch (ClassNotFoundException e) {
                      e.printStackTrace();
                  }
              }
              else{
+                 D.log("client "+struct.socket.getInetAddress().getHostAddress()+" disconnected");
+
                  break;
              }
          }
@@ -173,7 +159,6 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     public void send(SocketStruct struct ,ChannelObject channelObject) throws IOException{
             recentStruct.objectOutputStream.writeObject(channelObject);
             recentStruct.objectOutputStream.flush();
-
     }
 
     public void sendAll(ChannelObject chObject) throws IOException {
@@ -195,6 +180,20 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
         }
 
         if(chObject.TYPE== TYPE.NAME){
+            NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+            D.log(" server: NameChange Happened: ");
+
+        }
+
+        if(chObject.TYPE== TYPE.NET){
+            NetworkEventBody body= (NetworkEventBody) chObject.body;
+            if(body.getContent()== NET_EVT.DISCONNECT){
+                SocketStruct struct=getSocketStructByAddress(body.senderAddress);
+                socketList.remove(struct);
+                struct.objectOutputStream.close();
+                struct.objectInputStream.close();
+                struct.socket.close();
+            }
             NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
             D.log(" server: NameChange Happened: ");
 
@@ -238,8 +237,21 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
         } catch (IOException e) {
             e.printStackTrace();
             D.log(e.getMessage());
+
         }
         D.log("Server socket closed");
+    }
+    void closeClient(SocketStruct struct){
+        try {
+            socketList.remove(struct);
+            struct.objectInputStream.close();
+            struct.objectOutputStream.close();
+            struct.socket.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 }

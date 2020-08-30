@@ -7,12 +7,14 @@ import com.speakerz.model.SongChangedInfo;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.NetworkEventBody;
 import com.speakerz.model.network.Serializable.body.audio.AudioControlBody;
 import com.speakerz.model.network.Serializable.body.audio.AudioMetaBody;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO_CONTROL;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioControlDto;
+import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.threads.SocketStruct;
 import com.speakerz.model.network.threads.audio.util.AudioBuffererDecoder;
@@ -47,10 +49,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import ealvatag.audio.exceptions.CannotReadException;
+
 
 public class ServerAudioMultiCastSocketThread extends Thread {
 
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
+    public Event<EventArgs1<Exception>> ExceptionEvent;
     private Integer currentSongId;
     public void playAudioStreamFromLocalStorage(final SongChangedInfo info){
 
@@ -120,6 +125,24 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     AtomicBoolean swapSong=new AtomicBoolean(false);
     AtomicBoolean isSongInPlay=new AtomicBoolean(false);
     final Object locker=new Object();
+    void closeClient(ClientSocketStructWrapper wrapper){
+        try {
+            clients.remove(wrapper);
+            wrapper.dataSocket.socket.close();
+            wrapper.dataSocket.objectOutputStream.close();
+            wrapper.dataSocket.objectInputStream.close();
+
+            wrapper.senderInfoSocket.socket.close();
+            wrapper.senderInfoSocket.objectOutputStream.close();
+            wrapper.senderInfoSocket.objectInputStream.close();
+
+            wrapper.receiverInfoSocket.socket.close();
+            wrapper.receiverInfoSocket.objectOutputStream.close();
+            wrapper.receiverInfoSocket.objectInputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     public void run() {
         // playWav();
        // currentMediaFile = getFileByResId(R.raw.tobu_wav, "target.wav");
@@ -149,11 +172,19 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                                         cli.eofSongReachedLocker.notify();
                                     }
                                 }else{
-                                  cli.dataSocket.objectOutputStream.writeObject(new AudioPacket(0,new byte[0]));
-                                  cli.dataSocket.objectOutputStream.flush();
+                                    try {
+                                        if (!cli.dataSocket.socket.isClosed()) {
+                                            cli.dataSocket.objectOutputStream.writeObject(new AudioPacket(0, new byte[0]));
+                                            cli.dataSocket.objectOutputStream.flush();
+                                        }
+                                    }catch(IOException ex){
+                                        closeClient(cli);
+                                        ex.printStackTrace();
+                                        continue;
+                                    }
                                 }
                                 synchronized (cli.eofReceivedFromClientLocker) {
-                                    cli.eofReceivedFromClientLocker.wait(300);
+                                    cli.eofReceivedFromClientLocker.wait(200);
                                 }
                             }
                             decoderBufferer.stop();
@@ -165,9 +196,16 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                                 @Override
                                 public void run() {
                                     try {
-                                        decoder.startPlay(currentFile, AUDIO.MP3);
+                                        decoder.startPlay(currentFile);
                                     } catch (IOException e) {
                                         e.printStackTrace();
+                                    } catch (CannotReadException e) {
+                                        decoder.isPlaying.set(false);
+
+
+                                        isSongInPlay.set(false);
+
+                                        D.log("playerDecoder also Can not read file");
                                     }
                                 }
                             });
@@ -177,7 +215,14 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                                 @Override
                                 public void run() {
                                     try {
-                                        decoderBufferer.startPlay(currentFile, AUDIO.MP3,currentSongId);
+                                        try {
+                                            decoderBufferer.startPlay(currentFile,currentSongId);
+                                        } catch (CannotReadException e) {
+                                            isSongInPlay.set(false);
+                                            decoderBufferer.eosReceived.set(true);
+                                            ExceptionEvent.invoke(new EventArgs1<Exception>(self,e));
+                                            e.printStackTrace();
+                                        }
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
@@ -189,7 +234,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                             isSongInPlay.set(true);
                         }
 
-                } catch (InterruptedException | IOException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 //  yt.play("TW9d8vYrVFQ");
@@ -199,16 +244,18 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         t.start();
         acceptClients();
     }
-
+ServerAudioMultiCastSocketThread self=this;
     public void sendAudioMeta(ClientSocketStructWrapper client) {
         AudioMetaDto dto =recentAudioMetaDto;
         dto.actualBufferedPackageNumber=decoder.actualPackageNumber.get();
         dto.port = currentClientPort;
         try {
-
-          client.senderInfoSocket.objectOutputStream.writeObject(new ChannelObject(new AudioMetaBody(dto), TYPE.AUDIO_META));
+        if(client.senderInfoSocket.objectInputStream!=null) {
+            client.senderInfoSocket.objectOutputStream.writeObject(new ChannelObject(new AudioMetaBody(dto), TYPE.AUDIO_META));
             client.senderInfoSocket.objectOutputStream.flush();
+        }
         } catch (IOException e) {
+            closeClient(client);
             e.printStackTrace();
         }
 
@@ -254,7 +301,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
     int currentClientPort = 8100;
     private void listen(ClientSocketStructWrapper struct) {
-        while (!struct.receiverInfoSocket.socket.isClosed()) {
+        while (struct.senderInfoSocket.socket!=null&&!struct.receiverInfoSocket.socket.isClosed()) {
             try {
                 ChannelObject inObject = (ChannelObject) struct.receiverInfoSocket.objectInputStream.readObject();
                 D.log("got something");
@@ -284,11 +331,31 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                         struct.isClientInStream=false;
                     }
 
-                }else {
+                }else if(inObject.TYPE==TYPE.NET) {
+                   NetworkEventBody body = (NetworkEventBody) inObject.body;
+                   if(body.getContent()== NET_EVT.DISCONNECT){
+                       clients.remove(struct);
+                       struct.dataSocket.objectOutputStream.close();
+                       struct.dataSocket.objectInputStream.close();
+                       struct.dataSocket.socket.close();
+
+                       struct.senderInfoSocket.objectOutputStream.close();
+                       struct.senderInfoSocket.objectInputStream.close();
+                       struct.senderInfoSocket.socket.close();
+
+                       struct.receiverInfoSocket.objectOutputStream.close();
+                       struct.receiverInfoSocket.objectInputStream.close();
+                       struct.receiverInfoSocket.socket.close();
+                       D.log("client "+body.senderAddress+" disconnected.");
+                       break;
+                   }
+               }else
+                {
                    D.log("ClientAudioThread: received wrong package");
                }
             } catch (IOException e) {
                 e.printStackTrace();
+                break;
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
@@ -391,7 +458,10 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                         struct.dataSocket.objectOutputStream.writeObject(new AudioPacket(0,new byte[0]));
                         struct.dataSocket.objectOutputStream.flush();
                     } catch (IOException e) {
+
                         e.printStackTrace();
+                        closeClient(struct);
+                        break;
                     }
 
                     D.log("break");
@@ -421,6 +491,8 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
+                        closeClient(struct);
+                        break;
                     }
                 }else{
                     break;

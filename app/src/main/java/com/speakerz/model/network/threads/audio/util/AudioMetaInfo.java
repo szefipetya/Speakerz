@@ -29,19 +29,18 @@ public class AudioMetaInfo {
     private AudioHeader audioHeader = null;
     private Tag audioTag = null;
 
-    public AudioMetaInfo(File inputFile) {
+    public AudioMetaInfo(File inputFile) throws CannotReadException {
         try {
             audioFile = AudioFileIO.read(inputFile);
-        } catch (CannotReadException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        }catch (IOException e) {
             e.printStackTrace();
         } catch (TagException e) {
             e.printStackTrace();
         } catch (InvalidAudioFrameException e) {
             e.printStackTrace();
         }
-      init();
+        if(audioFile!=null)
+            init();
     }
 
     private void init(){
