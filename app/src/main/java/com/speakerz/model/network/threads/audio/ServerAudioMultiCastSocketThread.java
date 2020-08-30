@@ -49,10 +49,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import ealvatag.audio.exceptions.CannotReadException;
+
 
 public class ServerAudioMultiCastSocketThread extends Thread {
 
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
+    public Event<EventArgs1<Exception>> ExceptionEvent;
     private Integer currentSongId;
     public void playAudioStreamFromLocalStorage(final SongChangedInfo info){
 
@@ -181,7 +184,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                                     }
                                 }
                                 synchronized (cli.eofReceivedFromClientLocker) {
-                                    cli.eofReceivedFromClientLocker.wait(300);
+                                    cli.eofReceivedFromClientLocker.wait(200);
                                 }
                             }
                             decoderBufferer.stop();
@@ -193,9 +196,16 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                                 @Override
                                 public void run() {
                                     try {
-                                        decoder.startPlay(currentFile, AUDIO.MP3);
+                                        decoder.startPlay(currentFile);
                                     } catch (IOException e) {
                                         e.printStackTrace();
+                                    } catch (CannotReadException e) {
+                                        decoder.isPlaying.set(false);
+
+
+                                        isSongInPlay.set(false);
+
+                                        D.log("playerDecoder also Can not read file");
                                     }
                                 }
                             });
@@ -205,7 +215,14 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                                 @Override
                                 public void run() {
                                     try {
-                                        decoderBufferer.startPlay(currentFile, AUDIO.MP3,currentSongId);
+                                        try {
+                                            decoderBufferer.startPlay(currentFile,currentSongId);
+                                        } catch (CannotReadException e) {
+                                            isSongInPlay.set(false);
+                                            decoderBufferer.eosReceived.set(true);
+                                            ExceptionEvent.invoke(new EventArgs1<Exception>(self,e));
+                                            e.printStackTrace();
+                                        }
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
@@ -227,7 +244,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         t.start();
         acceptClients();
     }
-
+ServerAudioMultiCastSocketThread self=this;
     public void sendAudioMeta(ClientSocketStructWrapper client) {
         AudioMetaDto dto =recentAudioMetaDto;
         dto.actualBufferedPackageNumber=decoder.actualPackageNumber.get();

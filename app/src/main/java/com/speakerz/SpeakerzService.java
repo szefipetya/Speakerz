@@ -33,8 +33,11 @@ import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
 import com.speakerz.viewModel.TextValueStorage;
+
+import ealvatag.audio.exceptions.CannotReadException;
 
 public class SpeakerzService extends Service {
 
@@ -73,9 +76,10 @@ public class SpeakerzService extends Service {
                 model.getMusicPlayerModel().loadAudio();
                 registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
 
-                this.subscribeEvents();
                 startId = sId;
                 ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
+                this.subscribeEvents();
+
                 D.log("hostmodel created");
             }
             else if(!isHost&&(model==null || model instanceof HostModel)){
@@ -87,9 +91,10 @@ public class SpeakerzService extends Service {
                 model.start();
                 model.getMusicPlayerModel().loadAudio();
 
-                this.subscribeEvents();
                 startId = sId;
                 ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
+                this.subscribeEvents();
+
                 D.log("devicemodel created");
             }
             else { // nem kell service csere
@@ -131,6 +136,7 @@ public class SpeakerzService extends Service {
 
 
         }
+
         public BaseModel getModel(){
             return model;
         }
@@ -175,6 +181,7 @@ public class SpeakerzService extends Service {
         // Get the HandlerThread's Looper and use it for our Handler
         serviceLooper = thread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper, this);
+
     }
 
     /**

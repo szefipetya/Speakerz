@@ -20,6 +20,7 @@ import java.util.List;
 
 public abstract class BaseNetwork  {
 
+    public Event<EventArgs1<Exception>> ExceptionEvent;
     protected WifiBroadcastReciever reciever;
 
     public IntentFilter getIntentFilter() {

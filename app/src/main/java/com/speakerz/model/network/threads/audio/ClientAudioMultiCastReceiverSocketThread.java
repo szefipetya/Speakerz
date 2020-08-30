@@ -43,6 +43,7 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
 
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
+    public Event<EventArgs1<Exception>> ExceptionEvent;
     private boolean running;
     private byte[] buf = new byte[1024];
     private Context context;
@@ -311,14 +312,14 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
         D.log("isBitRateVariable: "+metaDto.isBitRateVariable);
         D.log("bytes/1000mSec: "+metaDto.sampleRate*(metaDto.bitsPerSample/8));
 
-        /*int minBufferSize = AudioTrack.getMinBufferSize(metaDto.sampleRate,
+        int minBufferSize = AudioTrack.getMinBufferSize(metaDto.sampleRate,
                 metaDto.channels == 2 ? AudioFormat.CHANNEL_OUT_STEREO : AudioFormat.CHANNEL_OUT_MONO,
                 metaDto.bitsPerSample == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT);
 
         AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, metaDto.sampleRate,
                 metaDto.channels == 2 ? AudioFormat.CHANNEL_OUT_STEREO : AudioFormat.CHANNEL_OUT_MONO,
-                metaDto.bitsPerSample == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);*/
-        int minBufferSize = AudioTrack.getMinBufferSize(metaDto.sampleRate,
+                metaDto.bitsPerSample == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);
+      /*  int minBufferSize = AudioTrack.getMinBufferSize(metaDto.sampleRate,
                 AudioFormat.CHANNEL_OUT_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT);
 
@@ -327,7 +328,7 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
                 AudioFormat.CHANNEL_OUT_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT,
                 minBufferSize,
-                AudioTrack.MODE_STREAM);
+                AudioTrack.MODE_STREAM);*/
         return at;
     }
     void send(SocketStruct struct,ChannelObject obj){
