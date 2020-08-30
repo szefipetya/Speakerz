@@ -65,7 +65,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             currentFile=info.file;
             currentSongId=info.songId;
             locker.notify();
-           // resumeAudioStream();
+            resumeAudioStream();
 
 
         }

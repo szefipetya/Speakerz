@@ -105,7 +105,7 @@ public class MusicPlayerModel{
     public List<Song> getAudioList() { return Collections.unmodifiableList(audioList); }
     public Context getContext() {return context; }
     public Boolean isHost() { return isHost; }
-    public boolean isPlaying() {return false; }
+    public boolean isPlaying() {return isPlaying; }
     public Song getCurrentSong() {
         if (currentPlayingIndex < 0 || currentPlayingIndex >= songQueue.size())
             return null;
@@ -176,12 +176,14 @@ public class MusicPlayerModel{
     // Start paused playing
     boolean isPlaying=true;
     public void start(){
+        isPlaying=true;
         invokeModelCommunication(MP_EVT.SONG_RESUME, null, null);
     }
 
 
     // pauses media player if exists
     public void pause(){
+        isPlaying=false;
         invokeModelCommunication(MP_EVT.SONG_PAUSE, null, null);
     }
 
