@@ -74,7 +74,9 @@ public class SpeakerzService extends Service {
                 model = new HostModel(service, service.receiver,service.connectivityManager,PermissionCheckEvent);
                 model.start();
                 model.getMusicPlayerModel().loadAudio();
+
                 registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
+
 
                 startId = sId;
                 ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
@@ -91,10 +93,10 @@ public class SpeakerzService extends Service {
                 model.start();
                 model.getMusicPlayerModel().loadAudio();
 
+
                 startId = sId;
                 ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
                 this.subscribeEvents();
-
                 D.log("devicemodel created");
             }
             else { // nem kell service csere

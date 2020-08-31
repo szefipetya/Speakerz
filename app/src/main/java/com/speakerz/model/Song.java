@@ -17,20 +17,20 @@ public class Song implements Serializable {
     private String title;
     private String album;
     private String artist;
-    private String albumArt;
+    private Long albumId;
     private String owner;
 
-    public Song(String data, String title, String album, String artist,String owner,String albumArt) {
+    public Song(String data, String title, String album, String artist,String owner,Long albumId) {
         this.data = data;
         this.title = title;
         this.album = album;
         this.artist = artist;
         this.owner = owner;
-        this.albumArt = albumArt;
+        this.albumId = albumId;
     }
 
-    public String getAlbumArt() {
-        return albumArt;
+    public Long getAlbumId() {
+        return albumId;
     }
 
     public String getOwner() {

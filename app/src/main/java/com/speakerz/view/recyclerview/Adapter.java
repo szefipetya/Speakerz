@@ -1,5 +1,7 @@
 package com.speakerz.view.recyclerview;
 
+import android.content.ContentUris;
+import android.net.Uri;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,11 +42,22 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Song currentItem = mItemList.get(position);
-        if(currentItem.getAlbumArt() == null){
+        /*TODO: sikerült csak elfailel ha nemtudja megnyitni -->minden songnak van album artja csak van akinek nulla ettől függetlenül van helyefoglalva de az értéke null így nem lehet megnyitni ->exception de akinek van arra működik
+         */
+        if(currentItem.getAlbumId() == null){
             holder.mImageView.setImageResource(R.drawable.ic_song);
+            System.out.println("nincs");
         }
         else{
-            holder.mImageView.setImageBitmap(currentItem.getAlbumImage(currentItem.getAlbumArt()));
+            try{
+                holder.mImageView.setImageURI(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()));
+            }
+            catch(Exception e){
+                holder.mImageView.setImageResource(R.drawable.ic_song);
+            }
+            //holder.mImageView.setImageURI(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()));
+            //System.out.println(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()));
+            System.out.println("van");
         }
         holder.mTextView1.setText(currentItem.getTitle());
         holder.mTextView2.setText(currentItem.getArtist());
@@ -72,7 +85,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
         public ViewHolder(View itemView, final OnItemClickListener listener) {
             super(itemView);
-            mImageView = itemView.findViewById(R.id.imageView);
+            mImageView = itemView.findViewById(R.id.albumArt);
             mTextView1 = itemView.findViewById(R.id.textView);
             mTextView2 = itemView.findViewById(R.id.textView2);
             mDeleteImage = itemView.findViewById(R.id.image_delete);

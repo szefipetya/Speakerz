@@ -1,6 +1,7 @@
 package com.speakerz.model;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -23,6 +24,7 @@ import com.speakerz.util.EventListener;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
@@ -167,9 +169,6 @@ public class MusicPlayerModel{
     }
 
 
-
-
-
     // Close music player services
     public void close(){
         stop();
@@ -247,12 +246,8 @@ public class MusicPlayerModel{
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
         String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
-        //Cursor cursor = contentResolver.query(uri, null, selection, null, sortOrder);
-        Cursor cursor= contentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
-                new String[] {MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART},
-                MediaStore.Audio.Albums._ID+ "=?",
-                new String[] {String.valueOf(MediaStore.Audio.Albums._ID)},
-                null);
+        Cursor cursor = contentResolver.query(uri, null, selection, null, sortOrder);
+
 
         if (cursor != null && cursor.getCount() > 0) {
             audioList = new ArrayList<>();
@@ -261,20 +256,24 @@ public class MusicPlayerModel{
                 String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
                 String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
                 String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-                String albumArt = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
+                int albumID = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+                Long thisalbumId = cursor.getLong(albumID);
+
 
 
                 //Print the title of the song that it found.
 
                 // Save to audioList
                 //TODO: replace alma to unique identifier
-                audioList.add(new Song(data, title, album, artist,"alma",albumArt));
+                audioList.add(new Song(data, title, album, artist,"alma",thisalbumId));
             }
         }
         cursor.close();
 
 
     }
+
+
 
     public void loadAudio() {
         loadAudioWithPermission();
