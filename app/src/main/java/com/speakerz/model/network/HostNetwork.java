@@ -66,6 +66,7 @@ public class HostNetwork extends BaseNetwork {
 
    @SuppressLint("MissingPermission")
    private void createGroup(){
+       advertiseMe();
 
       reciever.getWifiP2pManager().createGroup(reciever.getChannel(), new WifiP2pManager.ActionListener(){
          @Override
@@ -74,7 +75,7 @@ public class HostNetwork extends BaseNetwork {
             D.log("group created succesfully");
             TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Group Created succesfully"));
             //this makes sure that ACESS_COARSE_LOCATION is enabled
-            PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,PackageManager.PERMISSION_GRANTED));
+          //  PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,PackageManager.PERMISSION_GRANTED));
 
             getReciever().getWifiP2pManager().discoverPeers(getReciever().getChannel(), new WifiP2pManager.ActionListener() {
                @Override

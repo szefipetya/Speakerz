@@ -132,9 +132,15 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                 return;
             }
 
+            NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+            if (activeNetwork != null) {
+                wifiP2pManager.requestConnectionInfo(channel, connectionInfoListener);
+            } else {
+                ConnectionChangedEvent.invoke(new BooleanEventArgs(self,false));
+                // not connected to the internet
+            }
             NetworkInfo networkInfo = (NetworkInfo) intent
                     .getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
-
             if (networkInfo.isConnected()) {
 
                 // We are connected with the other device, request connection

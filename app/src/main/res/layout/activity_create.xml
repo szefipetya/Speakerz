@@ -138,4 +138,15 @@
         app:layout_constraintHorizontal_bias="0.735"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <Button
+        android:id="@+id/create_btn_advertise_me"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="60dp"
+        android:text="Make me visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.596"
+        app:layout_constraintStart_toEndOf="@+id/btn_start_session"
+        app:layout_constraintTop_toBottomOf="@+id/lv_song_list_test" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
