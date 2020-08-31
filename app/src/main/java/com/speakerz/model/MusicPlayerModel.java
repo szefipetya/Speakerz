@@ -69,6 +69,8 @@ public class MusicPlayerModel{
                         case SONG_CHANGED:
                             Integer songId=(Integer)body.getContent();
                             D.log("songId : "+songId);
+                            isPlaying = true;
+                            playbackStateChanged.invoke(new EventArgs1<>(this, true));
                             break;
                         case SONG_MAX_TIME_SECONDS:
                             Long timeInSeconds = (Long)body.getContent();

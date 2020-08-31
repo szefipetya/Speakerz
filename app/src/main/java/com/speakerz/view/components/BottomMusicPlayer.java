@@ -1,5 +1,6 @@
 package com.speakerz.view.components;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.view.View;
 import android.widget.ImageButton;
@@ -46,7 +47,13 @@ public class BottomMusicPlayer {
 
                 D.log("state " + args.arg1() );
             }
-            setPlayIcon(args.arg1());
+            final boolean _isPlaying = args.arg1();
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    setPlayIcon(_isPlaying);
+                }
+            });
         }
     };
 
