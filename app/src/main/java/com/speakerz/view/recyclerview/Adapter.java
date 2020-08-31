@@ -1,5 +1,6 @@
 package com.speakerz.view.recyclerview;
 
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,7 +40,12 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Song currentItem = mItemList.get(position);
-        holder.mImageView.setImageResource(R.drawable.ic_song);
+        if(currentItem.getAlbumArt() == null){
+            holder.mImageView.setImageResource(R.drawable.ic_song);
+        }
+        else{
+            holder.mImageView.setImageBitmap(currentItem.getAlbumImage(currentItem.getAlbumArt()));
+        }
         holder.mTextView1.setText(currentItem.getTitle());
         holder.mTextView2.setText(currentItem.getArtist());
     }

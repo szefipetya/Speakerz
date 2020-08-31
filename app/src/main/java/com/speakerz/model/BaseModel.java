@@ -48,6 +48,7 @@ public abstract class BaseModel {
     public final Event<EventArgs2<Body, TYPE>> NameChangeEvent=new Event<>();
 
 
+
     public BaseModel(final Context context, WifiBroadcastReciever reciever, Boolean isHost, Event<PermissionCheckEventArgs> PermissionCheckEvent){
         this.context = context;
         this.PermissionCheckEvent=PermissionCheckEvent;

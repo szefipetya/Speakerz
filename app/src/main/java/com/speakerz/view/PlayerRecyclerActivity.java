@@ -25,7 +25,9 @@ import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
+import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs2;
 import com.speakerz.view.components.BottomMusicPlayer;
 import com.speakerz.view.components.NameChangeDialog;
 import com.speakerz.view.components.TopMenu;
@@ -126,6 +128,6 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
         System.out.println(username+"outside");
         NameItem item = new NameItem(username,"en",model.getModel().deviceID);
         PutNameChangeRequestBody body1 = new PutNameChangeRequestBody(null,item);
-        model.getModel().NameChangeEvent.invoke(new EventArgs1<Body>(null,body1));
+        model.getModel().NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(null,body1,TYPE.NAME));
     }
 }

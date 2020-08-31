@@ -1,5 +1,8 @@
 package com.speakerz.model;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 
 import java.io.Serializable;
@@ -14,14 +17,20 @@ public class Song implements Serializable {
     private String title;
     private String album;
     private String artist;
+    private String albumArt;
     private String owner;
 
-    public Song(String data, String title, String album, String artist,String owner) {
+    public Song(String data, String title, String album, String artist,String owner,String albumArt) {
         this.data = data;
         this.title = title;
         this.album = album;
         this.artist = artist;
         this.owner = owner;
+        this.albumArt = albumArt;
+    }
+
+    public String getAlbumArt() {
+        return albumArt;
     }
 
     public String getOwner() {
@@ -71,5 +80,13 @@ public class Song implements Serializable {
     @Override
     public String toString() {
         return title;
+    }
+
+    public Bitmap getAlbumImage(String path) {
+        android.media.MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+        mmr.setDataSource(path);
+        byte[] data = mmr.getEmbeddedPicture();
+        if (data != null) return BitmapFactory.decodeByteArray(data, 0, data.length);
+        return null;
     }
 }
