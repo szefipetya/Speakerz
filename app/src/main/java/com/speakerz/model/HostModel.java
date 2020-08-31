@@ -94,7 +94,7 @@ public class HostModel extends BaseModel {
                 if(args.arg1()==MP_EVT.SEND_SONG){
                     try {
                         network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutSongRequestBody((Song)args.arg2()),TYPE.MP));
-                        SongQueueUpdatedEvent.invoke(null);
+                      //  SongQueueUpdatedEvent.invoke(null);
                         D.log("song sent to clients");
                     } catch (IOException e) {
                         D.log("could not send a single song");

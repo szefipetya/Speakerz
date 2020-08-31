@@ -35,6 +35,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 
+import ealvatag.audio.exceptions.CannotReadException;
+
 public class Create extends Activity {
     //REQUIRED_BEG MODEL_Declare
     SpeakerzService _service;
@@ -57,11 +59,16 @@ public class Create extends Activity {
         //Basemodel Events
         model.ExceptionEvent.addListener(new EventListener<EventArgs1<Exception>>() {
             @Override
-            public void action(EventArgs1<Exception> args) {
+            public void action(final EventArgs1<Exception> args) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        if(args.arg1() instanceof CannotReadException)
                         Toast.makeText(selfActivity,"Not supported format",Toast.LENGTH_SHORT).show();
+                        else{
+                            Toast.makeText(selfActivity,args.arg1().getMessage(),Toast.LENGTH_LONG).show();
+
+                        }
                     }
                 });
             }

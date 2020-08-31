@@ -1,5 +1,6 @@
 package com.speakerz.view.components;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.view.View;
 import android.widget.ImageButton;
@@ -11,6 +12,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.speakerz.R;
 import com.speakerz.debug.D;
 import com.speakerz.model.MusicPlayerModel;
+import com.speakerz.model.Song;
+import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
@@ -46,7 +49,27 @@ public class BottomMusicPlayer {
 
                 D.log("state " + args.arg1() );
             }
-            setPlayIcon(args.arg1());
+            final boolean _isPlaying = args.arg1();
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    setPlayIcon(_isPlaying);
+                }
+            });
+        }
+    };
+
+    final EventListener<EventArgs1<Song>> songChangedListener = new EventListener<EventArgs1<Song>>() {
+        @Override
+        public void action(EventArgs1<Song> args) {
+            final Song song = args.arg1();
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    titleSongTV.setText(song.getTitle());
+                    detailsTV.setText(song.getArtist());
+                }
+            });
         }
     };
 
@@ -116,6 +139,7 @@ public class BottomMusicPlayer {
 
         mpModel.playbackDurationChanged.addListener(playbackDurationChanged);
         mpModel.playbackStateChanged.addListener(playbackStateChangedListener);
+        mpModel.songChangedEvent.addListener(songChangedListener);
 
     }
 
@@ -123,6 +147,7 @@ public class BottomMusicPlayer {
         if(mpModel != null){
             mpModel.playbackDurationChanged.removeListener(playbackDurationChanged);
             mpModel.playbackStateChanged.removeListener(playbackStateChangedListener);
+            mpModel.songChangedEvent.removeListener(songChangedListener);
 
             mpModel = null;
         }
