@@ -55,6 +55,17 @@ public class Create extends Activity {
         lvSongsList.setAdapter(songListAdapter);
 
         //Basemodel Events
+        model.ExceptionEvent.addListener(new EventListener<EventArgs1<Exception>>() {
+            @Override
+            public void action(EventArgs1<Exception> args) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(selfActivity,"Not supported format",Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
         _service.getModel().SongQueueUpdatedEvent.addListener(new EventListener<EventArgs>() {
             @Override
             public void action(final EventArgs args) {

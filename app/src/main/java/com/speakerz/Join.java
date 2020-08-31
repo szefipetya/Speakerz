@@ -101,6 +101,17 @@ public class Join extends Activity {
         final Activity selfActivity = this;
 
         //Basemodel events
+        model.ExceptionEvent.addListener(new EventListener<EventArgs1<Exception>>() {
+            @Override
+            public void action(EventArgs1<Exception> args) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        songListAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        });
         model.SongQueueUpdatedEvent.addListener(new EventListener<EventArgs>() {
             @Override
             public void action(EventArgs args) {
@@ -120,6 +131,7 @@ public class Join extends Activity {
                 };
                 RunnableFuture<Void> task = new FutureTask<>(run, null);
                 selfActivity.runOnUiThread(task);
+
                 try {
                     task.get(); // this will block until Runnable completes
                 } catch (InterruptedException | ExecutionException e) {

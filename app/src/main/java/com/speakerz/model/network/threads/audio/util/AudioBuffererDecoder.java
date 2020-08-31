@@ -1,26 +1,21 @@
 package com.speakerz.model.network.threads.audio.util;
 
-import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
-
-import androidx.annotation.RequiresPermission;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioMetaDto;
 import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
 import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Queue;
@@ -29,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import ealvatag.audio.exceptions.CannotReadException;
 import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.BitstreamException;
 import javazoom.jl.decoder.Decoder;
@@ -41,10 +37,11 @@ public class AudioBuffererDecoder {
     private MediaExtractor mExtractor;
     private MediaCodec mDecoder;
 
-    private AtomicBoolean eosReceived=new AtomicBoolean(false);
+    public AtomicBoolean eosReceived=new AtomicBoolean(false);
     private int mSampleRate = 0;
     public Event<EventArgs1<AudioPacket>> AudioTrackBufferUpdateEvent;
     public Event<EventArgs1<AudioMetaDto>> MetaDtoReadyEvent;
+    public Event<EventArgs1<Exception>>ExceptionEvent;
 
     public final Queue<AudioPacket> bufferQueue=new ConcurrentLinkedQueue<>();
 
@@ -52,9 +49,9 @@ public class AudioBuffererDecoder {
 
     File currentFile=null;
     AudioMetaDto metaDto=new AudioMetaDto();
-    public void startPlay(String path, AUDIO audioType, Integer songId) throws IOException {
+    public void startPlay(String path, Integer songId) throws IOException, CannotReadException {
         currentFile=new File(path);
-        startPlay(currentFile,audioType,songId);
+        startPlay(currentFile,songId);
     }
 
     public AudioTrack getAudioTrack() {
@@ -63,13 +60,12 @@ public class AudioBuffererDecoder {
 
     AudioTrack audioTrack=null;
     AUDIO audioType=AUDIO.NONE;
-    public void startPlay(File file, AUDIO audioType,Integer songId) throws IOException {
+    public void startPlay(File file, Integer songId) throws IOException, CannotReadException {
         this.audioType=audioType;
         eosReceived.set(false);
         currentFile=file;
-
-
-        if(audioType==AUDIO.MP3){
+        AudioMetaInfo metaInfo=new AudioMetaInfo(file) ;
+        if(metaInfo.getAudioHeader().getEncodingType()=="mp3") {
             playMP3(file,songId);
         }
 
@@ -78,7 +74,7 @@ public class AudioBuffererDecoder {
 public AtomicInteger actualBufferedPackageNumber=new AtomicInteger(0);
 public AtomicInteger maxPackageNumber=new AtomicInteger(0);
 
-    private void playMP3(File file,Integer songId) throws IOException {
+    private void playMP3(File file,Integer songId) throws IOException, CannotReadException {
         actualBufferedPackageNumber.set(0);
         maxPackageNumber.set(0);
         eosReceived.set(false);
@@ -91,9 +87,10 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
         AudioMetaInfo metaInfo=new AudioMetaInfo(file) ;
         metaDto.sampleRate=metaInfo.getAudioHeader().getSampleRate();
         metaDto.channels=(short)metaInfo.getAudioHeader().getChannelCount();
-        metaDto.bitrate=(short)metaInfo.getAudioHeader().getBitRate();
         metaDto.bitsPerSample=(short)metaInfo.getAudioHeader().getBitsPerSample();
         metaDto.maxTimeInSeconds=(Long)metaInfo.getAudioHeader().getDuration(TimeUnit.SECONDS,false);
+        metaDto.isBitRateVariable=metaInfo.getAudioHeader().isVariableBitRate();
+        metaDto.fullLengthInBytes=metaInfo.getAudioHeader().getAudioDataLength();
         metaDto.songId=songId;
         InputStream mp3Source =new FileInputStream(file);
         Bitstream bitStream = new Bitstream(mp3Source);
@@ -180,7 +177,7 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
         if(maxPackageNumber.get()==0) {
             synchronized (playStoppedLocker) {
                 D.log("waiting for buffererdecoder to stop");
-                playStoppedLocker.wait(500);
+                playStoppedLocker.wait(100);
                 D.log(" buffererdecoder stopped");
 
             }

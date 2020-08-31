@@ -50,6 +50,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
+        android:focusedByDefault="false"
         android:id="@+id/edi"
         android:layout_width="143dp"
         android:layout_height="32dp"

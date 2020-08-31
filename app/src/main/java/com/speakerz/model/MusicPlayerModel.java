@@ -177,12 +177,14 @@ public class MusicPlayerModel{
 
     // Start paused playing
     public void start(){
+        isPlaying=true;
         invokeModelCommunication(MP_EVT.SONG_RESUME, null, null);
     }
 
 
     // pauses media player if exists
     public void pause(){
+        isPlaying=false;
         invokeModelCommunication(MP_EVT.SONG_PAUSE, null, null);
     }
 

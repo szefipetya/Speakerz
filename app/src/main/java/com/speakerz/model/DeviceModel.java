@@ -29,7 +29,9 @@ public class DeviceModel extends BaseModel {
     }
 
     protected void injectNetworkDependencies() {
+        network.getClientSocketWrapper().audioSocket.ExceptionEvent=this.ExceptionEvent;
         network.getClientSocketWrapper().audioSocket.MusicPlayerActionEvent=this.MusicPlayerActionEvent;
+        network.getClientSocketWrapper().controllerSocket.ExceptionEvent=ExceptionEvent;
         network.getClientSocketWrapper().controllerSocket.MusicPlayerActionEvent=MusicPlayerActionEvent;
         network.getClientSocketWrapper().controllerSocket.MetaInfoReceivedEvent=MetaInfoReceivedEvent;
         network.getClientSocketWrapper().controllerSocket.NameChangeEvent = NameChangeEvent;
@@ -101,6 +103,7 @@ public class DeviceModel extends BaseModel {
         super(context, reciever,false,PermissionCheckEvent);
         network=new DeviceNetwork(reciever);
         network.PermissionCheckEvent=this.PermissionCheckEvent;
+        network.ExceptionEvent=this.ExceptionEvent;
         injectNetworkDependencies();
 
         subscribeNetworkEvents();
