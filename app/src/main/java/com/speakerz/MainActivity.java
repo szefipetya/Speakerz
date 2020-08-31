@@ -42,6 +42,8 @@ import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
+import ealvatag.audio.exceptions.CannotReadException;
+
 
 /**REQUIRED means: it needs to be in every Activity.*/
 public class MainActivity extends Activity {
@@ -74,6 +76,8 @@ public class MainActivity extends Activity {
             _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.READ_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED));
             _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
 
+
+
         }
 
         @Override
@@ -81,7 +85,7 @@ public class MainActivity extends Activity {
             _isBounded = false;
         }
     };
-
+Activity self=this;
     private void subscribePermissionEvents(){
 
 

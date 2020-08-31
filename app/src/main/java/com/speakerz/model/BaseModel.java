@@ -1,7 +1,9 @@
 package com.speakerz.model;
 
 import android.content.Context;
+import android.os.Looper;
 import android.telephony.TelephonyManager;
+import android.widget.Toast;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
@@ -19,6 +21,8 @@ import com.speakerz.util.ThreadSafeEvent;
 import java.util.HashMap;
 import java.util.UUID;
 
+import ealvatag.audio.exceptions.CannotReadException;
+
 
 public abstract class BaseModel {
     public abstract void start();
@@ -26,12 +30,11 @@ public abstract class BaseModel {
 
     public String NickName = "placeholder";
     public String deviceID= "";
-    //public ArrayList<String> NickNames;
     public HashMap<String,String> NickNames;
 
     MusicPlayerModel musicPlayerModel;
     protected final Context context;
-
+    public final Event<EventArgs1<Exception>> ExceptionEvent=new Event<>();
     public final Event<EventArgs> SongQueueUpdatedEvent=new Event<>();
     public final ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent=new ThreadSafeEvent<>();
     public final Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
@@ -41,7 +44,7 @@ public abstract class BaseModel {
     public final Event<EventArgs1<Body>> NameChangeEvent=new Event<>();
 
 
-    public BaseModel(Context context, WifiBroadcastReciever reciever, Boolean isHost, Event<PermissionCheckEventArgs> PermissionCheckEvent){
+    public BaseModel(final Context context, WifiBroadcastReciever reciever, Boolean isHost, Event<PermissionCheckEventArgs> PermissionCheckEvent){
         this.context = context;
         this.PermissionCheckEvent=PermissionCheckEvent;
         musicPlayerModel = new MusicPlayerModel(this, isHost);
@@ -49,6 +52,8 @@ public abstract class BaseModel {
         NickName = "placeholder";
         deviceID = UUID.randomUUID().toString();
         NickNames= new HashMap<>();
+
+        NickNames.put(deviceID,NickName);
 
 
         subscribeToNameChange();
@@ -60,7 +65,10 @@ public abstract class BaseModel {
             }
         });
 
+
+
     }
+
 
 
     public abstract BaseNetwork getNetwork();

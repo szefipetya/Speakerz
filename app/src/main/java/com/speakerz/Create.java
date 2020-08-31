@@ -55,6 +55,17 @@ public class Create extends Activity {
         lvSongsList.setAdapter(songListAdapter);
 
         //Basemodel Events
+        model.ExceptionEvent.addListener(new EventListener<EventArgs1<Exception>>() {
+            @Override
+            public void action(EventArgs1<Exception> args) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(selfActivity,"Not supported format",Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
         _service.getModel().SongQueueUpdatedEvent.addListener(new EventListener<EventArgs>() {
             @Override
             public void action(final EventArgs args) {
@@ -239,18 +250,17 @@ public class Create extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create);
 
-        final EditText editName = (EditText) findViewById(R.id.edi);
 
-
-        Button nameChange = (Button) findViewById(R.id.temp);
+        /*Button nameChange = (Button) findViewById(R.id.temp);
         nameChange.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-                NameItem item = new NameItem(editName.getText().toString(),"en");
+                //TODO: change "en" to sender put this into recycleview
+                NameItem item = new NameItem(editName.getText().toString(),"en",_service.getModel().deviceID);
                 PutNameChangeRequestBody body1 = new PutNameChangeRequestBody(null,item);
                 _service.getModel().NameChangeEvent.invoke(new EventArgs1<Body>(null,body1));
             }
 
-        });
+        });*/
 
 
 

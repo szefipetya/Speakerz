@@ -34,9 +34,11 @@ import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
+import java.util.jar.Attributes;
 
 public class Join extends Activity {
     //REQUIRED_BEG MODEL
@@ -101,6 +103,17 @@ public class Join extends Activity {
         final Activity selfActivity = this;
 
         //Basemodel events
+        model.ExceptionEvent.addListener(new EventListener<EventArgs1<Exception>>() {
+            @Override
+            public void action(EventArgs1<Exception> args) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        songListAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        });
         model.SongQueueUpdatedEvent.addListener(new EventListener<EventArgs>() {
             @Override
             public void action(EventArgs args) {
@@ -120,6 +133,7 @@ public class Join extends Activity {
                 };
                 RunnableFuture<Void> task = new FutureTask<>(run, null);
                 selfActivity.runOnUiThread(task);
+
                 try {
                     task.get(); // this will block until Runnable completes
                 } catch (InterruptedException | ExecutionException e) {
@@ -330,6 +344,7 @@ public class Join extends Activity {
                 }
             }
         });
+
 
     }
 
