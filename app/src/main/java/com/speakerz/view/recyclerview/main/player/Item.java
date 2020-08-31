@@ -1,4 +1,4 @@
-package com.speakerz.view.recyclerview;
+package com.speakerz.view.recyclerview.main.player;
 
 public class Item {
     private int mImageResource;

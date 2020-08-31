@@ -1,12 +1,14 @@
-package com.speakerz.view.recyclerview;
+package com.speakerz.view.recyclerview.main.player;
 
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;;
 
@@ -14,9 +16,9 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.speakerz.R;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
-import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
+import com.speakerz.view.recyclerview.songadd.library.SongAddLibraryFragment;
 
 import java.util.ArrayList;
 
@@ -108,6 +110,11 @@ public class RecyclerView_FAB  {
 
                     isFabOpen = true;
                 }
+
+                //Darker background + Toolbar -> Ezt kell visszaállítani az eredeti színekkel a listában lévő plusz gomb lenyomása után
+                ConstraintLayout mConstraintLayout = activity.findViewById(R.id.layout_darker);
+                mConstraintLayout.setBackgroundResource(R.color.darkerBackground);
+                activity.getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.rgb(12,26,42)));
             }
         });
 
@@ -116,15 +123,23 @@ public class RecyclerView_FAB  {
         mLibraryFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                int position = model.getSongQueue().size();
+                //int position = model.getSongQueue().size();
 
-                model.addSong(model.getAudioList().get(position));
+                //model.addSong(model.getAudioList().get(position));
                 isFabOpen = false;
 
                 mLibraryFab.setVisibility(View.INVISIBLE);
                 mYoutubeFab.setVisibility(View.INVISIBLE);
                 mLibraryText.setVisibility(View.INVISIBLE);
                 mYoutubeText.setVisibility(View.INVISIBLE);
+
+                //Song add from library fragment open
+                activity.getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container_song_import, new SongAddLibraryFragment())
+                        .addToBackStack(null)
+                        .commit();
+
             }
         });
 
