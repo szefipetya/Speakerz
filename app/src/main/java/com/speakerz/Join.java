@@ -33,6 +33,8 @@ import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
+import com.speakerz.view.PlayerRecyclerActivity;
+import com.speakerz.view.recyclerview.RecyclerView_FAB;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -311,7 +313,7 @@ public class Join extends Activity {
         Button buttonMusicPlayer = (Button) findViewById(R.id.Musicplayer);
         buttonMusicPlayer.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                Intent Act2 = new Intent(getApplicationContext(), MusicPlayer.class);
+                Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);
                 // Act2.putExtra("Hello", "Hello World");
                 startActivity(Act2);
 

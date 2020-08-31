@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.widget.Toast;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
@@ -61,9 +62,7 @@ public class MusicPlayerModel{
                     if(isHost){
                         song.setId(currentSongId++);
                     }
-                    else {
-                        songQueue.add(song);
-                    }
+                    songQueue.add(song);
 
                     D.log("recieved a song.");
                     // kliens kapott egy zenét. be kéne tenni a listába.
@@ -144,8 +143,12 @@ public class MusicPlayerModel{
         if (isHost){
             song.setId(currentSongId++);
             songQueue.add(song);
+            invokeModelCommunication(MP_EVT.SEND_SONG,song,null);
+        }else{
+            invokeModelCommunication(MP_EVT.ADD_SONG_CLIENT,song,null);
         }
-        invokeModelCommunication(MP_EVT.SEND_SONG,song,null);
+        D.log("addSong");
+
         songAddedEvent.invoke(new EventArgs2<>(this, song, songQueue.size()));
     }
 
@@ -185,7 +188,11 @@ public class MusicPlayerModel{
     // starting song by Uri
     public void startONE(Context context, Uri uri,Integer songId){
         D.log("---START FROM UI");
-        invokeModelCommunication(MP_EVT.SONG_CHANGED,new SongChangedInfo(new File(uri.getPath()),songId),null);
+        if(uri.getPath()!=null) {
+            invokeModelCommunication(MP_EVT.SONG_CHANGED, new SongChangedInfo(new File(uri.getPath()), songId), null);
+        }else{
+            Toast.makeText(context,"Not yet implemented",Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void start(int songIndex){

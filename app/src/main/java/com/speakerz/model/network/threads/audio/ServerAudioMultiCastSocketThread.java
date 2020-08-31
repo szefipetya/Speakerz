@@ -201,11 +201,12 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                                         e.printStackTrace();
                                     } catch (CannotReadException e) {
                                         decoder.isPlaying.set(false);
-
-
                                         isSongInPlay.set(false);
 
                                         D.log("playerDecoder also Can not read file");
+                                    } catch (Exception e){
+                                        decoder.isPlaying.set(false);
+                                        isSongInPlay.set(false);
                                     }
                                 }
                             });
@@ -225,6 +226,11 @@ public class ServerAudioMultiCastSocketThread extends Thread {
                                         }
                                     } catch (IOException e) {
                                         e.printStackTrace();
+                                    }catch (Exception e){
+                                        isSongInPlay.set(false);
+                                        decoderBufferer.eosReceived.set(true);
+                                        e.printStackTrace();
+                                        ExceptionEvent.invoke(new EventArgs1<>(self,e));
                                     }
                                 }
                             });

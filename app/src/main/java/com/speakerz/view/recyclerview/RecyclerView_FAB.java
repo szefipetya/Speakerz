@@ -45,31 +45,61 @@ public class RecyclerView_FAB  {
 
     final EventListener<EventArgs2<Song, Integer>> songAddedListener = new EventListener<EventArgs2<Song, Integer>>() {
         @Override
-        public void action(EventArgs2<Song, Integer> args) {
-            if(mAdapter == null) return;
-            mAdapter.notifyItemInserted(args.arg2());
+        public void action(final EventArgs2<Song, Integer> args) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if(mAdapter == null) return;
+                    mAdapter.notifyItemInserted(args.arg2());
+                }
+            });
+
         }
     };    final EventListener<EventArgs2<Song, Integer>> songRemovedListener = new EventListener<EventArgs2<Song, Integer>>() {
         @Override
-        public void action(EventArgs2<Song, Integer> args) {
-            if(mAdapter == null) return;
-            mAdapter.notifyItemRemoved(args.arg2());
+        public void action(final EventArgs2<Song, Integer> args) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if(mAdapter == null) return;
+                    mAdapter.notifyItemRemoved(args.arg2());
+                }
+            });
+
         }
     };
 
-    public void insertItem(int position, String from, int pic) {
-        itemList.add(new Item(pic, from + ": New Item at position: " + (position), "Artist"));
-        mAdapter.notifyItemInserted(position);
+    public void insertItem(final int position,final String from,final int pic) {
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                itemList.add(new Item(pic, from + ": New Item at position: " + (position), "Artist"));
+                mAdapter.notifyItemInserted(position);
+            }
+        });
+
     }
 
-    public void removeItem(int position) {
-        itemList.remove(position);
-        mAdapter.notifyItemRemoved(position);
+    public void removeItem(final int position) {
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                itemList.remove(position);
+                mAdapter.notifyItemRemoved(position);
+            }
+        });
+
     }
 
-    public void changeItem(int position, String text) {
-        itemList.get(position).changeText1(text);
-        mAdapter.notifyItemChanged(position);
+    public void changeItem(final int position,final String text) {
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                itemList.get(position).changeText1(text);
+                mAdapter.notifyItemChanged(position);
+            }
+        });
+
     }
 
     public void buildRecyclerView() {
