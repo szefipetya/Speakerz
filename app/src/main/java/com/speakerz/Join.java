@@ -109,7 +109,7 @@ public class Join extends Activity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(selfActivity,"Not supported format",Toast.LENGTH_SHORT).show();
+                        songListAdapter.notifyDataSetChanged();
                     }
                 });
             }

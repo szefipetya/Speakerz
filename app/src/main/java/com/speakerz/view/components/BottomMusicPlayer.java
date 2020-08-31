@@ -99,6 +99,7 @@ public class BottomMusicPlayer {
             @Override
             public void onClick(View view) {
                 mpModel.togglePause();
+                setPlayIcon(mpModel.isPlaying());
             }
         });
     }
