@@ -79,21 +79,19 @@ public class MusicPlayerModel{
                             Integer songId=(Integer)body.getContent();
                             D.log("songId : "+songId);
                             Song _song = null;
+                            int cp = 0;
                             for (Song s: songQueue) {
                                 if(s.getId() == songId){
                                     _song = s;
                                     break;
                                 }
+                                cp++;
                             }
                             isPlaying = true;
                             playbackStateChanged.invoke(new EventArgs1<>(this, true));
                             if(_song != null) {
-
-                                D.log("invoke song change");
+                                currentPlayingIndex = cp;
                                 songChangedEvent.invoke(new EventArgs1<Song>(self, _song));
-                            }
-                            else{
-                                D.log("Song not found");
                             }
                             break;
                         case SONG_MAX_TIME_SECONDS:
@@ -175,13 +173,16 @@ public class MusicPlayerModel{
     }
 
     public void startNext(){
-        if (currentPlayingIndex>= songQueue.size()-1){
-            currentPlayingIndex =0;
-            start(currentPlayingIndex);
-        }
-        else{
+        if (currentPlayingIndex>= songQueue.size()-1)
+            start(0);
+        else
             start(currentPlayingIndex + 1);
-        }
+    }
+    public void startPrev(){
+        if (currentPlayingIndex == 0)
+            start(songQueue.size()-1);
+        else
+            start(currentPlayingIndex - 1);
     }
 
 
