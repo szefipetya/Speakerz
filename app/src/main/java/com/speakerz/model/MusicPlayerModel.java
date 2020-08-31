@@ -47,6 +47,7 @@ public class MusicPlayerModel{
     public final Event<EventArgs2<Integer, Integer>> playbackDurationChanged = new Event<>();
     public final Event<EventArgs2<Song, Integer>> songAddedEvent = new Event<>();
     public final Event<EventArgs2<Song, Integer>> songRemovedEvent = new Event<>();
+    public final Event<EventArgs1<Song>> songChangedEvent = new Event<>();
 
     // Event handlers
     EventListener<EventArgs1<Body>> musicPlayerActionListener = new EventListener<EventArgs1<Body>>() {
@@ -55,10 +56,19 @@ public class MusicPlayerModel{
             Body body = args.arg1();
             switch (args.arg1().SUBTYPE()){
                 case MP_PUT_SONG:
-                    D.log("recieved a song.");
                     Song song=((PutSongRequestBody)body).getContent();
+
+                    if(isHost){
+                        song.setId(currentSongId++);
+                    }
+                    else {
+                        songQueue.add(song);
+                    }
+
+                    D.log("recieved a song.");
                     // kliens kapott egy zenét. be kéne tenni a listába.
                     invokeModelCommunication(MP_EVT.SEND_SONG,song,body);
+                    songAddedEvent.invoke(new EventArgs2<>(this, song, songQueue.size()));
                     break;
                 case MP_GET_LIST:
                     if(isHost) invokeModelCommunication(MP_EVT.SEND_LIST, songQueue, body);
@@ -69,8 +79,23 @@ public class MusicPlayerModel{
                         case SONG_CHANGED:
                             Integer songId=(Integer)body.getContent();
                             D.log("songId : "+songId);
+                            Song _song = null;
+                            for (Song s: songQueue) {
+                                if(s.getId() == songId){
+                                    _song = s;
+                                    break;
+                                }
+                            }
                             isPlaying = true;
                             playbackStateChanged.invoke(new EventArgs1<>(this, true));
+                            if(_song != null) {
+
+                                D.log("invoke song change");
+                                songChangedEvent.invoke(new EventArgs1<Song>(self, _song));
+                            }
+                            else{
+                                D.log("Song not found");
+                            }
                             break;
                         case SONG_MAX_TIME_SECONDS:
                             Long timeInSeconds = (Long)body.getContent();
@@ -116,12 +141,11 @@ public class MusicPlayerModel{
 
     // Song managing functions
     public void addSong(Song song){
-        song.setId(currentSongId++);
-        songQueue.add(song);
-
-        if (isHost) invokeModelCommunication(MP_EVT.SEND_SONG,song,null);
-        else invokeModelCommunication(MP_EVT.SEND_SONG,song,null);
-
+        if (isHost){
+            song.setId(currentSongId++);
+            songQueue.add(song);
+        }
+        invokeModelCommunication(MP_EVT.SEND_SONG,song,null);
         songAddedEvent.invoke(new EventArgs2<>(this, song, songQueue.size()));
     }
 
