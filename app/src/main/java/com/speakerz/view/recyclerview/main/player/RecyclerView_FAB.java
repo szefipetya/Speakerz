@@ -112,9 +112,17 @@ public class RecyclerView_FAB  {
                 }
 
                 //Darker background + Toolbar -> Ezt kell visszaállítani az eredeti színekkel a listában lévő plusz gomb lenyomása után
+                //Sötétítés
                 ConstraintLayout mConstraintLayout = activity.findViewById(R.id.layout_darker);
                 mConstraintLayout.setBackgroundResource(R.color.darkerBackground);
                 activity.getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.rgb(12,26,42)));
+
+                //Visszavilágosítás
+                /*
+                * ConstraintLayout mConstraintLayout = activity.findViewById(R.id.layout_darker);
+                mConstraintLayout.setBackgroundResource(R.color.transparent);
+                activity.getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.rgb(31, 64, 104)));
+                * */
             }
         });
 
