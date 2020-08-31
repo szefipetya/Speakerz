@@ -53,6 +53,8 @@ public abstract class BaseModel {
         deviceID = UUID.randomUUID().toString();
         NickNames= new HashMap<>();
 
+        NickNames.put(deviceID,NickName);
+
 
         subscribeToNameChange();
 
