@@ -14,6 +14,7 @@ import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs2;
 import com.speakerz.util.ThreadSafeEvent;
 
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     //dependency injection
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent =null;
     public Event<EventArgs1<Body>> MetaInfoEvent = null;
-    public Event<EventArgs1<Body>> NameChangeEvent=null;
+    public Event<EventArgs2<Body,TYPE>> NameChangeEvent=null;
 
     volatile boolean externalShutdown=false;
     @Override
@@ -180,8 +181,14 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
         }
 
         if(chObject.TYPE== TYPE.NAME){
-            NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+            NameChangeEvent.invoke(new EventArgs2<Body,TYPE>(this,chObject.body,TYPE.NAME));
             D.log(" server: NameChange Happened: ");
+
+        }
+
+        if(chObject.TYPE== TYPE.DELETENAME) {
+            NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(this, chObject.body, TYPE.DELETENAME));
+            D.log(" server: NameChange DELETE Happened: ");
 
         }
 
@@ -194,7 +201,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                 struct.objectInputStream.close();
                 struct.socket.close();
             }
-            NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+            NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(this,chObject.body,chObject.TYPE));
             D.log(" server: NameChange Happened: ");
 
         }
@@ -211,7 +218,12 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
         }
 
         if(chObject.TYPE== TYPE.NAME){
-            NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+            NameChangeEvent.invoke(new EventArgs2<Body,TYPE>(this,chObject.body,chObject.TYPE));
+            D.log(" server: NameChange Happened: ");
+
+        }
+        if(chObject.TYPE== TYPE.DELETENAME){
+            NameChangeEvent.invoke(new EventArgs2<Body,TYPE>(this,chObject.body,chObject.TYPE));
             D.log(" server: NameChange Happened: ");
 
         }

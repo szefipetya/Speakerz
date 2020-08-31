@@ -6,14 +6,20 @@ import android.net.wifi.p2p.WifiP2pManager;
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.DeviceNetwork;
+import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
+import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
+
+import java.io.IOException;
 import java.lang.reflect.Method;
 
 public class DeviceModel extends BaseModel {
@@ -26,6 +32,7 @@ public class DeviceModel extends BaseModel {
     public void start() {
         network.start();
         network.getReciever().clearConnections();
+        //NameChangeEvent.invoke();
     }
 
     protected void injectNetworkDependencies() {
@@ -41,14 +48,30 @@ public class DeviceModel extends BaseModel {
     private void subscribeNetworkEvents() {
 
 
-        NameChangeEvent.addListener(new EventListener<EventArgs1<Body>>() {
+        NameChangeEvent.addListener(new EventListener<EventArgs2<Body,TYPE>>() {
 
             @Override
-            public void action(EventArgs1<Body> args) {
-                D.log("name:"+NickName);
-                D.log("NAME CHANGE HAPPEND.");
-                NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
-                D.log("name:"+NickNames.get(((PutNameChangeRequestBody)args.arg1()).getContent().id));
+            public void action(EventArgs2<Body,TYPE> args) {
+                if(args.arg2() == TYPE.DELETENAME){
+                    D.log("NAME DELETE HAPPEND.");
+                    try {
+                        NameItem delname = (NameItem) args.arg1().getContent();
+                        NickNames.remove(delname.id);
+                        network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.DELETENAME));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                if(args.arg2() == TYPE.NAME){
+                    D.log("NAME CHANGE HAPPEND.");
+                    NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
+                    D.log("name:"+NickNames.get(((PutNameChangeRequestBody)args.arg1()).getContent().id));
+                    try {
+                        network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.NAME));
+                        D.log("NameChange sent");
+                    } catch (Exception e) {e.printStackTrace(); }
+
+                }
 
             }
         });
@@ -61,7 +84,13 @@ public class DeviceModel extends BaseModel {
     @Override
     public void stop() {
         //network.getReciever().getWifiP2pManager().cancelConnect( network.getReciever().getChannel(),null);
-
+        //TODO: who is teh sender? and where should i put this here or some where else?
+        NameItem deleteName = new NameItem("delete","sender",deviceID);
+        try {
+            network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new PutNameChangeRequestBody(deleteName),TYPE.DELETENAME));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         if(network.getClientSocketWrapper().controllerSocket!=null) {
             network.getClientSocketWrapper().controllerSocket.shutdown();
             network.getClientSocketWrapper().audioSocket.shutdown();

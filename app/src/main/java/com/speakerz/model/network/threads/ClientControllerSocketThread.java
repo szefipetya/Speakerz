@@ -12,6 +12,7 @@ import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs2;
 import com.speakerz.util.ThreadSafeEvent;
 
 import java.io.IOException;
@@ -29,7 +30,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     //injection
    public Event<EventArgs1<Body>> MetaInfoReceivedEvent;
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
-    public Event<EventArgs1<Body>> NameChangeEvent;
+    public Event<EventArgs2<Body,TYPE>> NameChangeEvent;
     public Event<EventArgs1<Body>> DisconectedNameErase;
     volatile boolean externalShutdown=false;
     public ClientControllerSocketThread(){
@@ -95,8 +96,14 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,chObject.body));
         }
         if(chObject.TYPE== TYPE.NAME){
-            NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+            NameChangeEvent.invoke(new EventArgs2<Body,TYPE>(this,chObject.body,TYPE.NAME));
             D.log(" server: NameChange Happened: ");
+
+        }
+
+        if(chObject.TYPE== TYPE.DELETENAME) {
+            NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(this, chObject.body, TYPE.DELETENAME));
+            D.log(" server: NameChange DELETE Happened: ");
 
         }
     }

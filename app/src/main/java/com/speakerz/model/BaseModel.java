@@ -9,15 +9,19 @@ import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.BaseNetwork;
 import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 import com.speakerz.util.ThreadSafeEvent;
+
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -41,7 +45,7 @@ public abstract class BaseModel {
     public final Event<EventArgs1<String>> SongDownloadedEvent=new Event<>();
     public final Event<PermissionCheckEventArgs> PermissionCheckEvent;
     public final Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
-    public final Event<EventArgs1<Body>> NameChangeEvent=new Event<>();
+    public final Event<EventArgs2<Body, TYPE>> NameChangeEvent=new Event<>();
 
 
     public BaseModel(final Context context, WifiBroadcastReciever reciever, Boolean isHost, Event<PermissionCheckEventArgs> PermissionCheckEvent){

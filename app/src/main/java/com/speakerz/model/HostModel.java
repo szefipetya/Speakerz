@@ -20,6 +20,7 @@ import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
@@ -47,21 +48,33 @@ public class HostModel extends BaseModel {
     }
 
     private void subscribeNetWorkEvents() {
-        NameChangeEvent.addListener(new EventListener<EventArgs1<Body>>() {
-
+        NameChangeEvent.addListener(new EventListener<EventArgs2<Body,TYPE>>(){
             @Override
-            public void action(EventArgs1<Body> args) {
-                D.log("NAME CHANGE HAPPEND.");
-                NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
-                D.log("name:"+NickNames.get(((PutNameChangeRequestBody)args.arg1()).getContent().id));
-                try {
-                    network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.NAME));
-                    //SongQueueUpdatedEvent.invoke(null);
-                    D.log("NameChange sent");
-                } catch (IOException e) { }
+            public void action(EventArgs2<Body,TYPE> args) {
+                if(args.arg2() == TYPE.DELETENAME){
+                    D.log("NAME DELETE HAPPEND.");
+                    try {
+                        NameItem delname = (NameItem) args.arg1().getContent();
+                        NickNames.remove(delname.id);
+                        network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.DELETENAME));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if(args.arg2() == TYPE.NAME){
+                    D.log("NAME CHANGE HAPPEND.");
+                    NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
+                    D.log("name:"+NickNames.get(((PutNameChangeRequestBody)args.arg1()).getContent().id));
+                    try {
+                        network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.NAME));
+                        D.log("NameChange sent");
+                    } catch (IOException e) { }
+
+                }
 
             }
-        });
+
+            });
     }
 
     private void subscribeMusicPlayerModelEvents() {
