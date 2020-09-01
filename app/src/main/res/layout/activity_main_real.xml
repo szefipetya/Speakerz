@@ -199,5 +199,9 @@
         android:layout_marginEnd="25dp"
         android:layout_marginTop="70dp"
         android:layout_marginBottom="50dp"/>
+    <FrameLayout
+        android:id="@+id/fragment_container_devices"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

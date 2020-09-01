@@ -16,11 +16,11 @@ import java.util.ArrayList;
 
 public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHolderLibrary> {
     Context contextLibrary;
-    ArrayList<libraryItem> listLibrary;
+    ArrayList<libraryItem> listDevice;
 
     public AdapterLibrary(Context mContext, ArrayList<libraryItem> mList){
         contextLibrary = mContext;
-        listLibrary = mList;
+        listDevice = mList;
     }
 
     @NonNull
@@ -32,7 +32,7 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolderLibrary holder, int position) {
-        libraryItem currentItem = listLibrary.get(position);
+        libraryItem currentItem = listDevice.get(position);
 
         String imageURL = currentItem.getCoverImagePath();
         String songName = currentItem.getSongName();
@@ -48,7 +48,7 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
 
     @Override
     public int getItemCount() {
-        return listLibrary.size();
+        return listDevice.size();
     }
 
     public class ViewHolderLibrary extends RecyclerView.ViewHolder{

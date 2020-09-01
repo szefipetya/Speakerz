@@ -147,7 +147,6 @@ public class RecyclerView_FAB  {
                         .replace(R.id.fragment_container_song_import, new SongAddLibraryFragment())
                         .addToBackStack(null)
                         .commit();
-
             }
         });
 
