@@ -299,14 +299,14 @@ public class Create extends Activity {
 
         });
 
-        Button startSession = (Button) findViewById(R.id.btn_start_session);
+       /* Button startSession = (Button) findViewById(R.id.btn_start_session);
         startSession.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 ((HostModel) (_service.getModel())).startAdvertising();
 
             }
 
-        });
+        });*/
 
     }
     //ITS A FIXME ATTEMT TO FIXME1

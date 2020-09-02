@@ -40,9 +40,21 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             D.log("client running");
             externalShutdown=false;
             struct=new SocketStruct();
-            struct.socket=new Socket();
-            struct.socket.setReuseAddress(true);
-            struct.socket.connect(new InetSocketAddress(hostAddress,8040));
+
+            while(true) {
+                try {
+                    Thread.sleep(2000);
+                    struct.socket=new Socket();
+                    struct.socket.setReuseAddress(true);
+                    struct.socket.connect(new InetSocketAddress(hostAddress, 8040), 20000);
+                    break;
+                }catch (IOException e){
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
 
             D.log("connection succesful to "+ hostAddress);
             //PrintWriter pr=new PrintWriter(socket.getOutputStream());

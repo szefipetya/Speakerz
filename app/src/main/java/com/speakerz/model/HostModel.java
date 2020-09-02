@@ -25,6 +25,7 @@ import com.speakerz.util.EventListener;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 public class HostModel extends BaseModel {
@@ -44,6 +45,7 @@ public class HostModel extends BaseModel {
         subscribeNetWorkEvents();
         network.getServerSocketWrapper().audioSocket.setContext(context);
         NickNames.put("Host",this.NickName);
+        network.setNickName(NickName);
     }
 
     private void subscribeNetWorkEvents() {
@@ -67,6 +69,23 @@ public class HostModel extends BaseModel {
         });
     }
 
+
+
+    private void deletePersistentGroups(){
+        try {
+            Method[] methods = WifiP2pManager.class.getMethods();
+            for (int i = 0; i < methods.length; i++) {
+                if (methods[i].getName().equals("deletePersistentGroup")) {
+                    // Delete any persistent group
+                    for (int netid = 0; netid < 32; netid++) {
+                        methods[i].invoke(network.getReciever().getWifiP2pManager(), network.getReciever().getChannel(), netid, null);
+                    }
+                }
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
     private void subscribeMusicPlayerModelEvents() {
 
 
@@ -111,7 +130,7 @@ public class HostModel extends BaseModel {
         network.start();
         network.getReciever().clearConnections();
         startAdvertising();
-
+        deletePersistentGroups();
 
         //D.log("Model started");
     }
@@ -178,7 +197,7 @@ public class HostModel extends BaseModel {
         network.ListChanged=null;
         network.TextChanged.removeAllListeners();
         network.TextChanged=null;
-
+deletePersistentGroups();
 
     }
 

@@ -57,6 +57,24 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
     public Event<EventArgs1<Exception>> ExceptionEvent;
     private Integer currentSongId;
+
+    ///
+    private InetAddress address;
+
+    private ServerSocket receiverServerSocket;
+    private ServerSocket senderServerSocket;
+    private ServerSocket rdataServerSocket;
+
+    private Context context;
+    private boolean externalShutdown=false;
+
+
+    public ServerAudioMultiCastSocketThread() {
+        init();
+        mainLoop();
+    }
+
+
     public void playAudioStreamFromLocalStorage(final SongChangedInfo info){
 
         synchronized(locker) {
@@ -120,7 +138,108 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
         subscribeDecoderEvents();
     }
+private void mainLoop(){
+    Thread t = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            try {
 
+                while (/*!receiverServerSocket.isClosed()*/!externalShutdown) {
+                    synchronized(locker) {
+                        D.log("waiting for audio pick.");
+                        while (!swapSong.get()) {
+                            locker.wait();
+                            D.log("waiting ui notify clicked");
+                        }
+                        swapSong.set(false);
+                    }
+
+
+
+                    //megvárjuk, ameddig az összeskliensnek elküld egy 0 byte-os csomagot, ezzel jelezve a stream végét.
+                    if(isSongInPlay.get()) {
+                        decoderBufferer.stop();
+                        decoder.stop();
+                        for (ClientSocketStructWrapper cli : clients) {
+                            cli.eofSongReached = true;
+                            if(cli.isBuffering) {
+                                synchronized (cli.eofSongReachedLocker) {
+                                    cli.eofSongReachedLocker.notify();
+                                }
+                            }else{
+                                try {
+                                    sendObjectOrDelete(cli,cli.dataSocket,new AudioPacket(0, new byte[0]));
+                                }catch(IOException ex){
+                                    closeClient(cli);
+                                    ex.printStackTrace();
+                                    continue;
+                                }
+                            }
+                            synchronized (cli.eofReceivedFromClientLocker) {
+                                cli.eofReceivedFromClientLocker.wait(5000);
+                            }
+                        }
+
+
+                    }
+                    D.log("starting threads");
+                    Thread t=new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                decoder.startPlay(currentFile);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            } catch (CannotReadException e) {
+                                decoder.isPlaying.set(false);
+                                isSongInPlay.set(false);
+
+                                D.log("playerDecoder also Can not read file");
+                            } catch (Exception e){
+                                decoder.isPlaying.set(false);
+                                isSongInPlay.set(false);
+                            }
+                        }
+                    });
+
+                    t.start();
+                    Thread t2=new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                try {
+                                    decoderBufferer.startPlay(currentFile,currentSongId);
+                                } catch (CannotReadException e) {
+                                    isSongInPlay.set(false);
+                                    decoderBufferer.eosReceived.set(true);
+                                    ExceptionEvent.invoke(new EventArgs1<Exception>(self,e));
+                                    e.printStackTrace();
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }catch (Exception e){
+                                isSongInPlay.set(false);
+                                decoderBufferer.eosReceived.set(true);
+                                e.printStackTrace();
+                                ExceptionEvent.invoke(new EventArgs1<>(self,e));
+                            }
+                        }
+                    });
+
+                    t2.start();
+
+                    isSongInPlay.set(true);
+                }
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            //  yt.play("TW9d8vYrVFQ");
+        }
+    });
+
+    t.start();
+}
 
     AtomicBoolean swapSong=new AtomicBoolean(false);
     AtomicBoolean isSongInPlay=new AtomicBoolean(false);
@@ -143,111 +262,44 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             e.printStackTrace();
         }
     }
-    public void run() {
-        // playWav();
-       // currentMediaFile = getFileByResId(R.raw.tobu_wav, "target.wav");
-        init();
+    private void initSockets(){
+        try {
 
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-
-                        while (!receiverServerSocket.isClosed()) {
-                            synchronized(locker) {
-                            D.log("waiting for audio pick.");
-                            while (!swapSong.get()) {
-                                locker.wait();
-                                D.log("waiting ui notify clicked");
-                            }
-                                swapSong.set(false);
-                        }
-
-                        //megvárjuk, ameddig az összeskliensnek elküld egy 0 byte-os csomagot, ezzel jelezve a stream végét.
-                        if(isSongInPlay.get()) {
-                            for (ClientSocketStructWrapper cli : clients) {
-                                cli.eofSongReached = true;
-                                if(cli.isBuffering) {
-                                    synchronized (cli.eofSongReachedLocker) {
-                                        cli.eofSongReachedLocker.notify();
-                                    }
-                                }else{
-                                    try {
-                                        if (!cli.dataSocket.socket.isClosed()) {
-                                            cli.dataSocket.objectOutputStream.writeObject(new AudioPacket(0, new byte[0]));
-                                            cli.dataSocket.objectOutputStream.flush();
-                                        }
-                                    }catch(IOException ex){
-                                        closeClient(cli);
-                                        ex.printStackTrace();
-                                        continue;
-                                    }
-                                }
-                                synchronized (cli.eofReceivedFromClientLocker) {
-                                    cli.eofReceivedFromClientLocker.wait(200);
-                                }
-                            }
-                            decoderBufferer.stop();
-                            decoder.stop();
-
-                        }
-                            D.log("starting threads");
-                            Thread t=new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        decoder.startPlay(currentFile);
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    } catch (CannotReadException e) {
-                                        decoder.isPlaying.set(false);
-                                        isSongInPlay.set(false);
-
-                                        D.log("playerDecoder also Can not read file");
-                                    } catch (Exception e){
-                                        decoder.isPlaying.set(false);
-                                        isSongInPlay.set(false);
-                                    }
-                                }
-                            });
-
-                            t.start();
-                            Thread t2=new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        try {
-                                            decoderBufferer.startPlay(currentFile,currentSongId);
-                                        } catch (CannotReadException e) {
-                                            isSongInPlay.set(false);
-                                            decoderBufferer.eosReceived.set(true);
-                                            ExceptionEvent.invoke(new EventArgs1<Exception>(self,e));
-                                            e.printStackTrace();
-                                        }
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }catch (Exception e){
-                                        isSongInPlay.set(false);
-                                        decoderBufferer.eosReceived.set(true);
-                                        e.printStackTrace();
-                                        ExceptionEvent.invoke(new EventArgs1<>(self,e));
-                                    }
-                                }
-                            });
-
-                            t2.start();
-
-                            isSongInPlay.set(true);
-                        }
-
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                //  yt.play("TW9d8vYrVFQ");
+            if(senderServerSocket!=null){
+                senderServerSocket.close();
             }
-        });
+            if(receiverServerSocket!=null){
+                receiverServerSocket.close();
+            }
+            if(rdataServerSocket!=null){
+                rdataServerSocket.close();
+            }
+        } catch (IOException e) {
+        e.printStackTrace();
+    }
+        try {
 
-        t.start();
+            senderServerSocket = new ServerSocket();
+            senderServerSocket.setReuseAddress(true);
+            senderServerSocket.bind(new InetSocketAddress(9050));
+
+            receiverServerSocket = new ServerSocket();
+            receiverServerSocket.setReuseAddress(true);
+            receiverServerSocket.bind(new InetSocketAddress(9060));
+
+            rdataServerSocket = new ServerSocket();
+            rdataServerSocket.setReuseAddress(true);
+            rdataServerSocket.bind(new InetSocketAddress(9070));
+
+
+        } catch (SocketException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void run() {
+        initSockets();
         acceptClients();
     }
 ServerAudioMultiCastSocketThread self=this;
@@ -269,40 +321,6 @@ ServerAudioMultiCastSocketThread self=this;
 
 
 
-    ///
-    private InetAddress address;
-
-    private ServerSocket receiverServerSocket;
-    private ServerSocket senderServerSocket;
-    private ServerSocket rdataServerSocket;
-
-    private Context context;
-
-
-    public ServerAudioMultiCastSocketThread() {
-
-        try {
-
-            senderServerSocket = new ServerSocket();
-            senderServerSocket.setReuseAddress(true);
-            senderServerSocket.bind(new InetSocketAddress(address,9050));
-
-            receiverServerSocket = new ServerSocket();
-            receiverServerSocket.setReuseAddress(true);
-            receiverServerSocket.bind(new InetSocketAddress(address,9060));
-
-            rdataServerSocket = new ServerSocket();
-            rdataServerSocket.setReuseAddress(true);
-            rdataServerSocket.bind(new InetSocketAddress(address,9070));
-
-
-        } catch (SocketException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
 
 
     int currentClientPort = 8100;
@@ -371,7 +389,9 @@ ServerAudioMultiCastSocketThread self=this;
     }
     public void acceptClients() {
         while (!receiverServerSocket.isClosed()) {
-            final ClientSocketStructWrapper newClient=new ClientSocketStructWrapper();
+          //  initSockets();
+            final ClientSocketStructWrapper newClient;
+            newClient=new ClientSocketStructWrapper();
             try {
 
                 D.log("accepting client 1");
@@ -403,31 +423,37 @@ ServerAudioMultiCastSocketThread self=this;
                 D.log("input k");
                 //OUTPUTSTREAM FIRST
                 clients.add(newClient);
+                if(recentAudioMetaDto!=null) {
 
-                D.log("client added!!!!");
+                    Thread t=new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            sendAudioMeta(newClient);
+                            sendAudioFromBuffer(newClient);
+                        }
+                    });
+                    t.start();
+                }
+
+                Thread t=new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        listen(newClient);
+                    }
+                });
+                t.start();
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                D.log("client added, NO ERRORS");
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-                D.log("client added");
-            if(recentAudioMetaDto!=null) {
-                sendAudioMeta(newClient);
-                Thread t=new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        sendAudioFromBuffer(newClient);
-                    }
-                });
-                t.start();
-            }
 
-            Thread t=new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    listen(newClient);
-                }
-            });
-            t.start();
 
         }
 
@@ -445,7 +471,16 @@ ServerAudioMultiCastSocketThread self=this;
             send(wrapper.senderInfoSocket,obj);
         }
     }
+    void sendObjectOrDelete(ClientSocketStructWrapper wrapper,SocketStruct struct,Object obj) throws IOException {
+        if(struct.socket!=null&&!struct.socket.isClosed()){
 
+                struct.objectOutputStream.writeObject(obj);
+                struct.objectOutputStream.flush();
+
+        }else{
+            clients.remove(wrapper);
+        }
+    }
 
 
     void sendAudioFromBuffer(ClientSocketStructWrapper struct) {
@@ -491,8 +526,7 @@ ServerAudioMultiCastSocketThread self=this;
                     try {
                         actualReadedPackNumber = packet.packageNumber;
                         if(actualReadedPackNumber>=liveplayPackageNumber) {
-                            struct.dataSocket.objectOutputStream.writeObject(packet);
-                            struct.dataSocket.objectOutputStream.flush();
+                            sendObjectOrDelete(struct,struct.dataSocket,packet);
                            // D.log("packet" + packet.packageNumber + " sent");
                         }
                     } catch (IOException e) {
@@ -554,6 +588,7 @@ ServerAudioMultiCastSocketThread self=this;
     }
 
     public void shutdown() {
+        externalShutdown=true;
         try {
             decoder.stop();
             decoderBufferer.stop();

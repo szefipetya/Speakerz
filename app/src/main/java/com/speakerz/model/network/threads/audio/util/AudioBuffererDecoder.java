@@ -146,8 +146,9 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
 
                 AudioPacket pack=new AudioPacket(bytes.length,bytes);
                 pack.packageNumber=actualBufferedPackageNumber.get();
-                bufferQueue.add(pack);
+
                 synchronized (bufferQueue){
+                    bufferQueue.offer(pack);
                     bufferQueue.notify();
                 }
 

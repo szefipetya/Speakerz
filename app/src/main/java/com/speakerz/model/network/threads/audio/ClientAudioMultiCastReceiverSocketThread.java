@@ -181,19 +181,20 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
                            }
                        }
                     }
-                    Thread t=new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                at = createAudioTrack(body.getContent());
-                            } catch (IOException e) {
+                    at = createAudioTrack(body.getContent());
+                    playStarted=false;
+                    i=0;
+                    if(!handlerRunning){
+                        Thread t=new Thread(new Runnable() {
+                            @Override
+                            public void run() {
 
-                                e.printStackTrace();
+                                handleAudioPackets();
+
                             }
-                            handleAudioPackets(at);
-                        }
-                    });
-                    t.start();
+                        });
+                        t.start();
+                    }
                     MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_CHANGED,body.getContent().songId)));
                     MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_MAX_TIME_SECONDS,body.getContent().maxTimeInSeconds)));
 
@@ -242,6 +243,11 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
 
       //send a packet to the host to know about this client
             try {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 wrapper.receiverInfoSocket.socket=new Socket();
                 wrapper.receiverInfoSocket.socket.setReuseAddress(true);
                 wrapper.senderInfoSocket.socket=new Socket();
@@ -342,27 +348,31 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
     }
 
     Queue<AudioPacket> bufferQueue = new ConcurrentLinkedQueue<>();
-    int minBufferSizeToPlay=350;
-    private void handleAudioPackets(final AudioTrack at) {
+    int minBufferSizeToPlay=200;
+    boolean handlerRunning=false;
+    boolean playStarted=false;
+    int i=0;
+    private void handleAudioPackets() {
 
         D.log("receiving data packets:");
         ///buf = new byte[metaDto.packageSize];
         D.log("package size: "+metaDto.packageSize);
-        int i=0;
-        boolean playStarted=false;
-
+         i=0;
+        playStarted=false;
+handlerRunning=true;
         while (!wrapper.dataSocket.socket.isClosed()) {
             try {
 
                 AudioPacket packet=(AudioPacket) wrapper.dataSocket.objectInputStream.readObject();
+              //  D.log("pack"+i);
                 if(packet.size==0){
                     swapSong.set(true);
                     if(i<minBufferSizeToPlay) {
                         bufferQueue.clear();
                         MusicPlayerActionEvent.invoke(new EventArgs1<Body>("", new MusicPlayerActionBody(MP_EVT.SONG_EOF, null)));
-                        swapSong.set(false);
+
                     }
-                    break;
+                   continue;
                 }
                 /////
                 bufferQueue.add(packet);
@@ -374,21 +384,12 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
                     send(wrapper.senderInfoSocket,new ChannelObject(new AudioControlBody(dto),TYPE.AUDIO_CONTROL_SERVER));
                 }
                 i++;
-
-                //buf=new byte[metaDto.packageSize];
             } catch (IOException e) {
                 e.printStackTrace();
-                break;
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }
-
-
-
-
-
-
     }
 
 

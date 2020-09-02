@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -30,6 +31,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
 
     public Event<EventArgs1<Exception>> ExceptionEvent;
     LinkedList<SocketStruct> socketList=new LinkedList<>();
+    private InetAddress address;
 
     public ServerSocket getServerSocket() {
         return dataSocket;
@@ -254,4 +256,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
 
     }
 
+    public void setAddress(InetAddress address) {
+        this.address=address;
+    }
 }
