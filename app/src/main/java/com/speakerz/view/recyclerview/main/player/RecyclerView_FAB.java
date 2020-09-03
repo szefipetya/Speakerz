@@ -2,7 +2,6 @@ package com.speakerz.view.recyclerview.main.player;
 
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.view.View;
 import android.widget.TextView;
@@ -170,11 +169,12 @@ public class RecyclerView_FAB  {
                 mYoutubeFab.setVisibility(View.INVISIBLE);
                 mLibraryText.setVisibility(View.INVISIBLE);
                 mYoutubeText.setVisibility(View.INVISIBLE);
-
+                SongAddLibraryFragment fragment=new SongAddLibraryFragment();
+                fragment.setModel(model);
                 //Song add from library fragment open
                 activity.getSupportFragmentManager()
                         .beginTransaction()
-                        .replace(R.id.fragment_container_song_import, new SongAddLibraryFragment())
+                        .replace(R.id.fragment_container_song_import,fragment)
                         .addToBackStack(null)
                         .commit();
             }
@@ -203,8 +203,6 @@ public class RecyclerView_FAB  {
         mAdapter.setOnItemClickListener(new Adapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
-
-
                 model.startONE(model.getContext(), Uri.parse(model.getSongQueue().get(position).getData()),model.getSongQueue().get(position).getId());
 
             }

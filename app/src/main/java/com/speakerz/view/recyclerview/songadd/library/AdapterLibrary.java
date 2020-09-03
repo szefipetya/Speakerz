@@ -11,17 +11,19 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.speakerz.R;
+import com.speakerz.debug.D;
 
 import java.util.ArrayList;
 
 public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHolderLibrary> {
     Context contextLibrary;
-    ArrayList<libraryItem> listDevice;
+    ArrayList<libraryItem> listItems;
 
     public AdapterLibrary(Context mContext, ArrayList<libraryItem> mList){
         contextLibrary = mContext;
-        listDevice = mList;
+        listItems = mList;
     }
+
 
     @NonNull
     @Override
@@ -30,9 +32,10 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
         return new ViewHolderLibrary(v);
     }
 
+
     @Override
     public void onBindViewHolder(@NonNull ViewHolderLibrary holder, int position) {
-        libraryItem currentItem = listDevice.get(position);
+        libraryItem currentItem = listItems.get(position);
 
         String imageURL = currentItem.getCoverImagePath();
         String songName = currentItem.getSongName();
@@ -43,13 +46,15 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
         holder.songArtistTextView.setText(artist);
         holder.songLengthTimeTextView.setText(songLengthTime);
         holder.coverImageView.setImageResource(R.mipmap.ic_launcher_round);
+        D.log("clicked:"+position);
 
     }
 
     @Override
     public int getItemCount() {
-        return listDevice.size();
+        return listItems.size();
     }
+
 
     public class ViewHolderLibrary extends RecyclerView.ViewHolder{
         public ImageView coverImageView;
@@ -64,5 +69,8 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
             songArtistTextView = itemView.findViewById(R.id.songArtistTextView);
             songLengthTimeTextView = itemView.findViewById(R.id.songLengthTimeTextView);
         }
+
+
+
     }
 }

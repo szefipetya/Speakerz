@@ -176,7 +176,7 @@ private void mainLoop(){
                                 }
                             }
                             synchronized (cli.eofReceivedFromClientLocker) {
-                                cli.eofReceivedFromClientLocker.wait(5000);
+                                cli.eofReceivedFromClientLocker.wait(10000);
                             }
                         }
 
