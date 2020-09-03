@@ -8,6 +8,7 @@ import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioMetaDto;
 import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
+import com.speakerz.model.network.threads.util.ClientSocketStructWrapper;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +44,7 @@ public class AudioBuffererDecoder {
     public Event<EventArgs1<AudioPacket>> AudioTrackBufferUpdateEvent;
     public Event<EventArgs1<AudioMetaDto>> MetaDtoReadyEvent;
     public Event<EventArgs1<Exception>>ExceptionEvent;
+    public List<ClientSocketStructWrapper> clients=null;
 
     public final Queue<AudioPacket> bufferQueue=new ConcurrentLinkedQueue<>();
 
@@ -149,6 +152,9 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
 
                 synchronized (bufferQueue){
                     bufferQueue.offer(pack);
+                    for(ClientSocketStructWrapper cli:clients){
+                        cli.bufferQueue.offer(pack);
+                    }
                     bufferQueue.notify();
                 }
 
@@ -187,6 +193,9 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
         }
         actualBufferedPackageNumber.set(0);
         maxPackageNumber.set(0);
+        for(ClientSocketStructWrapper cli:clients){
+            cli.bufferQueue.clear();
+        }
         bufferQueue.clear();
 
     }

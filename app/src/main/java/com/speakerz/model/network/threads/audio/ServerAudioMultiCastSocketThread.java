@@ -135,7 +135,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
         MetaDtoReadyEvent=new Event<>();
         decoderBufferer.AudioTrackBufferUpdateEvent=AudioTrackBufferUpdateEvent;
         decoderBufferer.MetaDtoReadyEvent=MetaDtoReadyEvent;
-
+        decoderBufferer.clients=clients;
         subscribeDecoderEvents();
     }
 private void mainLoop(){
@@ -162,24 +162,25 @@ private void mainLoop(){
                         decoder.stop();
                         for (ClientSocketStructWrapper cli : clients) {
                             cli.eofSongReached = true;
-                            if(cli.isBuffering) {
+                            if (cli.isBuffering) {
                                 synchronized (cli.eofSongReachedLocker) {
                                     cli.eofSongReachedLocker.notify();
                                 }
-                            }else{
+                            } else {
                                 try {
-                                    sendObjectOrDelete(cli,cli.dataSocket,new AudioPacket(-1, new byte[0]));
-                                }catch(IOException ex){
+                                    sendObjectOrDelete(cli, cli.dataSocket, new AudioPacket(-1, new byte[0]));
+                                } catch (IOException ex) {
                                     closeClient(cli);
                                     ex.printStackTrace();
                                     continue;
                                 }
                             }
+                        }
+                        for (ClientSocketStructWrapper cli : clients) {
                             synchronized (cli.eofReceivedFromClientLocker) {
                                 cli.eofReceivedFromClientLocker.wait(3000);
                             }
                         }
-
 
                     }
                     D.log("starting threads");
@@ -483,16 +484,16 @@ ServerAudioMultiCastSocketThread self=this;
 
 
     void sendAudioFromBuffer(ClientSocketStructWrapper struct) {
-        Iterator<AudioPacket> itr = decoderBufferer.bufferQueue.iterator();
+        struct.bufferItr = decoderBufferer.bufferQueue.iterator();
 
         // hasNext() returns true if the queue has more elements
         int liveplayPackageNumber = decoder.actualPackageNumber.get();
         D.log("LIVE PLAY PACK NUMBER." + liveplayPackageNumber);
-        int actualReadedPackNumber = 0;
+        struct.bufferHeadPosition = 0;
         struct.isClientInStream=true;
         struct.eofSongReached=false;
         struct.isBuffering=true;
-            while ((actualReadedPackNumber <= decoderBufferer.maxPackageNumber.get() || decoderBufferer.maxPackageNumber.get() == 0)) {
+            while ((struct.bufferHeadPosition <= decoderBufferer.maxPackageNumber.get() || decoderBufferer.maxPackageNumber.get() == 0)) {
                 if(struct.eofSongReached){
                     try {
                         struct.dataSocket.objectOutputStream.writeObject(new AudioPacket(-1,new byte[0]));
@@ -520,13 +521,13 @@ ServerAudioMultiCastSocketThread self=this;
                     }
                 }
                // D.log("----");
-                if(itr.hasNext()) {
-                    AudioPacket packet = itr.next();
+                if(struct.bufferItr.hasNext()) {
+                    AudioPacket packet = struct.bufferItr.next();
                     try {
-                        actualReadedPackNumber = packet.packageNumber;
-                        if(actualReadedPackNumber>=liveplayPackageNumber) {
+                        struct.bufferHeadPosition = packet.packageNumber;
+                        if(struct.bufferHeadPosition>=liveplayPackageNumber) {
                             sendObjectOrDelete(struct,struct.dataSocket,packet);
-                           // D.log("packet" + packet.packageNumber + " sent");
+                            D.log("packet" + packet.packageNumber + " sent");
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -534,7 +535,7 @@ ServerAudioMultiCastSocketThread self=this;
                         break;
                     }
                 }else{
-                    break;
+                    D.log("no next :(");
                 }
 
             }

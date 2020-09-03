@@ -1,6 +1,11 @@
 package com.speakerz.model.network.threads.util;
 
 import com.speakerz.model.network.threads.SocketStruct;
+import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
+
+import java.util.Iterator;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ClientSocketStructWrapper {
     public Boolean isClientInStream=false;
@@ -10,6 +15,11 @@ public class ClientSocketStructWrapper {
   final  public Object eofReceivedFromClientLocker =new Object();
   final  public Object isBufferingLocker =new Object();
   public long timeWhenConnected;
+    public Iterator<AudioPacket> bufferItr;
+    public ConcurrentLinkedQueue<AudioPacket> bufferQueue=new ConcurrentLinkedQueue<>();
+
+  public int bufferHeadPosition=0;
+
 
   public ClientSocketStructWrapper(){
       receiverInfoSocket =new SocketStruct();

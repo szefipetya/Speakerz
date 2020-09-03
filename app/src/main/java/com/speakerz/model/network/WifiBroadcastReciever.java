@@ -45,6 +45,11 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
             //inform the view about the connection changes
 
          InetAddress hostAddress=info.groupOwnerAddress;
+         if(hostAddress==null){
+             Toast.makeText(context,"Connection failed. Try again!", Toast.LENGTH_SHORT).show();
+             return;
+         }
+
             D.log("onConnectionInfoavailable "+hostAddress);
             // After the group negotiation, we can determine the group owner
             // (server).
@@ -103,9 +108,11 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
         });
     }
 
+    Context context;
     @SuppressLint("MissingPermission")
     @Override
     public void onReceive(Context context, Intent intent) {
+        this.context=context;
         String action=intent.getAction();
         if(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)){
             int state=intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE,-1);
@@ -132,13 +139,13 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                 return;
             }
 
-            NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+           /* NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
             if (activeNetwork != null) {
                 wifiP2pManager.requestConnectionInfo(channel, connectionInfoListener);
             } else {
                 ConnectionChangedEvent.invoke(new BooleanEventArgs(self,false));
                 // not connected to the internet
-            }/*
+            }*/
             NetworkInfo networkInfo = (NetworkInfo) intent
                     .getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
             if (networkInfo.isConnected()) {
@@ -151,8 +158,9 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
             }else{
                 //disconnected
                 D.log("disconnected");
+
                 ConnectionChangedEvent.invoke(new BooleanEventArgs(self,false));
-            }*/
+            }
         }
         else if(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)){
 
