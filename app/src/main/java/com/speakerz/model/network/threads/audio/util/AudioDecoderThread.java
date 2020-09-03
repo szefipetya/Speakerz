@@ -82,7 +82,7 @@ public class AudioDecoderThread {
 
 
     AudioMetaDto metaDto=new AudioMetaDto();
-    public void startPlay(String path) throws IOException, CannotReadException {
+    public void startPlay(String path) throws IOException, CannotReadException,NullPointerException {
         currentFile=new File(path);
        startPlay(currentFile);
     }
@@ -93,11 +93,14 @@ public class AudioDecoderThread {
 
     AudioTrack audioTrack=null;
     AUDIO audioType=AUDIO.NONE;
-    public void startPlay(File file) throws IOException, CannotReadException {
+    public void startPlay(File file) throws IOException, CannotReadException,NullPointerException {
         this.audioType=audioType;
         eosReceived = false;
         currentFile=file;
+        eosReceived=false;
+        actualPackageNumber.set(0);
         AudioMetaInfo metaInfo=new AudioMetaInfo(file) ;
+        if(metaInfo.getAudioHeader()==null) throw new NullPointerException("Playback from client resource is not yet implemented");
         if(metaInfo.getAudioHeader().getEncodingType()=="mp3") {
             playMP3(file);
         }
@@ -110,9 +113,6 @@ public class AudioDecoderThread {
 
 
     private void playMP3(File file) throws IOException, CannotReadException {
-        eosReceived=false;
-        actualPackageNumber.set(0);
-
        // Create a jlayer Decoder instance.
         D.log("PLAYING MP3 ");
         Decoder decoder = new Decoder();

@@ -6,8 +6,11 @@ import android.net.wifi.p2p.WifiP2pManager;
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.DeviceNetwork;
+import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
+import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
@@ -26,6 +29,7 @@ public class DeviceModel extends BaseModel {
     public void start() {
         network.start();
         network.getReciever().clearConnections();
+        deletePersistentGroups();
     }
 
     protected void injectNetworkDependencies() {
@@ -109,7 +113,7 @@ public class DeviceModel extends BaseModel {
         network.getReciever().setConnectivityManager(connectivityManager);
         subscribeMusicPlayerModelEvents();
         network.getClientSocketWrapper().audioSocket.setContext(context);
-
+        network.setNickName(NickName);
 
 
 
@@ -123,12 +127,24 @@ public class DeviceModel extends BaseModel {
             public void action(EventArgs3<MP_EVT, Object,Body> args) {
                 if(args.arg1()==MP_EVT.SEND_LIST){
 
-                        SongQueueUpdatedEvent.invoke(null);
+                      //  SongQueueUpdatedEvent.invoke(null);
 
                 }
                 if(args.arg1()==MP_EVT.SEND_SONG){
-                    SongQueueUpdatedEvent.invoke(null);
 
+                  //  SongQueueUpdatedEvent.invoke(null);
+
+                }if(args.arg1()==MP_EVT.ADD_SONG_CLIENT){
+                    try {
+                        network.getClientSocketWrapper().controllerSocket.send(
+
+                                new ChannelObject(new PutSongRequestBody((Song)args.arg2()), TYPE.MP)
+                        );
+                    } catch (Exception e) {
+                        D.log("error:problem with sending song to server");
+
+                        e.printStackTrace();
+                    }
                 }
             }
         });

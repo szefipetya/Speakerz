@@ -45,10 +45,10 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
             //inform the view about the connection changes
 
          InetAddress hostAddress=info.groupOwnerAddress;
-            D.log("onCOnnectionInfoavailable "+hostAddress);
+            D.log("onConnectionInfoavailable "+hostAddress);
             // After the group negotiation, we can determine the group owner
             // (server).
-            if (info.groupFormed && info.isGroupOwner&&isHost) {
+            if (info.groupFormed &&isHost) {
                 D.log("owner");
                 // Do whatever tasks are specific to the group owner.
                 // One common case is creating a group owner thread and accepting
@@ -132,9 +132,15 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                 return;
             }
 
+            NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+            if (activeNetwork != null) {
+                wifiP2pManager.requestConnectionInfo(channel, connectionInfoListener);
+            } else {
+                ConnectionChangedEvent.invoke(new BooleanEventArgs(self,false));
+                // not connected to the internet
+            }/*
             NetworkInfo networkInfo = (NetworkInfo) intent
                     .getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
-
             if (networkInfo.isConnected()) {
 
                 // We are connected with the other device, request connection
@@ -146,7 +152,7 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                 //disconnected
                 D.log("disconnected");
                 ConnectionChangedEvent.invoke(new BooleanEventArgs(self,false));
-            }
+            }*/
         }
         else if(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)){
 

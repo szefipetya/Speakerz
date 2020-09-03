@@ -20,6 +20,11 @@ import java.util.List;
 
 public abstract class BaseNetwork  {
 
+    public void setNickName(String nickName) {
+        this.nickName = nickName;
+    }
+
+    protected String nickName;
     public Event<EventArgs1<Exception>> ExceptionEvent;
     protected WifiBroadcastReciever reciever;
 
@@ -86,6 +91,9 @@ public abstract class BaseNetwork  {
 
         }
     }
+    protected String SERVICE_INSTANCE="SPEAKERZ";
+    protected String TXTRECORD_PROP_AVAILABLE="AVAILABLE";
+
 
     //SETTERS
 

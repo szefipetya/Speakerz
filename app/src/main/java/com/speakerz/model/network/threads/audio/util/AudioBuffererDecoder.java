@@ -64,7 +64,11 @@ public class AudioBuffererDecoder {
         this.audioType=audioType;
         eosReceived.set(false);
         currentFile=file;
+        actualBufferedPackageNumber.set(0);
+        maxPackageNumber.set(0);
+        eosReceived.set(false);
         AudioMetaInfo metaInfo=new AudioMetaInfo(file) ;
+        if(metaInfo.getAudioHeader()==null) throw new NullPointerException("Playback from client resource is not yet implemented");
         if(metaInfo.getAudioHeader().getEncodingType()=="mp3") {
             playMP3(file,songId);
         }
@@ -75,9 +79,7 @@ public AtomicInteger actualBufferedPackageNumber=new AtomicInteger(0);
 public AtomicInteger maxPackageNumber=new AtomicInteger(0);
 
     private void playMP3(File file,Integer songId) throws IOException, CannotReadException {
-        actualBufferedPackageNumber.set(0);
-        maxPackageNumber.set(0);
-        eosReceived.set(false);
+
         // Create a jlayer Decoder instance.
         D.log("PLAYING MP3 ");
         Decoder decoder = new Decoder();
@@ -144,8 +146,9 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
 
                 AudioPacket pack=new AudioPacket(bytes.length,bytes);
                 pack.packageNumber=actualBufferedPackageNumber.get();
-                bufferQueue.add(pack);
+
                 synchronized (bufferQueue){
+                    bufferQueue.offer(pack);
                     bufferQueue.notify();
                 }
 
