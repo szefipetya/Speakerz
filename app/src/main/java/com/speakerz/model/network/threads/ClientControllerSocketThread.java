@@ -7,6 +7,7 @@ import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.NetworkEventBody;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
+import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
 import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.Event;
@@ -29,6 +30,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
    public Event<EventArgs1<Body>> MetaInfoReceivedEvent;
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
     public Event<EventArgs1<Body>> NameChangeEvent;
+    public Event<EventArgs1<Body>> DisconectedNameErase;
     volatile boolean externalShutdown=false;
     public ClientControllerSocketThread(){
 

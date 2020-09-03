@@ -30,7 +30,6 @@ public abstract class BaseModel {
 
     public String NickName = "placeholder";
     public String deviceID= "";
-    //public ArrayList<String> NickNames;
     public HashMap<String,String> NickNames;
 
     MusicPlayerModel musicPlayerModel;
@@ -53,6 +52,8 @@ public abstract class BaseModel {
         NickName = "placeholder";
         deviceID = UUID.randomUUID().toString();
         NickNames= new HashMap<>();
+
+        NickNames.put(deviceID,NickName);
 
 
         subscribeToNameChange();

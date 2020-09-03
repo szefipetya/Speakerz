@@ -22,15 +22,23 @@ import android.view.MenuItem;
 import com.speakerz.R;
 import com.speakerz.SpeakerzService;
 import com.speakerz.model.MusicPlayerModel;
+import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.view.components.BottomMusicPlayer;
+import com.speakerz.view.components.NameChangeDialog;
 import com.speakerz.view.components.TopMenu;
-import com.speakerz.view.recyclerview.RecyclerView_FAB;
+import com.speakerz.view.recyclerview.main.player.RecyclerView_FAB;
 
-import java.util.ArrayList;
-
-public class PlayerRecyclerActivity extends AppCompatActivity {
+public class PlayerRecyclerActivity extends AppCompatActivity implements NameChangeDialog.NameChangeDialogListener{
     RecyclerView_FAB recyclerViewFab;
     TopMenu menu;
+
+    public MusicPlayerModel getModel() {
+        return model;
+    }
+
     BottomMusicPlayer bottomPlayer;
     AppCompatActivity self=this;
 
@@ -41,7 +49,7 @@ public class PlayerRecyclerActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         // Initialize View
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_recycler_view);
+        setContentView(R.layout.activity_main_real);
 
         // Configure toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -71,6 +79,8 @@ public class PlayerRecyclerActivity extends AppCompatActivity {
             // Register model event handlers
             bottomPlayer.initModel(model);
             recyclerViewFab.initModel(model);
+
+            menu.setModel(model.getModel());
         }
 
         @Override
@@ -109,4 +119,11 @@ public class PlayerRecyclerActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    public void applyTexts(String username) {
+        System.out.println(username+"outside");
+        NameItem item = new NameItem(username,"en",model.getModel().deviceID);
+        PutNameChangeRequestBody body1 = new PutNameChangeRequestBody(null,item);
+        model.getModel().NameChangeEvent.invoke(new EventArgs1<Body>(null,body1));
+    }
 }

@@ -30,6 +30,11 @@ public class MusicPlayerModel{
     // Context variables
     private final MusicPlayerModel self = this;
     private final Context context;
+
+    public BaseModel getModel() {
+        return model;
+    }
+
     private final BaseModel model;
 
     // Playback managing variables

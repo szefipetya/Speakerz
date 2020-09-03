@@ -1,4 +1,4 @@
-package com.speakerz.view.recyclerview;
+package com.speakerz.view.recyclerview.main.player;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.speakerz.R;
 import com.speakerz.model.Song;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {

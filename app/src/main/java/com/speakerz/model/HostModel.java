@@ -53,12 +53,9 @@ public class HostModel extends BaseModel {
 
             @Override
             public void action(EventArgs1<Body> args) {
-                D.log("name:"+NickName);
                 D.log("NAME CHANGE HAPPEND.");
-                NickName = ((PutNameChangeRequestBody)args.arg1()).getContent().name;
-                NickNames.put("Host",NickName);
-                
-                Toast.makeText(context, "New name:"+NickNames.get("Host"), Toast.LENGTH_SHORT).show();
+                NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
+                D.log("name:"+NickNames.get(((PutNameChangeRequestBody)args.arg1()).getContent().id));
                 try {
                     network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.NAME));
                     //SongQueueUpdatedEvent.invoke(null);

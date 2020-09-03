@@ -37,9 +37,11 @@ import com.speakerz.util.EventListener;
 import com.speakerz.view.PlayerRecyclerActivity;
 import com.speakerz.view.recyclerview.RecyclerView_FAB;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
+import java.util.jar.Attributes;
 
 public class Join extends Activity {
     //REQUIRED_BEG MODEL
@@ -346,6 +348,7 @@ public class Join extends Activity {
                 }
             }
         });
+
 
     }
 
