@@ -168,7 +168,7 @@ private void mainLoop(){
                                 }
                             }else{
                                 try {
-                                    sendObjectOrDelete(cli,cli.dataSocket,new AudioPacket(0, new byte[0]));
+                                    sendObjectOrDelete(cli,cli.dataSocket,new AudioPacket(-1, new byte[0]));
                                 }catch(IOException ex){
                                     closeClient(cli);
                                     ex.printStackTrace();
@@ -473,7 +473,6 @@ ServerAudioMultiCastSocketThread self=this;
     }
     void sendObjectOrDelete(ClientSocketStructWrapper wrapper,SocketStruct struct,Object obj) throws IOException {
         if(struct.socket!=null&&!struct.socket.isClosed()){
-
                 struct.objectOutputStream.writeObject(obj);
                 struct.objectOutputStream.flush();
 
@@ -496,7 +495,7 @@ ServerAudioMultiCastSocketThread self=this;
             while ((actualReadedPackNumber <= decoderBufferer.maxPackageNumber.get() || decoderBufferer.maxPackageNumber.get() == 0)) {
                 if(struct.eofSongReached){
                     try {
-                        struct.dataSocket.objectOutputStream.writeObject(new AudioPacket(0,new byte[0]));
+                        struct.dataSocket.objectOutputStream.writeObject(new AudioPacket(-1,new byte[0]));
                         struct.dataSocket.objectOutputStream.flush();
                     } catch (IOException e) {
 
@@ -514,7 +513,7 @@ ServerAudioMultiCastSocketThread self=this;
                             try {
                              //   D.log("waiting for notify");
                                 //decoderbufferer will notify us, when a new package is added to the queue
-                                decoderBufferer.bufferQueue.wait(300);
+                                decoderBufferer.bufferQueue.wait(500);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }

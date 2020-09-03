@@ -11,6 +11,7 @@ import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
+import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
@@ -24,8 +25,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
 
-//TODO: Az első zene elindításakor elég bugosak a dolgok, ennek a kijavítása kell BUGOK: Seekbar nemindul, startgomb nemjól van,seekbar nemműködik
-// Ha ráléptetjük egy zenére valamilyen módon és megnyomjuka start gombot onnantól jó megy
 
 public class MusicPlayerModel{
     // Context variables
@@ -71,7 +70,18 @@ public class MusicPlayerModel{
                     break;
                 case MP_GET_LIST:
                     if(isHost) invokeModelCommunication(MP_EVT.SEND_LIST, songQueue, body);
-                    else invokeModelCommunication(MP_EVT.SEND_LIST, null, null);
+
+                    else {
+                        GetSongListBody body1=(GetSongListBody)body;
+                        List<Song> recvQueue= body1.getContent();
+                        songQueue.clear();
+                        for(Song e:recvQueue){
+                            songQueue.add(e);
+                            songAddedEvent.invoke(new EventArgs2<>(this, e, songQueue.size()));
+                        }
+
+                        invokeModelCommunication(MP_EVT.SEND_LIST, null, null);
+                    }
                     break;
                 case MP_ACTION_EVT:
                     switch (((MusicPlayerActionBody)body).getEvt()){

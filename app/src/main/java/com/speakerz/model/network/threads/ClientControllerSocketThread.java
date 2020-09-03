@@ -43,16 +43,16 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
 
             while(true) {
                 try {
-                    Thread.sleep(2000);
+                    //Thread.sleep(2000);
                     struct.socket=new Socket();
                     struct.socket.setReuseAddress(true);
                     struct.socket.connect(new InetSocketAddress(hostAddress, 8040), 20000);
                     break;
                 }catch (IOException e){
                     e.printStackTrace();
-                } catch (InterruptedException e) {
+                } /*catch (InterruptedException e) {
                     e.printStackTrace();
-                }
+                }*/
             }
 
 
