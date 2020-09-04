@@ -15,6 +15,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.speakerz.R;
 import com.speakerz.model.Song;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,15 +52,24 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
             System.out.println("nincs");
         }
         else{
-            try{
-                holder.mImageView.setImageURI(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()));
-            }
-            catch(Exception e){
+            /*File F = new File(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()).getPath());
+            if(!F.exists()){
+                System.out.println("nincs");
                 holder.mImageView.setImageResource(R.drawable.ic_song);
             }
+            else{
+                System.out.println("van");
+                holder.mImageView.setImageURI(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()));
+            }*/
+
+           /* try{
+                holder.mImageView.setImageURI(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()));
+            }
+            catch(IOException e){
+                holder.mImageView.setImageResource(R.drawable.ic_song);
+            }*/
             //holder.mImageView.setImageURI(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()));
             //System.out.println(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()));
-            System.out.println("van");
         }
         holder.mTextView1.setText(currentItem.getTitle());
         holder.mTextView2.setText(currentItem.getArtist());
