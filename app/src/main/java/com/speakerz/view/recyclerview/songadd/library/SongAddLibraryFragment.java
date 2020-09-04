@@ -57,8 +57,9 @@ public class SongAddLibraryFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        //FIXME ANDROID 4.4 -> crash
         final View mView = inflater.inflate(R.layout.fragment_song_adding_from_library, container, false);
-
+        //
         recyclerViewLibrary = mView.findViewById(R.id.recyclerview_song_add_library);
         recyclerViewLibrary.setHasFixedSize(true);
         LinearLayoutManager mLinearLayoutManager = new LinearLayoutManager(mView.getContext(), LinearLayoutManager.VERTICAL, false);

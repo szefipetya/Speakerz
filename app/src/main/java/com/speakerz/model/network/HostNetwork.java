@@ -9,6 +9,7 @@ import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
+import android.os.Build;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.EVT;
@@ -95,6 +96,23 @@ public class HostNetwork extends BaseNetwork {
    private void createGroup(){
     //  startRegistration();
        advertiseMe();
+       //if device is under 6
+      /* if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
+           reciever.getWifiP2pManager().createGroup(reciever.getChannel(), new WifiP2pManager.ActionListener() {
+               @Override
+               public void onSuccess() {
+                   TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Party Created successfully"));
+               }
+
+               @Override
+               public void onFailure(int reason) {
+                   TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Could not create the Party"));
+
+               }
+           });
+
+
+       }*/
    }
 
    @SuppressLint("MissingPermission")

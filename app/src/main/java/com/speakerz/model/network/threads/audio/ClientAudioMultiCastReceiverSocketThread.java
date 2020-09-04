@@ -4,6 +4,7 @@ import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.os.Build;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
@@ -220,7 +221,13 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
     public void run() {
         D.log("testbegins");
 
-      //send a packet to the host to know about this client
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+        }
             try {
 
                 wrapper.receiverInfoSocket.socket=new Socket();
