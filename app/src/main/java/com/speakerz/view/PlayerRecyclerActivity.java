@@ -31,9 +31,7 @@ import com.speakerz.util.EventArgs2;
 import com.speakerz.view.components.BottomMusicPlayer;
 import com.speakerz.view.components.NameChangeDialog;
 import com.speakerz.view.components.TopMenu;
-import com.speakerz.view.recyclerview.RecyclerView_FAB;
-
-import java.util.ArrayList;
+import com.speakerz.view.recyclerview.main.player.RecyclerView_FAB;
 
 public class PlayerRecyclerActivity extends AppCompatActivity implements NameChangeDialog.NameChangeDialogListener{
     RecyclerView_FAB recyclerViewFab;
@@ -53,7 +51,7 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
     protected void onCreate(Bundle savedInstanceState) {
         // Initialize View
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_recycler_view);
+        setContentView(R.layout.activity_main_real);
 
         // Configure toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);

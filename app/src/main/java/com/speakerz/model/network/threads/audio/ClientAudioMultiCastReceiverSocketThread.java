@@ -141,17 +141,8 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
                     }
                 }
             }
-            playbackStarted.set(false);
-            D.log("playback ended");
-            at.stop();
             swapSong.set(false);
 
-            bufferQueue.clear();
-            MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_EOF,null)));
-            send(wrapper.senderInfoSocket,new ChannelObject(new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.EOF_RECEIVED)),TYPE.AUDIO_CONTROL_SERVER));
-            synchronized (eofLocker){
-                eofLocker.notify();
-            }
         }
     };
 
@@ -170,30 +161,19 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
                 if (inObject.TYPE == TYPE.AUDIO_META) {
                     final AudioMetaBody body = (AudioMetaBody) inObject.body;
                     D.log("recieved meta packet");
-                    //a sync csak a handle után jöhet
-                    if(metaDto!=null&&playbackStarted.get()){
-                        swapSong.set(true);
-                       synchronized (eofLocker){
-                           try {
-                               eofLocker.wait();
-                           } catch (InterruptedException e) {
-                               e.printStackTrace();
-                           }
-                       }
-                    }
-                    Thread t=new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                at = createAudioTrack(body.getContent());
-                            } catch (IOException e) {
 
-                                e.printStackTrace();
+                    at = createAudioTrack(body.getContent());
+                    playStarted=false;
+                    i=0;
+                    if(!handlerRunning){
+                        Thread t=new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                handleAudioPackets();
                             }
-                            handleAudioPackets(at);
-                        }
-                    });
-                    t.start();
+                        });
+                        t.start();
+                    }
                     MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_CHANGED,body.getContent().songId)));
                     MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_MAX_TIME_SECONDS,body.getContent().maxTimeInSeconds)));
 
@@ -242,6 +222,7 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
 
       //send a packet to the host to know about this client
             try {
+
                 wrapper.receiverInfoSocket.socket=new Socket();
                 wrapper.receiverInfoSocket.socket.setReuseAddress(true);
                 wrapper.senderInfoSocket.socket=new Socket();
@@ -319,16 +300,7 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
         AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, metaDto.sampleRate,
                 metaDto.channels == 2 ? AudioFormat.CHANNEL_OUT_STEREO : AudioFormat.CHANNEL_OUT_MONO,
                 metaDto.bitsPerSample == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT, minBufferSize, AudioTrack.MODE_STREAM);
-      /*  int minBufferSize = AudioTrack.getMinBufferSize(metaDto.sampleRate,
-                AudioFormat.CHANNEL_OUT_STEREO,
-                AudioFormat.ENCODING_PCM_16BIT);
 
-        AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC,
-                metaDto.sampleRate,
-                AudioFormat.CHANNEL_OUT_STEREO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                minBufferSize,
-                AudioTrack.MODE_STREAM);*/
         return at;
     }
     void send(SocketStruct struct,ChannelObject obj){
@@ -342,27 +314,37 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
     }
 
     Queue<AudioPacket> bufferQueue = new ConcurrentLinkedQueue<>();
-    int minBufferSizeToPlay=350;
-    private void handleAudioPackets(final AudioTrack at) {
+    int minBufferSizeToPlay=200;
+    boolean handlerRunning=false;
+    boolean playStarted=false;
+    int i=0;
+    private void handleAudioPackets() {
 
         D.log("receiving data packets:");
         ///buf = new byte[metaDto.packageSize];
         D.log("package size: "+metaDto.packageSize);
-        int i=0;
-        boolean playStarted=false;
-
+         i=0;
+        playStarted=false;
+handlerRunning=true;
         while (!wrapper.dataSocket.socket.isClosed()) {
             try {
 
                 AudioPacket packet=(AudioPacket) wrapper.dataSocket.objectInputStream.readObject();
-                if(packet.size==0){
+              //  D.log("pack"+i);
+                if(packet.size==-1){
                     swapSong.set(true);
-                    if(i<minBufferSizeToPlay) {
-                        bufferQueue.clear();
-                        MusicPlayerActionEvent.invoke(new EventArgs1<Body>("", new MusicPlayerActionBody(MP_EVT.SONG_EOF, null)));
-                        swapSong.set(false);
-                    }
-                    break;
+                    playbackStarted.set(false);
+                    D.log("playback ended");
+                    at.stop();
+
+                    i=0;
+
+                    bufferQueue.clear();
+                    MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_EOF,null)));
+
+                    send(wrapper.senderInfoSocket,new ChannelObject(new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.EOF_RECEIVED)),TYPE.AUDIO_CONTROL_SERVER));
+
+                    continue;
                 }
                 /////
                 bufferQueue.add(packet);
@@ -374,21 +356,12 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
                     send(wrapper.senderInfoSocket,new ChannelObject(new AudioControlBody(dto),TYPE.AUDIO_CONTROL_SERVER));
                 }
                 i++;
-
-                //buf=new byte[metaDto.packageSize];
             } catch (IOException e) {
                 e.printStackTrace();
-                break;
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }
-
-
-
-
-
-
     }
 
 

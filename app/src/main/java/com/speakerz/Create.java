@@ -142,6 +142,13 @@ public class Create extends Activity {
 
             }
         },GroupConnectionChangedEvent_EVT_ID);
+        Button advertiseMe = (Button) findViewById(R.id.create_btn_advertise_me);
+        advertiseMe.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View view){
+                model.getNetwork().advertiseMe();
+            }
+
+        });
 
     }
 
@@ -152,10 +159,7 @@ public class Create extends Activity {
             _service.getModel().setAreUiEventsSubscribed(true);
         subscribeModel((HostModel) _service.getModel());
         _service.getTextValueStorage().autoConfigureTexts(this);
-        //_service.getModel().start();
 
-        //registerReceiver(_service.getModel().getNetwork().getReciever(), _service.getModel().getNetwork().getIntentFilter());
-        //_isRegisterRecieverConnected=true;
     }
     //REQUIRED_END MODEL_Declare
 
@@ -294,14 +298,14 @@ public class Create extends Activity {
 
         });
 
-        Button startSession = (Button) findViewById(R.id.btn_start_session);
+       /* Button startSession = (Button) findViewById(R.id.btn_start_session);
         startSession.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 ((HostModel) (_service.getModel())).startAdvertising();
 
             }
 
-        });
+        });*/
 
     }
     //ITS A FIXME ATTEMT TO FIXME1

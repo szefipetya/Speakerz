@@ -4,8 +4,11 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.net.InetAddresses;
+import android.net.wifi.WpsInfo;
+import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.EVT;
@@ -23,9 +26,12 @@ import com.speakerz.util.EventListener;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 public class HostNetwork extends BaseNetwork {
-   boolean firstStart=true;
+    private static final String SERVICE_REG_TYPE ="REG_SPEAKERZ" ;
+    boolean firstStart=true;
     public HostNetwork(WifiBroadcastReciever reciever) {
       super(reciever);
       serverSocketWrapper.controllerSocket = new ServerControllerSocketThread();
@@ -47,7 +53,7 @@ public class HostNetwork extends BaseNetwork {
    }
 
    private void startServerThread(InetAddress addr){
-    //   serverSocketWrapper.controllerSocket.setAddress(addr);
+       serverSocketWrapper.controllerSocket.setAddress(addr);
             serverSocketWrapper.controllerSocket.start();
             serverSocketWrapper.audioSocket.setAddress(addr);
             serverSocketWrapper.audioSocket.start();
@@ -63,40 +69,32 @@ public class HostNetwork extends BaseNetwork {
    ServerSocketWrapper serverSocketWrapper=new ServerSocketWrapper();
 
    public Event<BooleanEventArgs> GroupConnectionChangedEvent = new Event<>();
+    @SuppressLint("MissingPermission")
+    private void startRegistration() {
+        Map<String, String> record = new HashMap<String, String>();
+        record.put(TXTRECORD_PROP_AVAILABLE, "visible");
+        record.put("host_name", nickName);
+        WifiP2pDnsSdServiceInfo service = WifiP2pDnsSdServiceInfo.newInstance(
+                SERVICE_INSTANCE, SERVICE_REG_TYPE, record);
+        reciever.getWifiP2pManager().addLocalService(reciever.getChannel(), service, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                D.log("Added Local Service");
+                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Party Created successfully"));
 
+
+            }
+
+            @Override
+            public void onFailure(int error) {
+                D.log("Failed to add a service");
+            }
+        });
+    }
    @SuppressLint("MissingPermission")
    private void createGroup(){
-
-      reciever.getWifiP2pManager().createGroup(reciever.getChannel(), new WifiP2pManager.ActionListener(){
-         @Override
-         public void onSuccess() {
-            // Device is ready to accept incoming connections from peers.
-            D.log("group created succesfully");
-            TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Group Created succesfully"));
-            //this makes sure that ACESS_COARSE_LOCATION is enabled
-            PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,PackageManager.PERMISSION_GRANTED));
-
-            getReciever().getWifiP2pManager().discoverPeers(getReciever().getChannel(), new WifiP2pManager.ActionListener() {
-               @Override
-               public void onSuccess() {
-                  D.log("advertising...");
-
-               }
-
-               @Override
-               public void onFailure(int i) {
-                  D.log("advertising init failed");
-
-               }
-            });
-         }
-
-         @Override
-         public void onFailure(int reason) {
-            D.log("group creation failed");
-            TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Failed to create group"));
-         }
-      });
+    //  startRegistration();
+       advertiseMe();
    }
 
    @SuppressLint("MissingPermission")
@@ -105,12 +103,14 @@ public class HostNetwork extends BaseNetwork {
            @Override
            public void onSuccess() {
                D.log("advertising...");
+               TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Advertising... "));
 
            }
 
            @Override
            public void onFailure(int i) {
                D.log("advertising init failed");
+              TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Advertise init failed"));
 
            }
        });
@@ -118,11 +118,7 @@ public class HostNetwork extends BaseNetwork {
 
    @SuppressLint("MissingPermission")
    public void removeGroupIfExists() {
-    //  WifiP2pConfig config=new WifiP2pConfig();
-      //config.groupOwnerIntent=15;
-      //config.wps.setup= WpsInfo.PBC;
-
-      reciever.getWifiP2pManager().requestGroupInfo(reciever.getChannel(), new WifiP2pManager.GroupInfoListener() {
+        reciever.getWifiP2pManager().requestGroupInfo(reciever.getChannel(), new WifiP2pManager.GroupInfoListener() {
                  @Override
                  public void onGroupInfoAvailable(WifiP2pGroup group) {
                     if (group != null) {

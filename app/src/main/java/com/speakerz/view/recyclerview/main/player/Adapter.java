@@ -1,4 +1,4 @@
-package com.speakerz.view.recyclerview;
+package com.speakerz.view.recyclerview.main.player;
 
 import android.content.ContentUris;
 import android.net.Uri;
@@ -15,10 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.speakerz.R;
 import com.speakerz.model.Song;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {

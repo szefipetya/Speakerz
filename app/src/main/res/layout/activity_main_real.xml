@@ -7,8 +7,9 @@
 
     <include
         android:id="@+id/toolbar"
-        layout="@layout/toolbar_dark"
+        layout="@layout/toolbar"
         app:layout_constraintTop_toTopOf="parent" />
+    <!--Dark toolbar:rgb 12,26,42 -->
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
@@ -22,6 +23,7 @@
         app:layout_constraintBottom_toTopOf="@+id/m_player_layout"
         app:layout_constraintTop_toBottomOf="@+id/toolbar"
         tools:layout_editor_absoluteX="16dp" />
+    <!--Dark color: #1b1b2f -->
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -102,91 +104,104 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/layout_darker"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_darker"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <!--Draker color #96000000 -->
+
+        <androidx.coordinatorlayout.widget.CoordinatorLayout
+            android:id="@+id/container_layout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#96000000">
-
-            <androidx.coordinatorlayout.widget.CoordinatorLayout
-                android:id="@+id/container_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentBottom="true"
-                android:layout_marginBottom="100dp"
-                android:background="@android:color/transparent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent">
-
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fab_basic"
-                    android:layout_width="wrap_content"
-                    android:layout_height="180dp"
-                    android:layout_gravity="bottom|end"
-                    android:layout_margin="32dp"
-                    android:backgroundTint="#1f4068"
-                    android:clickable="true"
-                    android:tint="@android:color/white"
-                    app:srcCompat="@drawable/ic_bassline_add_24" />
-
-            </androidx.coordinatorlayout.widget.CoordinatorLayout>
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="100dp"
+            android:background="@android:color/transparent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/fab_library"
+                android:id="@+id/fab_basic"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentBottom="true"
-                android:layout_marginEnd="32dp"
-                android:layout_marginBottom="20dp"
-                android:background="#65a6d1"
-                android:backgroundTint="#65a6d1"
+                android:layout_height="180dp"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="32dp"
+                android:backgroundTint="#1f4068"
                 android:clickable="true"
-                android:visibility="invisible"
-                app:layout_constraintBottom_toTopOf="@+id/fab_youtube"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:srcCompat="@drawable/ic_from_library" />
+                android:tint="@android:color/white"
+                app:srcCompat="@drawable/ic_bassline_add_24" />
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/fab_youtube"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentBottom="true"
-                android:layout_marginEnd="32dp"
-                android:backgroundTint="@color/design_default_color_error"
-                android:clickable="true"
-                android:visibility="invisible"
-                app:layout_constraintBottom_toTopOf="@+id/container_layout"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:srcCompat="@drawable/ic_youtube" />
+        </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-            <TextView
-                android:id="@+id/library_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="Own Library"
-                android:textColor="@android:color/white"
-                android:visibility="invisible"
-                app:layout_constraintBottom_toBottomOf="@+id/fab_library"
-                app:layout_constraintEnd_toStartOf="@+id/fab_library"
-                app:layout_constraintTop_toTopOf="@+id/fab_library" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_library"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="20dp"
+            android:background="#65a6d1"
+            android:backgroundTint="#65a6d1"
+            android:clickable="true"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toTopOf="@+id/fab_youtube"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:srcCompat="@drawable/ic_from_library" />
 
-            <TextView
-                android:id="@+id/youtube_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="Youtube"
-                android:textColor="@android:color/white"
-                android:visibility="invisible"
-                app:layout_constraintBottom_toBottomOf="@+id/fab_youtube"
-                app:layout_constraintEnd_toStartOf="@+id/fab_youtube"
-                app:layout_constraintTop_toTopOf="@+id/fab_youtube" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_youtube"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="32dp"
+            android:backgroundTint="@color/design_default_color_error"
+            android:clickable="true"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toTopOf="@+id/container_layout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:srcCompat="@drawable/ic_youtube" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/library_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="Own Library"
+            android:textColor="@android:color/white"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@+id/fab_library"
+            app:layout_constraintEnd_toStartOf="@+id/fab_library"
+            app:layout_constraintTop_toTopOf="@+id/fab_library" />
+
+        <TextView
+            android:id="@+id/youtube_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="Youtube"
+            android:textColor="@android:color/white"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@+id/fab_youtube"
+            app:layout_constraintEnd_toStartOf="@+id/fab_youtube"
+            app:layout_constraintTop_toTopOf="@+id/fab_youtube" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <FrameLayout
+        android:id="@+id/fragment_container_song_import"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        android:layout_marginTop="70dp"
+        android:layout_marginBottom="50dp"/>
+    <FrameLayout
+        android:id="@+id/fragment_container_devices"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -3,12 +3,14 @@ package com.speakerz.view.components;
 import android.util.Log;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.speakerz.R;
 import com.speakerz.model.BaseModel;
+import com.speakerz.view.recyclerview.songadd.library.SongAddLibraryFragment;
 
 public class TopMenu {
 
@@ -28,8 +30,16 @@ public class TopMenu {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.network:
-                Toast.makeText(activity, "Network selected", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(activity, "Network selected", Toast.LENGTH_SHORT).show();
                 openNameListDialog();
+
+                //Kicsit buggos xd
+                activity.getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container_devices, new SongAddLibraryFragment())
+                        .addToBackStack(null)
+                        .commit();
+
                 return true;
             case R.id.profile:
                 Toast.makeText(activity, "Profile selected", Toast.LENGTH_SHORT).show();

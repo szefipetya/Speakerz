@@ -32,7 +32,11 @@ public class DeviceModel extends BaseModel {
     public void start() {
         network.start();
         network.getReciever().clearConnections();
+
         //NameChangeEvent.invoke();
+
+        deletePersistentGroups();
+
     }
 
     protected void injectNetworkDependencies() {
@@ -138,7 +142,7 @@ public class DeviceModel extends BaseModel {
         network.getReciever().setConnectivityManager(connectivityManager);
         subscribeMusicPlayerModelEvents();
         network.getClientSocketWrapper().audioSocket.setContext(context);
-
+        network.setNickName(NickName);
 
 
 

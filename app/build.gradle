@@ -49,6 +49,7 @@ dependencies {
   //  implementation fileTree(dir: 'jar', include: ['*.aar', '*.jar'], exclude: [])
     implementation files('jar\\jaad-0.8.4.jar')
     implementation files('jar\\YoutubeDecoder-1.0.jar')
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
