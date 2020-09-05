@@ -47,7 +47,7 @@ public class HostModel extends BaseModel {
         subscribeMusicPlayerModelEvents();
         subscribeNetWorkEvents();
         network.getServerSocketWrapper().audioSocket.setContext(context);
-        NickNames.put("Host",this.NickName);
+        NickNames.put(this.deviceID,this.NickName);
         network.setNickName(NickName);
     }
 
@@ -89,7 +89,8 @@ public class HostModel extends BaseModel {
             public void action(EventArgs1<Body> args) {
                 D.log("NAMELIST INIT REQUEST HAPPEND. SERVER");
                 try {
-                    network.getServerSocketWrapper().controllerSocket.send(args.arg1().senderAddress,new ChannelObject(new PutNameListInitRequestBody(new NameList(NickNames)),TYPE.INITNAMELIST));
+                    PutNameListInitRequestBody body = (PutNameListInitRequestBody) args.arg1();
+                    network.getServerSocketWrapper().controllerSocket.send(body.senderAddress,new ChannelObject(new PutNameListInitRequestBody(new NameList(NickNames)),TYPE.INITNAMELIST));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

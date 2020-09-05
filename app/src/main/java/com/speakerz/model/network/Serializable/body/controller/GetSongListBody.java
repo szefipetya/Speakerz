@@ -5,6 +5,7 @@ import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 
 import java.io.Serializable;
+import java.net.InetAddress;
 import java.util.List;
 
 public class GetSongListBody  extends Body implements  Serializable {
@@ -13,7 +14,7 @@ public class GetSongListBody  extends Body implements  Serializable {
         list=items;
     }
 
-    public GetSongListBody(String sender, List<Song> items){
+    public GetSongListBody(InetAddress sender, List<Song> items){
         this.senderAddress=sender;
         list=items;
     }

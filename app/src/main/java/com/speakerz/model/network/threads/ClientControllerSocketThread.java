@@ -64,6 +64,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
                     struct.socket.setReuseAddress(true);
                     struct.socket.connect(new InetSocketAddress(hostAddress, 8040), timeout);
 
+
                 }catch (IOException e){
                     e.printStackTrace();
                 }
@@ -78,12 +79,6 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             struct.objectInputStream = new ObjectInputStream(struct.socket.getInputStream());
             listen(struct);
             //TODO: HOVA?
-            try {
-                send(new ChannelObject(new PutNameListInitRequestBody(null),TYPE.INITNAMELIST));
-                D.log("sended namelistinit");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
 
         } catch (IOException  e) {
             if(e.getMessage()!=null)
@@ -123,6 +118,14 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
         D.log("got a ChObj");
         if(chObject.TYPE== TYPE.META){
             MetaInfoReceivedEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+            try {
+                D.log("address is: "+struct.socket.getInetAddress().getHostAddress());
+                send(new ChannelObject(new PutNameListInitRequestBody(null),TYPE.INITNAMELIST));
+                D.log("sended namelistinit request");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         }if(chObject.TYPE==TYPE.MP){
             MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,chObject.body));
         }
@@ -148,7 +151,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     public boolean send(ChannelObject chobj) throws Exception{
         if(struct.socket!=null&&!struct.socket.isClosed())
         {
-            chobj.body.senderAddress=struct.socket.getInetAddress().getHostAddress();
+            chobj.body.senderAddress=struct.socket.getLocalAddress();
             struct.objectOutputStream.writeObject(chobj);
             struct.objectOutputStream.flush();
             return true;

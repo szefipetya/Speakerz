@@ -135,9 +135,9 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     //be careful with that!
    volatile SocketStruct recentStruct=null;
 
-    private SocketStruct getSocketStructByAddress(String address){
+    private SocketStruct getSocketStructByAddress(InetAddress address){
         for(SocketStruct s: socketList){
-            if(s.socket.getInetAddress().getHostAddress()==address){
+            if(s.socket.getInetAddress().equals(address)){
                 return s;
             }
         }
@@ -145,7 +145,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     }
 
     //be careful with null value!
-    public void send(String address,ChannelObject channelObject) throws IOException{
+    public void send(InetAddress address,ChannelObject channelObject) throws IOException{
 
 
         if(address==null&& recentStruct!=null){
@@ -195,9 +195,9 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
 
         }
 
-        if(chObject.TYPE== TYPE.INITNAMELIST) {
+        if(chObject.TYPE == TYPE.INITNAMELIST) {
             NameListInitEvent.invoke(new EventArgs1<Body>(TYPE.INITNAMELIST,chObject.body));
-            D.log(" Server:got NameList Request ");
+            D.log(" Server:got NameListInit Request ");
         }
 
         if(chObject.TYPE== TYPE.NET){
@@ -263,6 +263,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     }
     void closeClient(SocketStruct struct){
         try {
+            //TODO: DELETE NAME EVENT
             socketList.remove(struct);
             struct.objectInputStream.close();
             struct.objectOutputStream.close();
