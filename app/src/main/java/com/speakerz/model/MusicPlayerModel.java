@@ -63,6 +63,7 @@ public class MusicPlayerModel{
     EventListener<EventArgs1<Body>> musicPlayerActionListener = new EventListener<EventArgs1<Body>>() {
         @Override
         public void action(EventArgs1<Body> args) {
+            D.log("mp evt happened");
             Body body = args.arg1();
             switch (args.arg1().SUBTYPE()){
                 case MP_PUT_SONG:
@@ -122,13 +123,27 @@ public class MusicPlayerModel{
                             //TODO, not implemented
                             break;
                         case SONG_RESUME:
+                            D.log("resume");
                             isPlaying = true;
                             playbackStateChanged.invoke(new EventArgs1<>(this, true));
                             break;
                         case SONG_PAUSE:
                         case SONG_EOF:
+                            D.log("pause/eof");
                             isPlaying = false;
                             playbackStateChanged.invoke(new EventArgs1<>(this, false));
+                            break;
+                        case SONG_NEXT:
+                            D.log("song_next event happened");
+
+                            Thread t=new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    startNext();
+                                }
+                            });
+                            t.start();
+                            playbackStateChanged.invoke(new EventArgs1<>(this, true));
                             break;
                     }
             }

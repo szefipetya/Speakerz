@@ -147,20 +147,11 @@ public class AudioDecoderThread {
         Header frame = null;
         int framesReaded = 0;
         while (!eosReceived) {
-            if(isPaused.get()){
-                synchronized (isPaused){
-                    try {
-                        isPaused.wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
                      try {
                 if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
-                    D.log("readed tha whole music");
-
-                    break;
+                    //TODO: Ez nem érkezik meg a musicplayermodelbe
+                    MusicPlayerActionEvent.invoke(new EventArgs1<Body>(self,new MusicPlayerActionBody(MP_EVT.SONG_NEXT,null)));
+                    D.log("played tha whole music");
                 }
 
             } catch (BitstreamException e) {
@@ -194,6 +185,7 @@ public class AudioDecoderThread {
         synchronized (playStoppedLocker) {
             playStoppedLocker.notify();
         }
+        //TODO: Ez nem érkezik meg a musicplayermodelbe
         MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_EOF,null)));
 
     }

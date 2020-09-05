@@ -53,8 +53,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
             dataSocket.bind(new InetSocketAddress(8040));
             D.log("server address: "+dataSocket.getInetAddress());
             D.log("localsocketaddress : "+dataSocket.getLocalSocketAddress());
-            //serverSocket.bind(new InetSocketAddress(5048));
-            //waiting for someone
+
             D.log("server running");
 
             while(!externalShutdown) {
@@ -209,27 +208,6 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
         }
     }
 
-    public void handleIncomingObject(SocketStruct struct,ChannelObject chObject) throws IOException {
-        D.log("server: got an object: "+chObject.TYPE);
-
-        struct.socket.getInetAddress();
-        if(chObject.TYPE== TYPE.MP){
-            MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,chObject.body));
-            D.log(" server: MusicPlayerActionEvent Happened: ");
-
-        }
-
-        if(chObject.TYPE== TYPE.NAME){
-            NameChangeEvent.invoke(new EventArgs2<Body,TYPE>(this,chObject.body,chObject.TYPE));
-            D.log(" server: NameChange Happened: ");
-
-        }
-        if(chObject.TYPE== TYPE.DELETENAME){
-            NameChangeEvent.invoke(new EventArgs2<Body,TYPE>(this,chObject.body,chObject.TYPE));
-            D.log(" server: NameChange Happened: ");
-
-        }
-    }
 
     @Override
     public void shutdown(){

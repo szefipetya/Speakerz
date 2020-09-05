@@ -236,9 +236,11 @@ private void mainLoop(){
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            //  yt.play("TW9d8vYrVFQ");
+
+
         }
     });
+
 
     t.start();
 }
@@ -515,7 +517,7 @@ ServerAudioMultiCastSocketThread self=this;
                             try {
                              //   D.log("waiting for notify");
                                 //decoderbufferer will notify us, when a new package is added to the queue
-                                decoderBufferer.bufferQueue.wait(500);
+                                decoderBufferer.bufferQueue.wait(100);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
@@ -528,7 +530,7 @@ ServerAudioMultiCastSocketThread self=this;
                         struct.bufferHeadPosition = packet.packageNumber;
                         if(struct.bufferHeadPosition>=liveplayPackageNumber) {
                             sendObjectOrDelete(struct,struct.dataSocket,packet);
-                            D.log("packet" + packet.packageNumber + " sent");
+                         //   D.log("packet" + packet.packageNumber + " sent");
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -536,7 +538,9 @@ ServerAudioMultiCastSocketThread self=this;
                         break;
                     }
                 }else{
+
                     D.log("no next :(");
+                    break;
                 }
 
             }
@@ -568,6 +572,7 @@ ServerAudioMultiCastSocketThread self=this;
                 }
             }
         });
+
 
     }
 

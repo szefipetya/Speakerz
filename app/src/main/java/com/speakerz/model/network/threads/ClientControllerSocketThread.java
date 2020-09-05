@@ -66,12 +66,12 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
 
 
 
-            D.log("connection succesful to "+ hostAddress);
-            //PrintWriter pr=new PrintWriter(socket.getOutputStream());
-          //  pr.println("Hello, i am a client");
-            //pr.flush();
+
             struct.objectOutputStream = new ObjectOutputStream(struct.socket.getOutputStream());
             struct.objectInputStream = new ObjectInputStream(struct.socket.getInputStream());
+            D.log("connection succesful to "+ hostAddress);
+
+
             listen(struct);
         } catch (IOException  e) {
             if(e.getMessage()!=null)
