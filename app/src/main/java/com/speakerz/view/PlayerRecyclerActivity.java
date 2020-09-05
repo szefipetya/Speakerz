@@ -18,12 +18,15 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.ContactsContract;
 import android.view.MenuItem;
 import com.speakerz.R;
 import com.speakerz.SpeakerzService;
 import com.speakerz.model.MusicPlayerModel;
+import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.PutNameListInitRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.EventArgs1;
@@ -120,11 +123,12 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
         return this.menu.onOptionsItemSelected(item);
     }
 
-
+    // THis communicates with the Dialog
     @Override
     public void applyTexts(String username) {
         System.out.println(username+"outside");
         NameItem item = new NameItem(username,"en",model.getModel().deviceID);
+        model.getModel().NickName=username;
         PutNameChangeRequestBody body1 = new PutNameChangeRequestBody(null,item);
         model.getModel().NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(null,body1,TYPE.NAME));
     }

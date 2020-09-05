@@ -9,7 +9,9 @@ import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.PutNameListInitRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
+import com.speakerz.model.network.Serializable.body.controller.content.NameList;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
@@ -33,8 +35,6 @@ public class DeviceModel extends BaseModel {
         network.start();
         network.getReciever().clearConnections();
 
-        //NameChangeEvent.invoke();
-
         deletePersistentGroups();
 
     }
@@ -46,6 +46,7 @@ public class DeviceModel extends BaseModel {
         network.getClientSocketWrapper().controllerSocket.MusicPlayerActionEvent=MusicPlayerActionEvent;
         network.getClientSocketWrapper().controllerSocket.MetaInfoReceivedEvent=MetaInfoReceivedEvent;
         network.getClientSocketWrapper().controllerSocket.NameChangeEvent = NameChangeEvent;
+        network.getClientSocketWrapper().controllerSocket.NameListInitEvent= NameListInitEvent;
     }
 
 
@@ -56,26 +57,42 @@ public class DeviceModel extends BaseModel {
 
             @Override
             public void action(EventArgs2<Body,TYPE> args) {
+                //TODO: EZT azért biztos lehet szebben is de így működik
                 if(args.arg2() == TYPE.DELETENAME){
                     D.log("NAME DELETE HAPPEND.");
                     try {
                         NameItem delname = (NameItem) args.arg1().getContent();
-                        NickNames.remove(delname.id);
-                        network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.DELETENAME));
+                        if(NickNames.get(delname.id) != null){
+                            network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.DELETENAME));
+                            NickNames.remove(delname.id);
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
+                //TODO: EZT azért biztos lehet szebben is de így működik
                 if(args.arg2() == TYPE.NAME){
-                    D.log("NAME CHANGE HAPPEND.");
-                    NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
-                    D.log("name:"+NickNames.get(((PutNameChangeRequestBody)args.arg1()).getContent().id));
-                    try {
-                        network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.NAME));
-                        D.log("NameChange sent");
-                    } catch (Exception e) {e.printStackTrace(); }
-
+                    if(NickNames.get(((NameItem) args.arg1().getContent()).id) ==null || !NickNames.get(((NameItem) args.arg1().getContent()).id).equals(((NameItem) args.arg1().getContent()).name)){
+                        D.log("NAME CHANGE HAPPEND.");
+                        NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
+                        D.log("name:"+NickNames.get(((PutNameChangeRequestBody)args.arg1()).getContent().id));
+                        try {
+                            network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.NAME));
+                            D.log("NameChange sent");
+                        } catch (Exception e) {e.printStackTrace(); }
+                    }
                 }
+
+            }
+        });
+
+        NameListInitEvent.addListener(new EventListener<EventArgs1<Body>>(){
+            @Override
+            public void action(EventArgs1<Body> args) {
+                D.log("NAMELIST INIT REQUEST HAPPEND. SERVER");
+                NickNames = ((NameList) args.arg1().getContent()).namelist;
+                NameItem nameitem = new NameItem(NickName,"",deviceID);
+                NameChangeEvent.invoke(new EventArgs2<Body,TYPE>(this,new PutNameChangeRequestBody(nameitem),TYPE.NAME));
 
             }
         });

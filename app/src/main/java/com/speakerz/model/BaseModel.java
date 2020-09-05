@@ -43,6 +43,7 @@ public abstract class BaseModel {
     public final ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent=new ThreadSafeEvent<>();
     public final Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
     public final Event<EventArgs1<String>> SongDownloadedEvent=new Event<>();
+    public final Event<EventArgs1<Body>> NameListInitEvent =new Event<>();;
     public final Event<PermissionCheckEventArgs> PermissionCheckEvent;
     public final Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
     public final Event<EventArgs2<Body, TYPE>> NameChangeEvent=new Event<>();
@@ -57,8 +58,6 @@ public abstract class BaseModel {
         NickName = "placeholder";
         deviceID = UUID.randomUUID().toString();
         NickNames= new HashMap<>();
-
-        NickNames.put(deviceID,NickName);
 
 
         subscribeToNameChange();

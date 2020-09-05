@@ -9,6 +9,7 @@ import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.NetworkEventBody;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.PutNameListInitRequestBody;
 import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.Event;
@@ -32,8 +33,11 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
    public Event<EventArgs1<Body>> MetaInfoReceivedEvent;
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
     public Event<EventArgs2<Body,TYPE>> NameChangeEvent;
+    public Event<EventArgs1<Body>> NameListInitEvent;
     public Event<EventArgs1<Body>> DisconectedNameErase;
     volatile boolean externalShutdown=false;
+    private int timeout;
+
     public ClientControllerSocketThread(){
 
     }
@@ -58,7 +62,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
                     //Thread.sleep(2000);
                     struct.socket=new Socket();
                     struct.socket.setReuseAddress(true);
-                    struct.socket.connect(new InetSocketAddress(hostAddress, 8040), 20000);
+                    struct.socket.connect(new InetSocketAddress(hostAddress, 8040), timeout);
 
                 }catch (IOException e){
                     e.printStackTrace();
@@ -73,6 +77,14 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             struct.objectOutputStream = new ObjectOutputStream(struct.socket.getOutputStream());
             struct.objectInputStream = new ObjectInputStream(struct.socket.getInputStream());
             listen(struct);
+            //TODO: HOVA?
+            try {
+                send(new ChannelObject(new PutNameListInitRequestBody(null),TYPE.INITNAMELIST));
+                D.log("sended namelistinit");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         } catch (IOException  e) {
             if(e.getMessage()!=null)
                D.log(e.getMessage());
@@ -116,14 +128,18 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
         }
         if(chObject.TYPE== TYPE.NAME){
             NameChangeEvent.invoke(new EventArgs2<Body,TYPE>(this,chObject.body,TYPE.NAME));
-            D.log(" server: NameChange Happened: ");
+            D.log(" Client: NameChange Happened: ");
 
         }
 
         if(chObject.TYPE== TYPE.DELETENAME) {
             NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(this, chObject.body, TYPE.DELETENAME));
-            D.log(" server: NameChange DELETE Happened: ");
+            D.log(" Client: NameChange DELETE Happened: ");
 
+        }
+        if(chObject.TYPE== TYPE.INITNAMELIST) {
+            NameListInitEvent.invoke(new EventArgs1<Body>(TYPE.INITNAMELIST,chObject.body));
+            D.log(" Client:got NameList ");
         }
     }
 
@@ -143,6 +159,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     @Override
     public void shutdown(){
         try {
+            D.log("SHUTDOWN");
             externalShutdown=true;
 
           //  send(new ChannelObject(new NetworkEventBody(struct.socket.getInetAddress().getHostAddress(), NET_EVT.DISCONNECT),TYPE.NET));

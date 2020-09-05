@@ -42,6 +42,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     //dependency injection
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent =null;
     public Event<EventArgs1<Body>> MetaInfoEvent = null;
+    public Event<EventArgs1<Body>> NameListInitEvent;
     public Event<EventArgs2<Body,TYPE>> NameChangeEvent=null;
 
     volatile boolean externalShutdown=false;
@@ -192,6 +193,11 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
             NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(this, chObject.body, TYPE.DELETENAME));
             D.log(" server: NameChange DELETE Happened: ");
 
+        }
+
+        if(chObject.TYPE== TYPE.INITNAMELIST) {
+            NameListInitEvent.invoke(new EventArgs1<Body>(TYPE.INITNAMELIST,chObject.body));
+            D.log(" Server:got NameList Request ");
         }
 
         if(chObject.TYPE== TYPE.NET){

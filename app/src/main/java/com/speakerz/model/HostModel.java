@@ -13,8 +13,10 @@ import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.PutNameListInitRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
+import com.speakerz.model.network.Serializable.body.controller.content.NameList;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
@@ -57,26 +59,43 @@ public class HostModel extends BaseModel {
                     D.log("NAME DELETE HAPPEND.");
                     try {
                         NameItem delname = (NameItem) args.arg1().getContent();
-                        NickNames.remove(delname.id);
-                        network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.DELETENAME));
+                        if(NickNames.get(delname.id) != null) {
+                            NickNames.remove(delname.id);
+                            network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody((NameItem) args.arg1().getContent()), TYPE.DELETENAME));
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
                 if(args.arg2() == TYPE.NAME){
-                    D.log("NAME CHANGE HAPPEND.");
-                    NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
                     D.log("name:"+NickNames.get(((PutNameChangeRequestBody)args.arg1()).getContent().id));
-                    try {
-                        network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.NAME));
-                        D.log("NameChange sent");
-                    } catch (IOException e) { }
-
-                }
+                    if(NickNames.get(((NameItem) args.arg1().getContent()).id) ==null || !NickNames.get(((NameItem) args.arg1().getContent()).id).equals(((NameItem) args.arg1().getContent()).name)) {
+                        D.log("NAME CHANGE HAPPEND.");
+                        NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
+                        try {
+                            network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody((NameItem) args.arg1().getContent()), TYPE.NAME));
+                            D.log("NameChange sent");
+                        } catch (IOException e) {
+                        }
+                    }
+                   }
 
             }
 
             });
+
+        NameListInitEvent.addListener(new EventListener<EventArgs1<Body>>(){
+            @Override
+            public void action(EventArgs1<Body> args) {
+                D.log("NAMELIST INIT REQUEST HAPPEND. SERVER");
+                try {
+                    network.getServerSocketWrapper().controllerSocket.send(args.arg1().senderAddress,new ChannelObject(new PutNameListInitRequestBody(new NameList(NickNames)),TYPE.INITNAMELIST));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
     }
 
 
@@ -226,5 +245,6 @@ deletePersistentGroups();
         network.getServerSocketWrapper().controllerSocket.MetaInfoEvent =MetaInfoReceivedEvent;
         network.getServerSocketWrapper().controllerSocket.ExceptionEvent =ExceptionEvent;
         network.getServerSocketWrapper().controllerSocket.NameChangeEvent =NameChangeEvent;
+        network.getServerSocketWrapper().controllerSocket.NameListInitEvent= NameListInitEvent;
     }
 }
