@@ -203,20 +203,7 @@ Activity self=this;
 
         });
 
-
-
-
-
-
-        gpsStatusCheck();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            //checkCoarseLocationPermission();
-        }
-
-        //ez Android 8.0 felett kell
-
-
+     //   gpsStatusCheck();
     }
 
     //Permission&Policy
