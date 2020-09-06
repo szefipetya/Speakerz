@@ -264,6 +264,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     void closeClient(SocketStruct struct){
         try {
             //TODO: DELETE NAME EVENT
+            //struct.socket.getInetAddress();
             socketList.remove(struct);
             struct.objectInputStream.close();
             struct.objectOutputStream.close();

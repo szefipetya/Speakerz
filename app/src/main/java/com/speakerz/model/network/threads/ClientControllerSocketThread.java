@@ -120,7 +120,9 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             MetaInfoReceivedEvent.invoke(new EventArgs1<Body>(this,chObject.body));
             try {
                 D.log("address is: "+struct.socket.getInetAddress().getHostAddress());
+
                 send(new ChannelObject(new PutNameListInitRequestBody(null),TYPE.INITNAMELIST));
+
                 D.log("sended namelistinit request");
             } catch (Exception e) {
                 e.printStackTrace();
