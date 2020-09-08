@@ -10,6 +10,5 @@ public class SocketStruct  {
   public  Socket socket;
     public ObjectInputStream objectInputStream;
     public ObjectOutputStream objectOutputStream;
-    UUID deviceID;
 
 }

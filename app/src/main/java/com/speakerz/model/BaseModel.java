@@ -22,6 +22,7 @@ import com.speakerz.util.EventListener;
 import com.speakerz.util.ThreadSafeEvent;
 
 import java.lang.reflect.Type;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -47,6 +48,7 @@ public abstract class BaseModel {
     public final Event<PermissionCheckEventArgs> PermissionCheckEvent;
     public final Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
     public final Event<EventArgs2<Body, TYPE>> NameChangeEvent=new Event<>();
+    public final Event<EventArgs1<Body>> INITDeviceAddressEvent = new Event<>();
 
 
 
@@ -56,7 +58,7 @@ public abstract class BaseModel {
         musicPlayerModel = new MusicPlayerModel(this, isHost);
         
         NickName = "placeholder";
-        deviceID = UUID.randomUUID().toString();
+        deviceID = "test";
         NickNames= new HashMap<>();
 
 

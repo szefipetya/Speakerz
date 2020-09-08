@@ -8,8 +8,10 @@ import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.NetworkEventBody;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
+import com.speakerz.model.network.Serializable.body.controller.INITDeviceAddressBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameListInitRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.Event;
@@ -32,8 +34,10 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     //injection
    public Event<EventArgs1<Body>> MetaInfoReceivedEvent;
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
+    public Event<EventArgs1<Body>> INITDeviceAddressEvent;
     public Event<EventArgs2<Body,TYPE>> NameChangeEvent;
     public Event<EventArgs1<Body>> NameListInitEvent;
+
     public Event<EventArgs1<Body>> DisconectedNameErase;
     volatile boolean externalShutdown=false;
     private int timeout;
@@ -75,10 +79,8 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             struct.objectOutputStream = new ObjectOutputStream(struct.socket.getOutputStream());
             struct.objectInputStream = new ObjectInputStream(struct.socket.getInputStream());
             D.log("connection succesful to "+ hostAddress);
-
-
+            this.INITDeviceAddressEvent.invoke(new EventArgs1<Body>("senki",new INITDeviceAddressBody(struct.socket.getLocalAddress())));
             listen(struct);
-            //TODO: HOVA?
 
         } catch (IOException  e) {
             if(e.getMessage()!=null)
@@ -190,5 +192,9 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
 
     public void setAddress(InetAddress address) {
         this.hostAddress=address.getHostAddress();
+    }
+
+    public InetAddress getAddress(){
+        return this.struct.socket.getInetAddress();
     }
 }

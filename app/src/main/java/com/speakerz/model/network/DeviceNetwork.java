@@ -79,7 +79,8 @@ public class DeviceNetwork extends BaseNetwork {
             }
         });
 
-initServiceListeners();
+        initServiceListeners();
+
     }
 
     DeviceNetwork self = this;

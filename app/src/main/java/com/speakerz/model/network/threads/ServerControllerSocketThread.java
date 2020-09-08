@@ -9,6 +9,9 @@ import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.controller.GetServerInfoBody;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.ChannelObject;
+import com.speakerz.model.network.Serializable.body.controller.INITDeviceAddressBody;
+import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.Serializable.body.controller.content.ServerInfo;
 import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
@@ -42,6 +45,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     //dependency injection
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent =null;
     public Event<EventArgs1<Body>> MetaInfoEvent = null;
+    public Event<EventArgs1<Body>> INITDeviceAddressEvent;
     public Event<EventArgs1<Body>> NameListInitEvent;
     public Event<EventArgs2<Body,TYPE>> NameChangeEvent=null;
 
@@ -56,7 +60,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
             D.log("localsocketaddress : "+dataSocket.getLocalSocketAddress());
 
             D.log("server running");
-
+            this.INITDeviceAddressEvent.invoke(new EventArgs1<Body>("senki",new INITDeviceAddressBody(address)));
             while(!externalShutdown) {
                 final Socket socket = dataSocket.accept();
                 if(socket == null){
@@ -73,6 +77,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
 
 
                 D.log("client connected: "+socket.getInetAddress());
+
 
                 //új szálon elindítjuk a socketet, hogy hallgassuk a bejövő adatokat.
                 new Thread() {
@@ -208,7 +213,6 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                 struct.objectInputStream.close();
                 struct.socket.close();
             }
-            NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(this,chObject.body,chObject.TYPE));
             D.log(" server: NameChange Happened: ");
 
         }
@@ -242,6 +246,9 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     void closeClient(SocketStruct struct){
         try {
             //TODO: DELETE NAME EVENT
+            NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(this, new PutNameChangeRequestBody(
+                    new NameItem("torles","server",struct.socket.getInetAddress().toString())),TYPE.DELETENAME));
+            D.log("lecsatlakozott egy ember");
             //struct.socket.getInetAddress();
             socketList.remove(struct);
             struct.objectInputStream.close();
@@ -256,5 +263,9 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
 
     public void setAddress(InetAddress address) {
         this.address=address;
+    }
+
+    public InetAddress getAddress(){
+        return address;
     }
 }

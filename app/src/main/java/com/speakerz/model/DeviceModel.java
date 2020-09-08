@@ -47,6 +47,7 @@ public class DeviceModel extends BaseModel {
         network.getClientSocketWrapper().controllerSocket.MetaInfoReceivedEvent=MetaInfoReceivedEvent;
         network.getClientSocketWrapper().controllerSocket.NameChangeEvent = NameChangeEvent;
         network.getClientSocketWrapper().controllerSocket.NameListInitEvent= NameListInitEvent;
+        network.getClientSocketWrapper().controllerSocket.INITDeviceAddressEvent= INITDeviceAddressEvent;
     }
 
 
@@ -94,6 +95,13 @@ public class DeviceModel extends BaseModel {
                 NameItem nameitem = new NameItem(NickName,"",deviceID);
                 NameChangeEvent.invoke(new EventArgs2<Body,TYPE>(this,new PutNameChangeRequestBody(nameitem),TYPE.NAME));
 
+            }
+        });
+
+        INITDeviceAddressEvent.addListener(new EventListener<EventArgs1<Body>>(){
+            @Override
+            public void action(EventArgs1<Body> args) {
+               deviceID=args.arg1().getContent().toString();
             }
         });
         //a network jelzi, hogy songObjectet kapott.
@@ -160,14 +168,11 @@ public class DeviceModel extends BaseModel {
         subscribeMusicPlayerModelEvents();
         network.getClientSocketWrapper().audioSocket.setContext(context);
         network.setNickName(NickName);
-
-
+        //this.deviceID = network.getClientSocketWrapper().controllerSocket.getAddress().toString();
 
 
     }
     private void subscribeMusicPlayerModelEvents() {
-
-
         ModelCommunicationEvent.addListener(new EventListener<EventArgs3<MP_EVT, Object, Body>>() {
             @Override
             public void action(EventArgs3<MP_EVT, Object,Body> args) {

@@ -3,7 +3,9 @@ package com.speakerz.model;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.text.format.Formatter;
 import android.widget.Toast;
 
 import com.speakerz.debug.D;
@@ -30,6 +32,9 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
+
+import static android.content.Context.WIFI_SERVICE;
+import static androidx.core.content.ContextCompat.getSystemService;
 
 public class HostModel extends BaseModel {
     HostNetwork network;
@@ -95,6 +100,12 @@ public class HostModel extends BaseModel {
                     e.printStackTrace();
                 }
 
+            }
+        });
+        INITDeviceAddressEvent.addListener(new EventListener<EventArgs1<Body>>(){
+            @Override
+            public void action(EventArgs1<Body> args) {
+                deviceID=args.arg1().getContent().toString();
             }
         });
     }
@@ -247,5 +258,6 @@ deletePersistentGroups();
         network.getServerSocketWrapper().controllerSocket.ExceptionEvent =ExceptionEvent;
         network.getServerSocketWrapper().controllerSocket.NameChangeEvent =NameChangeEvent;
         network.getServerSocketWrapper().controllerSocket.NameListInitEvent= NameListInitEvent;
+        network.getServerSocketWrapper().controllerSocket.INITDeviceAddressEvent= INITDeviceAddressEvent;
     }
 }
