@@ -17,6 +17,8 @@ import com.speakerz.R;
 import com.speakerz.debug.D;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
+import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs;
 import com.speakerz.view.recyclerview.RecyclerItemClickListener;
 
 import java.util.ArrayList;
@@ -28,7 +30,7 @@ public class SongAddLibraryFragment extends Fragment {
 
     private ArrayList<libraryItem> listLibrary = new ArrayList<>();
     private AdapterLibrary adapterLibrary;
-
+    public final Event<EventArgs> CloseEvent=new Event<>();
     public void setModel(MusicPlayerModel model) {
         this.model = model;
         synchronized (modelIsNullLocker) {
@@ -72,6 +74,7 @@ public class SongAddLibraryFragment extends Fragment {
                 D.log("back");
                 // self.getActivity().getFragmentManager().popBackStack();
                 self.getActivity().onBackPressed();
+                CloseEvent.invoke(null);
             }
         });
 

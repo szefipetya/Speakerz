@@ -33,8 +33,7 @@ public abstract class BaseNetwork  {
     }
 
     protected IntentFilter intentFilter;
-
-    public Event<TextChangedEventArgs> TextChanged = new Event<>();
+    public Event<TextChangedEventArgs> TextChanged=null;
     public Event<EventArgs> ListChanged = new Event<>();
     //@Injected
     public Event<PermissionCheckEventArgs> PermissionCheckEvent =null;
@@ -51,6 +50,10 @@ public abstract class BaseNetwork  {
 
     WifiP2pManager.PeerListListener peerListListener;
     UpdateEventManager updateEventManagerToModel;
+
+    public void setTextChanged(Event<TextChangedEventArgs> textChanged) {
+        TextChanged = textChanged;
+    }
 
     public BaseNetwork(WifiBroadcastReciever reciever) {
         this.reciever = reciever;

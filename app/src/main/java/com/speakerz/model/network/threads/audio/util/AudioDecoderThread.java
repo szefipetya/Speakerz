@@ -147,6 +147,15 @@ public class AudioDecoderThread {
         Header frame = null;
         int framesReaded = 0;
         while (!eosReceived) {
+            if(isPaused.get()){
+                synchronized (isPaused) {
+                    try {
+                        isPaused.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
                      try {
                 if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
                     //TODO: Ez nem érkezik meg a musicplayermodelbe

@@ -27,15 +27,19 @@ import com.speakerz.debug.D;
 import com.speakerz.model.BaseModel;
 import com.speakerz.model.DeviceModel;
 import com.speakerz.model.HostModel;
+import com.speakerz.model.enums.EVT;
 import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
+import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
 import com.speakerz.viewModel.TextValueStorage;
+
+import org.w3c.dom.Text;
 
 import ealvatag.audio.exceptions.CannotReadException;
 
@@ -75,6 +79,7 @@ public class SpeakerzService extends Service {
                 model.start();
                 model.getMusicPlayerModel().loadAudio();
 
+
                 registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
 
 
@@ -88,7 +93,6 @@ public class SpeakerzService extends Service {
                 if(model!=null){stopService("changing service type");}
 
                 model = new DeviceModel(service, service.receiver,service.connectivityManager,PermissionCheckEvent);
-
                 registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
                 model.start();
                 model.getMusicPlayerModel().loadAudio();
@@ -143,6 +147,7 @@ public class SpeakerzService extends Service {
             return model;
         }
     }
+
 
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
