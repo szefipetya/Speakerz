@@ -11,11 +11,14 @@ package com.speakerz.view;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.ContactsContract;
@@ -45,7 +48,7 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
     }
 
     BottomMusicPlayer bottomPlayer;
-    AppCompatActivity self=this;
+    PlayerRecyclerActivity self=this;
 
 
     MusicPlayerModel model = null;
@@ -71,7 +74,23 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
         // Configure BottomPlayer
         bottomPlayer = new BottomMusicPlayer(self);
     }
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        lightOverlay();
+    }
+    public void lightOverlay(){
+        ConstraintLayout mConstraintLayout = findViewById(R.id.layout_darker);
+        mConstraintLayout.setBackgroundResource(R.color.transparent);
+        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.rgb(31, 64, 104)));
 
+    }
+    public void darkOverlay(){
+        ConstraintLayout mConstraintLayout = findViewById(R.id.layout_darker);
+        mConstraintLayout.setBackgroundResource(R.color.darkerBackground);
+        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.rgb(12,26,42)));
+
+    }
     private ServiceConnection srvConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className, IBinder binder) {

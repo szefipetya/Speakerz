@@ -7,6 +7,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.widget.Toast;
 
 import com.speakerz.debug.D;
+import com.speakerz.model.enums.EVT;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.*;
 import com.speakerz.model.network.Serializable.ChannelObject;
@@ -20,6 +21,7 @@ import com.speakerz.model.network.Serializable.body.controller.content.NameList;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
+import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
@@ -38,9 +40,11 @@ public class HostModel extends BaseModel {
     public HostModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager, Event<PermissionCheckEventArgs> PermissionCheckEvent) {
 
         super(context, reciever,true,PermissionCheckEvent);
+        NickName="Host";
         network = new HostNetwork(reciever);
         network.PermissionCheckEvent=this.PermissionCheckEvent;
         network.ExceptionEvent=this.ExceptionEvent;
+        network.TextChanged=this.TextChanged;
         network.getReciever().setConnectivityManager(connectivityManager);
         injectNetworkDependencies();
 
@@ -60,8 +64,10 @@ public class HostModel extends BaseModel {
                     try {
                         NameItem delname = (NameItem) args.arg1().getContent();
                         if(NickNames.get(delname.id) != null) {
-                            NickNames.remove(delname.id);
+
+                            TextChanged.invoke(new TextChangedEventArgs(self, EVT.toast,( NickNames.get(delname.id)+" left the party")));
                             network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody((NameItem) args.arg1().getContent()), TYPE.DELETENAME));
+                            NickNames.remove(delname.id);
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -71,6 +77,8 @@ public class HostModel extends BaseModel {
                     D.log("name:"+NickNames.get(((PutNameChangeRequestBody)args.arg1()).getContent().id));
                     if(NickNames.get(((NameItem) args.arg1().getContent()).id) ==null || !NickNames.get(((NameItem) args.arg1().getContent()).id).equals(((NameItem) args.arg1().getContent()).name)) {
                         D.log("NAME CHANGE HAPPEND.");
+                        TextChanged.invoke(new TextChangedEventArgs(self, EVT.toast,((NameItem) args.arg1().getContent()).name+" joined the party"));
+
                         NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
                         try {
                             network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody((NameItem) args.arg1().getContent()), TYPE.NAME));
@@ -91,6 +99,7 @@ public class HostModel extends BaseModel {
                 try {
                     PutNameListInitRequestBody body = (PutNameListInitRequestBody) args.arg1();
                     network.getServerSocketWrapper().controllerSocket.send(body.senderAddress,new ChannelObject(new PutNameListInitRequestBody(new NameList(NickNames)),TYPE.INITNAMELIST));
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

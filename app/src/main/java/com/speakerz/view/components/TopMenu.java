@@ -34,21 +34,22 @@ public class TopMenu {
                 openNameListDialog();
 
                 //Kicsit buggos xd
-                activity.getSupportFragmentManager()
+                /*activity.getSupportFragmentManager()
                         .beginTransaction()
                         .replace(R.id.fragment_container_devices, new SongAddLibraryFragment())
                         .addToBackStack(null)
-                        .commit();
+                        .commit();*/
+                //vajon miért? :D -Peti
 
                 return true;
             case R.id.profile:
                 Toast.makeText(activity, "Profile selected", Toast.LENGTH_SHORT).show();
+                openNameChangeDialog(activity);
                 return true;
             case R.id.fav:
                 Toast.makeText(activity, "Favorites selected", Toast.LENGTH_SHORT).show();
                 return true;
             case R.id.name_change:
-                Toast.makeText(activity, "Name Change selected", Toast.LENGTH_SHORT).show();
                 openNameChangeDialog(activity);
                 return true;
             case R.id.feedback:
@@ -68,6 +69,7 @@ public class TopMenu {
     public void openNameListDialog(){
         NameListDialog nameListDialog = new NameListDialog(model);
         nameListDialog.show(activity.getSupportFragmentManager(), "example dialog");
+
 
     }
 

@@ -36,6 +36,7 @@ public class NameListDialog extends AppCompatDialogFragment {
                 .setNegativeButton("back", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
+                        dismiss(); // <---- closes the dialog
                     }
                 });
 

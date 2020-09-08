@@ -1,17 +1,20 @@
 package com.speakerz.model;
 
 import android.content.Context;
+import android.os.Handler;
 import android.os.Looper;
 import android.telephony.TelephonyManager;
 import android.widget.Toast;
 
 import com.speakerz.debug.D;
+import com.speakerz.model.enums.EVT;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.BaseNetwork;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
+import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
@@ -47,6 +50,8 @@ public abstract class BaseModel {
     public final Event<PermissionCheckEventArgs> PermissionCheckEvent;
     public final Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
     public final Event<EventArgs2<Body, TYPE>> NameChangeEvent=new Event<>();
+    public Event<TextChangedEventArgs> TextChanged=new Event<>();
+
 
 
 
@@ -68,7 +73,19 @@ public abstract class BaseModel {
             public void action(WirelessStatusChangedEventArgs args) {
             }
         });
-
+        TextChanged.addListener(new EventListener<TextChangedEventArgs>() {
+            @Override
+            public void action(final TextChangedEventArgs args) {
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(args.event()== EVT.toast){
+                            Toast.makeText(context,args.text(),Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+            }
+        });
 
 
     }

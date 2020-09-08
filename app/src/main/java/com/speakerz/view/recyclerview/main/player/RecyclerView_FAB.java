@@ -15,14 +15,16 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.speakerz.R;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
+import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
+import com.speakerz.view.PlayerRecyclerActivity;
 import com.speakerz.view.recyclerview.songadd.library.SongAddLibraryFragment;
 
 import java.util.ArrayList;
 
 public class RecyclerView_FAB  {
-    AppCompatActivity activity;
+    PlayerRecyclerActivity activity;
 
     private ArrayList<Item> itemList;
 
@@ -37,7 +39,7 @@ public class RecyclerView_FAB  {
 
     // private Animation mFabOpenAnim, mFabCloseAnim; //Jelenleg nem működik
 
-    public RecyclerView_FAB(AppCompatActivity activity){
+    public RecyclerView_FAB(PlayerRecyclerActivity activity){
         this.activity = activity;
         itemList = new ArrayList<>();
         buildRecyclerView();
@@ -129,6 +131,7 @@ public class RecyclerView_FAB  {
                     //mYoutubeFab.setAnimation(mFabCloseAnim);
 
                     isFabOpen = false;
+                    activity.lightOverlay();
                 }else {
                     mLibraryFab.setVisibility(View.VISIBLE);
                     mYoutubeFab.setVisibility(View.VISIBLE);
@@ -138,13 +141,12 @@ public class RecyclerView_FAB  {
                     //mYoutubeFab.setAnimation(mFabOpenAnim);
 
                     isFabOpen = true;
+                    activity.darkOverlay();
                 }
 
                 //Darker background + Toolbar -> Ezt kell visszaállítani az eredeti színekkel a listában lévő plusz gomb lenyomása után
                 //Sötétítés
-                ConstraintLayout mConstraintLayout = activity.findViewById(R.id.layout_darker);
-                mConstraintLayout.setBackgroundResource(R.color.darkerBackground);
-                activity.getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.rgb(12,26,42)));
+
 
                 //Visszavilágosítás
                 /*
@@ -154,6 +156,7 @@ public class RecyclerView_FAB  {
                 * */
             }
         });
+
 
         mLibraryFab = activity.findViewById(R.id.fab_library);
         mLibraryText = activity.findViewById(R.id.library_text);
@@ -171,12 +174,20 @@ public class RecyclerView_FAB  {
                 mYoutubeText.setVisibility(View.INVISIBLE);
                 SongAddLibraryFragment fragment=new SongAddLibraryFragment();
                 fragment.setModel(model);
+
                 //Song add from library fragment open
                 activity.getSupportFragmentManager()
                         .beginTransaction()
                         .replace(R.id.fragment_container_song_import,fragment)
                         .addToBackStack(null)
                         .commit();
+                fragment.CloseEvent.addListener(new EventListener<EventArgs>() {
+                    @Override
+                    public void action(EventArgs args) {
+                        //set the darkness back when the dialog is closed
+                       activity.lightOverlay();
+                    }
+                });
             }
         });
 
@@ -193,6 +204,7 @@ public class RecyclerView_FAB  {
                 mYoutubeFab.setVisibility(View.INVISIBLE);
                 mLibraryText.setVisibility(View.INVISIBLE);
                 mYoutubeText.setVisibility(View.INVISIBLE);
+                activity.lightOverlay();
             }
         });
     }

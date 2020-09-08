@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import com.speakerz.debug.D;
+import com.speakerz.model.enums.EVT;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.Serializable.ChannelObject;
@@ -15,6 +16,7 @@ import com.speakerz.model.network.Serializable.body.controller.content.NameList;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
+import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
@@ -28,6 +30,26 @@ public class DeviceModel extends BaseModel {
     DeviceNetwork network;
     public Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
 
+    public DeviceModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager, Event<PermissionCheckEventArgs> PermissionCheckEvent){
+        super(context, reciever,false,PermissionCheckEvent);
+        network=new DeviceNetwork(reciever);
+        network.PermissionCheckEvent=this.PermissionCheckEvent;
+        network.ExceptionEvent=this.ExceptionEvent;
+        network.TextChanged=this.TextChanged;
+
+        injectNetworkDependencies();
+
+        subscribeNetworkEvents();
+
+        network.getReciever().setConnectivityManager(connectivityManager);
+        subscribeMusicPlayerModelEvents();
+        network.getClientSocketWrapper().audioSocket.setContext(context);
+        network.setNickName(NickName);
+
+
+
+
+    }
 
 
     @Override
@@ -49,7 +71,7 @@ public class DeviceModel extends BaseModel {
         network.getClientSocketWrapper().controllerSocket.NameListInitEvent= NameListInitEvent;
     }
 
-
+DeviceModel self=this;
     private void subscribeNetworkEvents() {
 
 
@@ -63,6 +85,9 @@ public class DeviceModel extends BaseModel {
                     try {
                         NameItem delname = (NameItem) args.arg1().getContent();
                         if(NickNames.get(delname.id) != null){
+
+                            TextChanged.invoke(new TextChangedEventArgs(self, EVT.toast,( NickNames.get(delname.id)+" left the party")));
+
                             network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.DELETENAME));
                             NickNames.remove(delname.id);
                         }
@@ -75,6 +100,8 @@ public class DeviceModel extends BaseModel {
                     if(NickNames.get(((NameItem) args.arg1().getContent()).id) ==null || !NickNames.get(((NameItem) args.arg1().getContent()).id).equals(((NameItem) args.arg1().getContent()).name)){
                         D.log("NAME CHANGE HAPPEND.");
                         NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
+                        TextChanged.invoke(new TextChangedEventArgs(self, EVT.toast,((NameItem) args.arg1().getContent()).name+" joined the party"));
+
                         D.log("name:"+NickNames.get(((PutNameChangeRequestBody)args.arg1()).getContent().id));
                         try {
                             network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.NAME));
@@ -106,6 +133,7 @@ public class DeviceModel extends BaseModel {
     public void stop() {
         //network.getReciever().getWifiP2pManager().cancelConnect( network.getReciever().getChannel(),null);
         //TODO: who is teh sender? and where should i put this here or some where else?
+        //ezt a socket szintre le kéne vinni, InetAdress-el az id-t
         NameItem deleteName = new NameItem("delete","sender",deviceID);
         try {
             network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new PutNameChangeRequestBody(deleteName),TYPE.DELETENAME));
@@ -147,24 +175,7 @@ public class DeviceModel extends BaseModel {
             e.printStackTrace();
         }
     }
-    public DeviceModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager, Event<PermissionCheckEventArgs> PermissionCheckEvent){
-        super(context, reciever,false,PermissionCheckEvent);
-        network=new DeviceNetwork(reciever);
-        network.PermissionCheckEvent=this.PermissionCheckEvent;
-        network.ExceptionEvent=this.ExceptionEvent;
-        injectNetworkDependencies();
 
-        subscribeNetworkEvents();
-
-        network.getReciever().setConnectivityManager(connectivityManager);
-        subscribeMusicPlayerModelEvents();
-        network.getClientSocketWrapper().audioSocket.setContext(context);
-        network.setNickName(NickName);
-
-
-
-
-    }
     private void subscribeMusicPlayerModelEvents() {
 
 
