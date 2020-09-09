@@ -33,6 +33,7 @@ import com.speakerz.util.EventListener;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.util.List;
 
 import static android.content.Context.WIFI_SERVICE;
@@ -115,6 +116,7 @@ public class HostModel extends BaseModel {
             @Override
             public void action(EventArgs1<Body> args) {
                 deviceID=args.arg1().getContent().toString();
+                deviceAddress= (InetAddress) args.arg1().getContent();
             }
         });
     }

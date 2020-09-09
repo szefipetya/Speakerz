@@ -38,6 +38,7 @@ public abstract class BaseModel {
 
     public String NickName = "placeholder";
     public String deviceID= "";
+    public InetAddress deviceAddress;
     public HashMap<String,String> NickNames;
 
     MusicPlayerModel musicPlayerModel;

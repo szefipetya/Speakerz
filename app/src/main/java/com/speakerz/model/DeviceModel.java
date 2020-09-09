@@ -25,6 +25,7 @@ import com.speakerz.util.EventListener;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 
 public class DeviceModel extends BaseModel {
     DeviceNetwork network;
@@ -129,6 +130,7 @@ DeviceModel self=this;
             @Override
             public void action(EventArgs1<Body> args) {
                deviceID=args.arg1().getContent().toString();
+               deviceAddress= (InetAddress) args.arg1().getContent();
             }
         });
         //a network jelzi, hogy songObjectet kapott.
