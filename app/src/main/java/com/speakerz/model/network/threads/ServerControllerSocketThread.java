@@ -56,11 +56,11 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
             dataSocket = new ServerSocket();
             dataSocket.setReuseAddress(true);
             dataSocket.bind(new InetSocketAddress(8040));
-            D.log("server address: "+dataSocket.getInetAddress());
+            D.log("server address: "+dataSocket.getInetAddress().getHostAddress());
             D.log("localsocketaddress : "+dataSocket.getLocalSocketAddress());
 
             D.log("server running");
-            this.INITDeviceAddressEvent.invoke(new EventArgs1<Body>("senki",new INITDeviceAddressBody(address)));
+            this.INITDeviceAddressEvent.invoke(new EventArgs1<Body>(this,new INITDeviceAddressBody(address)));
             while(!externalShutdown) {
                 final Socket socket = dataSocket.accept();
                 if(socket == null){
@@ -246,11 +246,12 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     void closeClient(SocketStruct struct){
         try {
             //TODO: DELETE NAME EVENT
+            socketList.remove(struct);
+
             NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(this, new PutNameChangeRequestBody(
                     new NameItem("torles","server",struct.socket.getInetAddress().toString())),TYPE.DELETENAME));
             D.log("lecsatlakozott egy ember");
             //struct.socket.getInetAddress();
-            socketList.remove(struct);
             struct.objectInputStream.close();
             struct.objectOutputStream.close();
             struct.socket.close();

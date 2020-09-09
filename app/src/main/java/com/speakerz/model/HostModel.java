@@ -57,7 +57,6 @@ public class HostModel extends BaseModel {
         subscribeMusicPlayerModelEvents();
         subscribeNetWorkEvents();
         network.getServerSocketWrapper().audioSocket.setContext(context);
-        NickNames.put(this.deviceID,this.NickName);
         network.setNickName(NickName);
     }
 
@@ -69,12 +68,17 @@ public class HostModel extends BaseModel {
                     D.log("NAME DELETE HAPPEND.");
                     try {
                         NameItem delname = (NameItem) args.arg1().getContent();
-                        if(NickNames.get(delname.id) != null) {
 
-                            TextChanged.invoke(new TextChangedEventArgs(self, EVT.toast,( NickNames.get(delname.id)+" left the party")));
+
+                        D.log("id=="+delname.id);
+                        D.log("name=="+NickNames.get(delname.id));
+                        TextChanged.invoke(new TextChangedEventArgs(self, EVT.toast,( NickNames.get(delname.id)+" left the party")));
+                        deleteFromNicknamesByAddress(delname.id);
+                        DeviceListChangedEvent.invoke(null);
+
                             network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody((NameItem) args.arg1().getContent()), TYPE.DELETENAME));
-                            NickNames.remove(delname.id);
-                        }
+
+
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -86,6 +90,8 @@ public class HostModel extends BaseModel {
                         TextChanged.invoke(new TextChangedEventArgs(self, EVT.toast,((NameItem) args.arg1().getContent()).name+" joined the party"));
 
                         NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
+                        DeviceListChangedEvent.invoke(null);
+
                         try {
                             network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody((NameItem) args.arg1().getContent()), TYPE.NAME));
                             D.log("NameChange sent");
@@ -117,6 +123,9 @@ public class HostModel extends BaseModel {
             public void action(EventArgs1<Body> args) {
                 deviceID=args.arg1().getContent().toString();
                 deviceAddress= (InetAddress) args.arg1().getContent();
+                //a server hozzáadja magát a listához.
+                NickNames.put(self.deviceID,self.NickName);
+                DeviceListChangedEvent.invoke(null);
             }
         });
     }

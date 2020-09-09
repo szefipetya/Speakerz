@@ -91,7 +91,10 @@ DeviceModel self=this;
                             TextChanged.invoke(new TextChangedEventArgs(self, EVT.toast,( NickNames.get(delname.id)+" left the party")));
 
                             network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.DELETENAME));
-                            NickNames.remove(delname.id);
+                            deleteFromNicknamesByAddress(delname.id);
+
+                            DeviceListChangedEvent.invoke(null);
+
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -103,12 +106,14 @@ DeviceModel self=this;
                         D.log("NAME CHANGE HAPPEND.");
                         NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
                         TextChanged.invoke(new TextChangedEventArgs(self, EVT.toast,((NameItem) args.arg1().getContent()).name+" joined the party"));
+                        DeviceListChangedEvent.invoke(null);
 
                         D.log("name:"+NickNames.get(((PutNameChangeRequestBody)args.arg1()).getContent().id));
                         try {
                             network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.NAME));
                             D.log("NameChange sent");
                         } catch (Exception e) {e.printStackTrace(); }
+
                     }
                 }
 
@@ -122,7 +127,6 @@ DeviceModel self=this;
                 NickNames = ((NameList) args.arg1().getContent()).namelist;
                 NameItem nameitem = new NameItem(NickName,"",deviceID);
                 NameChangeEvent.invoke(new EventArgs2<Body,TYPE>(this,new PutNameChangeRequestBody(nameitem),TYPE.NAME));
-
             }
         });
 
@@ -141,15 +145,8 @@ DeviceModel self=this;
 
     @Override
     public void stop() {
-        //network.getReciever().getWifiP2pManager().cancelConnect( network.getReciever().getChannel(),null);
-        //TODO: who is teh sender? and where should i put this here or some where else?
-        //ezt a socket szintre le kéne vinni, InetAdress-el az id-t
-        NameItem deleteName = new NameItem("delete","sender",deviceID);
-        try {
-            network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new PutNameChangeRequestBody(deleteName),TYPE.DELETENAME));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
+
         if(network.getClientSocketWrapper().controllerSocket!=null) {
             network.getClientSocketWrapper().controllerSocket.shutdown();
             network.getClientSocketWrapper().audioSocket.shutdown();

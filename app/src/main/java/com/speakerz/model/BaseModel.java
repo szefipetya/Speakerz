@@ -48,13 +48,34 @@ public abstract class BaseModel {
     public final ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent=new ThreadSafeEvent<>();
     public final Event<EventArgs1<Body>> MetaInfoReceivedEvent=new Event<>();
     public final Event<EventArgs1<String>> SongDownloadedEvent=new Event<>();
-    public final Event<EventArgs1<Body>> NameListInitEvent =new Event<>();;
+    public final Event<EventArgs1<Body>> NameListInitEvent =new Event<>();
+    public final Event<EventArgs1<Body>> DeviceListChangedEvent =new Event<>();
     public final Event<PermissionCheckEventArgs> PermissionCheckEvent;
     public final Event<EventArgs3<MP_EVT,Object,Body>> ModelCommunicationEvent=new Event<>();
     public final Event<EventArgs2<Body, TYPE>> NameChangeEvent=new Event<>();
     public final Event<EventArgs1<Body>> INITDeviceAddressEvent = new Event<>();
     public Event<TextChangedEventArgs> TextChanged=new Event<>();
 
+    public boolean deleteFromNicknamesByAddress(String address){
+        D.log("in the map----");
+        for(HashMap.Entry ent:NickNames.entrySet()){
+            D.log((String) ent.getKey());
+            D.log((String) ent.getValue());
+        }
+        boolean l=false;
+        if(NickNames.get(address)!=null){
+            NickNames.remove(address);
+            l=true;
+        }
+        D.log("after-----");
+        for(HashMap.Entry ent:NickNames.entrySet()){
+            D.log("in the map----");
+            D.log((String) ent.getKey());
+            D.log((String) ent.getValue());
+        }
+        return l;
+
+    }
 
 
     public BaseModel(final Context context, WifiBroadcastReciever reciever, Boolean isHost, Event<PermissionCheckEventArgs> PermissionCheckEvent){
@@ -63,7 +84,7 @@ public abstract class BaseModel {
         musicPlayerModel = new MusicPlayerModel(this, isHost);
         
         NickName = "placeholder";
-        deviceID = "test";
+        deviceID = "ip::null";
         NickNames= new HashMap<>();
 
 

@@ -60,14 +60,13 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                 // incoming connections.
                 // ConnectionChangedEvent.invoke(new ConnectionChangedEventArgs(self, wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner));
                 HostAddressAvailableEvent.invoke(new HostAddressEventArgs(self,info.groupOwnerAddress,true));
-            } if (info.groupFormed&&!isHost) {
-                if (info.groupOwnerAddress != null) {
+            }else if (info.groupFormed&&!isHost) {
+
                     D.log("client " + info.groupOwnerAddress);
                     HostAddressAvailableEvent.invoke(new HostAddressEventArgs(self,info.groupOwnerAddress,false));
                     // The other device acts as the peer (client). In this case,
                     // you'll want to create a peer thread that connects
                     // to the group owner.
-                }
 
             }
         }

@@ -45,6 +45,8 @@ public class DeviceNetwork extends BaseNetwork {
 
     public DeviceNetwork(WifiBroadcastReciever reciever) {
         super(reciever);
+        reciever.setHost(false);
+
         clientSocketWrapper.controllerSocket = new ClientControllerSocketThread();
         clientSocketWrapper.audioSocket = new ClientAudioMultiCastReceiverSocketThread();
         reciever.HostAddressAvailableEvent.addListener(new EventListener<HostAddressEventArgs>() {
