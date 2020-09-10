@@ -54,13 +54,12 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             struct=new SocketStruct();
 
 
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
-                    try {
+
+                  /*  try {
                         Thread.sleep(5000);
                     } catch (InterruptedException ex) {
                         ex.printStackTrace();
-                    }
-                }
+                    }*/
 
                 try {
                     //Thread.sleep(2000);

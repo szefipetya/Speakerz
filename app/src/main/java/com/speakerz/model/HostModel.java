@@ -52,6 +52,8 @@ public class HostModel extends BaseModel {
         network.ExceptionEvent=this.ExceptionEvent;
         network.TextChanged=this.TextChanged;
         network.getReciever().setConnectivityManager(connectivityManager);
+        network.setAppRunning(isAppRunning);
+
         injectNetworkDependencies();
 
         subscribeMusicPlayerModelEvents();
@@ -190,6 +192,7 @@ public class HostModel extends BaseModel {
     public void start() {
         network.start();
         network.getReciever().clearConnections();
+
         startAdvertising();
         deletePersistentGroups();
 
@@ -212,6 +215,7 @@ public class HostModel extends BaseModel {
             public void onSuccess() {
                 D.log("advertising...");
                 network.removeGroupIfExists();
+                network.startRegistration();
 
             }
 
@@ -225,6 +229,7 @@ public class HostModel extends BaseModel {
     }
     @Override
     public void stop() {
+        isAppRunning=false;
         D.log("Model stopped");
         if(   network.getServerSocketWrapper().controllerSocket!=null) {
             network.getServerSocketWrapper().controllerSocket.shutdown();

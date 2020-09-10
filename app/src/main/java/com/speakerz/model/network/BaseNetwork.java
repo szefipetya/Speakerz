@@ -40,6 +40,11 @@ public abstract class BaseNetwork  {
     //Music player events
     //
 
+    public void setAppRunning(Boolean appRunning) {
+        isAppRunning = appRunning;
+    }
+
+    protected Boolean isAppRunning;
     List<WifiP2pDevice> peers;
     List<String> deviceNames = new ArrayList<>();
     WifiP2pDevice[] devices = new WifiP2pDevice[0];

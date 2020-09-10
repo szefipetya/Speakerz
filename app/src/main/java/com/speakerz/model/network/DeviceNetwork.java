@@ -87,6 +87,8 @@ public class DeviceNetwork extends BaseNetwork {
 
     DeviceNetwork self = this;
 
+
+
     public void discoverPeers() {
        // serviceDevices.clear();
       //  discoverService();
@@ -104,8 +106,8 @@ public class DeviceNetwork extends BaseNetwork {
                 TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Discovering init failed..."));
             }
         });
-
-        peers = new ArrayList<>();
+discoverService();
+      /*  peers = new ArrayList<>();
         peerListListener = new WifiP2pManager.PeerListListener() {
             @Override
             public void onPeersAvailable(WifiP2pDeviceList peerList) {
@@ -138,7 +140,7 @@ public class DeviceNetwork extends BaseNetwork {
                 }
             }
         };
-        reciever.setPeerListListener(peerListListener);
+        reciever.setPeerListListener(peerListListener);*/
     }
 
     public List<String> getDeviceNames() {
@@ -196,9 +198,9 @@ public class DeviceNetwork extends BaseNetwork {
     }
 
     public void connect(int i) {
-        removeGroupIfExists(i);
+       // removeGroupIfExists(i);
 
-       // connectP2p(serviceDevices.get(i));
+        connectP2p(serviceDevices.get(i));
         //send an invoke to the service, to check the FINE_LOCATION access permission
 
 

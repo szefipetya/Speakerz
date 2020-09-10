@@ -36,6 +36,8 @@ public abstract class BaseModel {
     public abstract void start();
     public abstract void stop();
 
+    public Boolean isAppRunning=true;
+
     public String NickName = "placeholder";
     public String deviceID= "";
     public InetAddress deviceAddress;

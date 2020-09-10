@@ -113,7 +113,8 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
                         long bytesPer1000ms=metaDto.sampleRate* metaDto.bitsPerSample/8;//1000 ms alatt ennyi byte megy le
                         D.log("bytesPer1000ms: "+bytesPer1000ms);
 
-                        long offsetInBytes= (long)((float)deltaTime/1000* bytesPer1000ms);
+                        long offsetInBytes= (long)((float)(deltaTime/1000* bytesPer1000ms)/metaDto.channels);
+
                         D.log("offset in bytes:"+offsetInBytes);
                         packagesToSkipByDelta=(int)offsetInBytes/metaDto.packageSize;
                         lastPackageOffsetByDelta=(int)offsetInBytes%metaDto.packageSize;
@@ -222,13 +223,13 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
     public void run() {
         D.log("testbegins");
 
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
-            try {
+
+         /*   try {
                 Thread.sleep(5000);
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
-            }
-        }
+            }*/
+
             try {
 
                 wrapper.receiverInfoSocket.socket=new Socket();

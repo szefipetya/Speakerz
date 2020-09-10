@@ -18,6 +18,8 @@ import com.speakerz.model.network.event.HostAddressEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 
 import java.net.InetAddress;
 
@@ -25,6 +27,7 @@ import java.net.InetAddress;
 public class WifiBroadcastReciever extends BroadcastReceiver {
     public Event<WirelessStatusChangedEventArgs> WirelessStatusChanged = new Event<>();
     public Event<BooleanEventArgs> ConnectionChangedEvent = new Event<>();
+    public Event<EventArgs1<Boolean>> DiscoveryStatusChangedEvent = new Event<>();
     public Event<PermissionCheckEventArgs> PermissionCheckEvent = new Event<>();
     public Event<HostAddressEventArgs> HostAddressAvailableEvent = new Event<>();
     private WifiBroadcastReciever self = this;
@@ -53,7 +56,7 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
             D.log("onConnectionInfoavailable "+hostAddress);
             // After the group negotiation, we can determine the group owner
             // (server).
-            if (info.groupFormed &&isHost) {
+            if (info.groupFormed &&isHost&&info.isGroupOwner) {
                 D.log("owner");
                 // Do whatever tasks are specific to the group owner.
                 // One common case is creating a group owner thread and accepting
@@ -68,6 +71,8 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                     // you'll want to create a peer thread that connects
                     // to the group owner.
 
+            }else{
+                D.log("ROSSZ EMBER A GROUP OWNER");
             }
         }
     };
@@ -163,8 +168,16 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
         }
         else if(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)){
 
+        }else if(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action) ){
+            int state=intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE,-1);
+            if(state==WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED){
+                DiscoveryStatusChangedEvent.invoke(new EventArgs1<Boolean>(this,false));
+            }else if(state==WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED) {
+                DiscoveryStatusChangedEvent.invoke(new EventArgs1<Boolean>(this, true));
+            }
         }
     }
+
 
 
     //getters

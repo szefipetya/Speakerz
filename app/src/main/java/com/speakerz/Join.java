@@ -49,7 +49,8 @@ public class Join extends Activity {
     boolean _isBounded;
     ListView lvPeersList;
     ListView lvSongsList;
-    ArrayAdapter<String> peerListAdapter;
+   // ArrayAdapter<String> peerListAdapter;
+    ArrayAdapter<WifiP2pService> peerListAdapter;
     ArrayAdapter<Song> songListAdapter = null;
     private final Integer PermissionCheckEvent_EVT_ID=10;
     private final Integer SongListChangedEvent_EVT_ID=11;
@@ -76,7 +77,8 @@ public class Join extends Activity {
         songListAdapter = new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1, _service.getModel().getMusicPlayerModel().getSongQueue());
         lvSongsList.setAdapter(songListAdapter);
 
-        peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
+        //peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
+        peerListAdapter = new ArrayAdapter<WifiP2pService>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).serviceDevices));
         lvPeersList.setAdapter(peerListAdapter);
 
         //set up the listView's onclick, so clients can connect to hosts by klicking on a device in a listview

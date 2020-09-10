@@ -11,6 +11,7 @@ import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameListInitRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.Serializable.body.controller.content.NameList;
 import com.speakerz.model.network.Serializable.enums.TYPE;
@@ -37,7 +38,7 @@ public class DeviceModel extends BaseModel {
         network.PermissionCheckEvent=this.PermissionCheckEvent;
         network.ExceptionEvent=this.ExceptionEvent;
         network.TextChanged=this.TextChanged;
-
+    network.setAppRunning(isAppRunning);
         injectNetworkDependencies();
 
         subscribeNetworkEvents();
@@ -145,7 +146,7 @@ DeviceModel self=this;
 
     @Override
     public void stop() {
-
+isAppRunning=false;
 
         if(network.getClientSocketWrapper().controllerSocket!=null) {
             network.getClientSocketWrapper().controllerSocket.shutdown();
@@ -195,6 +196,15 @@ DeviceModel self=this;
                 if(args.arg1()==MP_EVT.SEND_SONG){
                     SongQueueUpdatedEvent.invoke(null);
 
+                }
+                if(args.arg1()==MP_EVT.ADD_SONG_CLIENT){
+                    try {
+                        getNetwork().getClientSocketWrapper().controllerSocket.send(
+                                        new ChannelObject(new PutSongRequestBody(self.deviceAddress,(Song)args.arg2()), TYPE.MP)
+                                );
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         });
