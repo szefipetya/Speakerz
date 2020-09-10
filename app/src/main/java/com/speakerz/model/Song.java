@@ -5,6 +5,8 @@ import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 
 public class Song implements Serializable {
@@ -19,7 +21,7 @@ public class Song implements Serializable {
     private String artist;
     private Long albumId;
     private String owner;
-    Bitmap songCoverArt = null;
+    byte[] songCoverArt = null;
 
     public Song(String data, String title, String album, String artist,String owner,Long albumId,Bitmap songCoverArt) {
         this.data = data;
@@ -28,15 +30,24 @@ public class Song implements Serializable {
         this.artist = artist;
         this.owner = owner;
         this.albumId = albumId;
-        this.songCoverArt = songCoverArt;
+       this.setSongCoverArt(songCoverArt);
     }
+
 
     public Bitmap getSongCoverArt() {
-        return songCoverArt;
+        if(songCoverArt!=null){
+            return BitmapFactory.decodeByteArray(songCoverArt, 0, songCoverArt.length);
+
+        }
+        else return null;
     }
 
-    public void setSongCoverArt(Bitmap songCoverArt) {
-        this.songCoverArt = songCoverArt;
+    public void setSongCoverArt(Bitmap songCoverArt1) {
+        if(songCoverArt1!=null) {
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            songCoverArt1.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            this.songCoverArt = stream.toByteArray();
+        }
     }
 
     public Long getAlbumId() {
