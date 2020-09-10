@@ -20,28 +20,49 @@ import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.provider.ContactsContract;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.WindowId;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.speakerz.Create;
 import com.speakerz.R;
 import com.speakerz.SpeakerzService;
+import com.speakerz.debug.D;
+import com.speakerz.model.BaseModel;
+import com.speakerz.model.HostModel;
 import com.speakerz.model.MusicPlayerModel;
+import com.speakerz.model.enums.EVT;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameListInitRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.Serializable.enums.TYPE;
+import com.speakerz.model.network.event.BooleanEventArgs;
+import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
+import com.speakerz.util.EventListener;
 import com.speakerz.view.components.BottomMusicPlayer;
 import com.speakerz.view.components.NameChangeDialog;
 import com.speakerz.view.components.TopMenu;
 import com.speakerz.view.recyclerview.main.player.RecyclerView_FAB;
 
+import java.net.ConnectException;
+
 public class PlayerRecyclerActivity extends AppCompatActivity implements NameChangeDialog.NameChangeDialogListener{
     RecyclerView_FAB recyclerViewFab;
     TopMenu menu;
+
 
     public MusicPlayerModel getModel() {
         return model;
@@ -74,10 +95,35 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
         // Configure BottomPlayer
         bottomPlayer = new BottomMusicPlayer(self);
     }
+
+    boolean doubleBackToExitPressedOnce = false;
+
+    public void onBackPressed(Boolean instant){
+        if(instant){
+            super.onBackPressed();
+        }
+    }
+
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
+
+        if (doubleBackToExitPressedOnce) {
+            super.onBackPressed();
+            _service.onUserDestroy();
+            this.finishAffinity();
+            return;
+        }
         lightOverlay();
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show();
+
+        new Handler().postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                doubleBackToExitPressedOnce=false;
+            }
+        }, 2000);
     }
     public void lightOverlay(){
         ConstraintLayout mConstraintLayout = findViewById(R.id.layout_darker);
@@ -96,15 +142,22 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
         public void onServiceConnected(ComponentName className, IBinder binder) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             SpeakerzService.LocalBinder localBinder = (SpeakerzService.LocalBinder) binder;
-
             // Bind model
             model = localBinder.getService().getModel().getMusicPlayerModel();
+            _service=(SpeakerzService)(localBinder.getService());
 
             // Register model event handlers
             bottomPlayer.initModel(model);
             recyclerViewFab.initModel(model);
+                /*
+                A Create Activity Megszűnt ezen sorok alább, abból származnak.
+                 */
+
+
+            onServiceReady(localBinder.getService());
 
             menu.setModel(model.getModel());
+
         }
 
         @Override
@@ -115,6 +168,108 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
             model = null;
         }
     };
+    SpeakerzService _service;
+    void onServiceReady(final SpeakerzService _service){
+        //már eleve létezik, akkor ez lefut
+        if(_service.getModel() instanceof HostModel){
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    self.initAndStart(_service);
+                }
+            });
+        }
+        //ha a nézet gyorsabb, akkor a service fog szólni, hogy kész a model.
+        _service.ModelReadyEvent.addListener(new EventListener<BooleanEventArgs>() {
+            @Override
+            public void action(final BooleanEventArgs args) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(args.getValue())
+                            self.initAndStart(_service);
+
+                    }
+                });
+            }
+        });
+        connectListeners();
+    }
+    private void connectListeners(){
+              _service.getModel().getNetwork().getReciever().ConnectionChangedEvent.addListener(new EventListener<BooleanEventArgs>() {
+            @Override
+            public void action(BooleanEventArgs args) {
+                D.log("args:"+args.getValue());
+                if (!args.getValue()) {
+                    if(!model.isHost()){
+                        ((TextView) findViewById(R.id.discover_status)).setText("Disconnected");
+                        goBackToJoinPage();
+                    }
+
+                }else{
+                    //connected
+                    if(!model.isHost()){
+                        ((TextView) findViewById(R.id.discover_status)).setText("Connected, Host: "+ _service.getModel().NickNames.get("/192.168.49.1").toString());
+                    }
+
+                }
+
+            }
+        });
+             if(!model.isHost()){
+
+                 String s=_service.getModel().NickNames.get("/192.168.49.1");
+                 ((TextView) findViewById(R.id.discover_status)).setText("Connected, Host: "+s);
+             }
+    }
+    private Integer TextChanged_EVT_ID=10;
+    private void subscribeModel(final SpeakerzService _service,final HostModel model) {
+        //Basemodel Events
+        model.getNetwork().TextChanged.addListener(new EventListener<TextChangedEventArgs>() {
+            @Override
+            public void action(TextChangedEventArgs args) {
+                if(args.event()== EVT.update_discovery_status){
+                    _service.getTextValueStorage().setTextValue(R.id.discover_status, args.text());
+                    _service.getTextValueStorage().autoConfigureTexts(self);
+                }
+                if(args.event()==EVT.h_service_created){
+                    _service.getTextValueStorage().setTextValue(R.id.h_service_status, args.text());
+                    _service.getTextValueStorage().autoConfigureTexts(self);
+                }
+            }
+        },TextChanged_EVT_ID);
+
+        ImageButton advertiseMe = (ImageButton) findViewById(R.id.btn_advertise);
+        advertiseMe.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View view){
+                model.getNetwork().advertiseMe();
+            }
+
+        });
+    }
+
+
+
+    private void initAndStart(final SpeakerzService _service) {
+        subscribeModel(_service,(HostModel) _service.getModel());
+        _service.getTextValueStorage().autoConfigureTexts(this);
+
+
+
+    }
+
+
+private void goBackToJoinPage(){
+        D.log("backtoJoin");
+    if(recyclerViewFab.getSongPickerOpen()){
+        self.onBackPressed(true);
+        self.onBackPressed(true);
+    }else{
+        if(!model.isHost())
+            self.onBackPressed(true);
+
+    }
+}
 
     @Override
     protected void onStop() {

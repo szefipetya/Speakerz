@@ -56,10 +56,10 @@ public class DeviceModel extends BaseModel {
 
     @Override
     public void start() {
+        deletePersistentGroups();
         network.start();
         network.getReciever().clearConnections();
 
-        deletePersistentGroups();
 
     }
 

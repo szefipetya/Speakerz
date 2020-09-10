@@ -13,6 +13,7 @@ import com.speakerz.model.network.event.channel.ConnectionUpdatedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,10 +63,9 @@ public abstract class BaseNetwork  {
 
     public BaseNetwork(WifiBroadcastReciever reciever) {
         this.reciever = reciever;
-        if(reciever!=null) {
+        if (reciever != null) {
             reciever.setPeerListListener(peerListListener);
-        }
-        else{
+        } else {
             //D.log("err: reviecer was null.");
         }
         intentFilter = new IntentFilter();
@@ -73,8 +73,9 @@ public abstract class BaseNetwork  {
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
-    }
 
+
+    }
     public void addUpdateEventListener(EventHandler event) {
         updateEventManagerToModel.addListener(event);
         //D.log("event added");

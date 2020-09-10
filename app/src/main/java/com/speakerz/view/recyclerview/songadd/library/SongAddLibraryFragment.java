@@ -19,6 +19,7 @@ import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
+import com.speakerz.view.PlayerRecyclerActivity;
 import com.speakerz.view.recyclerview.RecyclerItemClickListener;
 
 import java.util.ArrayList;
@@ -73,7 +74,7 @@ public class SongAddLibraryFragment extends Fragment {
             public void onClick(View view) {
                 D.log("back");
                 // self.getActivity().getFragmentManager().popBackStack();
-                self.getActivity().onBackPressed();
+                ((PlayerRecyclerActivity)self.getActivity()).onBackPressed(true);
                 CloseEvent.invoke(null);
             }
         });

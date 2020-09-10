@@ -41,6 +41,7 @@ import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
+import com.speakerz.view.PlayerRecyclerActivity;
 
 import ealvatag.audio.exceptions.CannotReadException;
 
@@ -182,9 +183,10 @@ Activity self=this;
         buttonCreate.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
                 initAndStart(true);
-                Intent Act2 = new Intent(getApplicationContext(),Create.class);
+             /*   Intent Act2 = new Intent(getApplicationContext(),Create.class);
+                startActivity(Act2);*/
+                Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);
                 startActivity(Act2);
-                Act2.putExtra("Hello","Hello World");
 
 
             }

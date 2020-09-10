@@ -36,6 +36,7 @@ public class RecyclerView_FAB  {
     private TextView mLibraryText, mYoutubeText;
     private boolean isFabOpen;
     private MusicPlayerModel model;
+   private Boolean isSongPickerOpen=false;
 
     // private Animation mFabOpenAnim, mFabCloseAnim; //Jelenleg nem működik
 
@@ -181,11 +182,13 @@ public class RecyclerView_FAB  {
                         .replace(R.id.fragment_container_song_import,fragment)
                         .addToBackStack(null)
                         .commit();
+                isSongPickerOpen=true;
                 fragment.CloseEvent.addListener(new EventListener<EventArgs>() {
                     @Override
                     public void action(EventArgs args) {
                         //set the darkness back when the dialog is closed
                        activity.lightOverlay();
+                       isSongPickerOpen=false;
                     }
                 });
             }
@@ -208,6 +211,8 @@ public class RecyclerView_FAB  {
             }
         });
     }
+
+
 
     public void initModel(final MusicPlayerModel model) {
         mAdapter = new Adapter(model.getSongQueue());
@@ -237,5 +242,8 @@ public class RecyclerView_FAB  {
 
         mAdapter = null;
         model = null;
+    }
+    public Boolean getSongPickerOpen() {
+        return isSongPickerOpen;
     }
 }

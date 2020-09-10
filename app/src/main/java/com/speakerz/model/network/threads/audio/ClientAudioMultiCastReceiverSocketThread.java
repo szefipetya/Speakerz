@@ -29,6 +29,7 @@ import com.speakerz.util.ThreadSafeEvent;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -113,7 +114,7 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
                         long bytesPer1000ms=metaDto.sampleRate* metaDto.bitsPerSample/8;//1000 ms alatt ennyi byte megy le
                         D.log("bytesPer1000ms: "+bytesPer1000ms);
 
-                        long offsetInBytes= (long)((float)(deltaTime/1000* bytesPer1000ms)/metaDto.channels);
+                        long offsetInBytes= (long)((float)(deltaTime/1000* bytesPer1000ms));
 
                         D.log("offset in bytes:"+offsetInBytes);
                         packagesToSkipByDelta=(int)offsetInBytes/metaDto.packageSize;
@@ -275,16 +276,17 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
 
 
                 D.log("yeeeeeeeey");
-
+                buf=new byte[2048];
+                // packet =new DatagramPacket(buf, buf.length);
+                listen(wrapper.receiverInfoSocket);
             } catch (IOException e) {
                 e.printStackTrace();
+                ExceptionEvent.invoke(new EventArgs1<Exception>(this,new ConnectException("AUIDO_CONN_REFUSED")));
             }
 
 
         //first packet is always metadata
-        buf=new byte[2048];
-       // packet =new DatagramPacket(buf, buf.length);
-        listen(wrapper.receiverInfoSocket);
+
 
 
 

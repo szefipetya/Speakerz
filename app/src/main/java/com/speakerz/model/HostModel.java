@@ -192,9 +192,9 @@ public class HostModel extends BaseModel {
     public void start() {
         network.start();
         network.getReciever().clearConnections();
-
-        startAdvertising();
         deletePersistentGroups();
+        startAdvertising();
+
 
         //D.log("Model started");
     }
@@ -234,11 +234,6 @@ public class HostModel extends BaseModel {
         if(   network.getServerSocketWrapper().controllerSocket!=null) {
             network.getServerSocketWrapper().controllerSocket.shutdown();
             network.getServerSocketWrapper().audioSocket.shutdown();
-            try {
-                network.getServerSocketWrapper().controllerSocket.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
 
         musicPlayerModel.close();

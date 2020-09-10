@@ -237,6 +237,12 @@ public class SpeakerzService extends Service {
         super.onDestroy();
     }
 
+    public void onUserDestroy() {
+        serviceHandler.stopService("terminated by user");
+        D.log("onUserDestroy");
+        super.onDestroy();
+    }
+
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {

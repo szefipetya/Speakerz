@@ -78,7 +78,19 @@ public class HostNetwork extends BaseNetwork {
                }
            }
        });
-   }
+        reciever.WirelessStatusChanged.addListener(new EventListener<EventArgs1<Boolean>>() {
+            @Override
+            public void action(EventArgs1<Boolean> args) {
+                if(isWifiWasOffBefore&&args.arg1()){
+                    advertiseMe();
+                    startRegistration();
+                }
+                isWifiWasOffBefore=!args.arg1();
+            }
+        });
+    }
+
+    Boolean isWifiWasOffBefore=false;
 
    private void startServerThread(InetAddress addr){
        serverSocketWrapper.controllerSocket.setAddress(addr);
@@ -110,12 +122,12 @@ public class HostNetwork extends BaseNetwork {
             public void onSuccess() {
                 D.log("Added Local Service");
                 TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Party Created successfully"));
-
-
             }
 
             @Override
             public void onFailure(int error) {
+                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Please, turn on the WIFI!"));
+
                 D.log("Failed to add a service");
             }
         });

@@ -22,6 +22,7 @@ import com.speakerz.util.ThreadSafeEvent;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -48,50 +49,38 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
 
     @Override
     public void run() {
-        try {
+
             D.log("client running");
             externalShutdown=false;
             struct=new SocketStruct();
 
-
-
-                  /*  try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException ex) {
-                        ex.printStackTrace();
-                    }*/
-
                 try {
-                    //Thread.sleep(2000);
                     struct.socket=new Socket();
                     struct.socket.setReuseAddress(true);
                     struct.socket.connect(new InetSocketAddress(hostAddress, 8040));
+                    struct.objectOutputStream = new ObjectOutputStream(struct.socket.getOutputStream());
+                    struct.objectInputStream = new ObjectInputStream(struct.socket.getInputStream());
+                    D.log("connection succesful to "+ hostAddress);
+                    D.log("my ip: "+ struct.socket.getLocalAddress());
 
+                    this.INITDeviceAddressEvent.invoke(new EventArgs1<Body>("senki",new INITDeviceAddressBody(struct.socket.getLocalAddress())));
+                    listen(struct);
 
                 }catch (IOException e){
                     e.printStackTrace();
+                    if(e.getMessage()!=null)
+                        D.log(e.getMessage());
+                    e.printStackTrace();
+
+                    ExceptionEvent.invoke(new EventArgs1<Exception>(this,new ConnectException("CTRL_CONN_REFUSED")));
+                    shutdown();
                 }
 
 
 
 
-            struct.objectOutputStream = new ObjectOutputStream(struct.socket.getOutputStream());
-            struct.objectInputStream = new ObjectInputStream(struct.socket.getInputStream());
-            D.log("connection succesful to "+ hostAddress);
-            D.log("my ip: "+ struct.socket.getLocalAddress());
-
-            this.INITDeviceAddressEvent.invoke(new EventArgs1<Body>("senki",new INITDeviceAddressBody(struct.socket.getLocalAddress())));
-            listen(struct);
-
-        } catch (IOException  e) {
-            if(e.getMessage()!=null)
-               D.log(e.getMessage());
-            e.printStackTrace();
 
 
-             shutdown();
-
-        }
         //send and recieve
     }
 
@@ -108,6 +97,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
                 e.printStackTrace();
                 break;
             } catch (IOException e) {
+                ExceptionEvent.invoke(new EventArgs1<Exception>(this,new ConnectException("Connection Lost")));
                 e.printStackTrace();
                 shutdown();
                 break;

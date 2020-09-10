@@ -95,7 +95,7 @@ public class DeviceNetwork extends BaseNetwork {
 
        // PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,PackageManager.PERMISSION_GRANTED));
 
-        reciever.discoverPeers(new WifiP2pManager.ActionListener() {
+       reciever.discoverPeers(new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
                 TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Discovering..."));
@@ -106,6 +106,7 @@ public class DeviceNetwork extends BaseNetwork {
                 TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Discovering init failed..."));
             }
         });
+     // removeGroupIfExists(0);
 discoverService();
       /*  peers = new ArrayList<>();
         peerListListener = new WifiP2pManager.PeerListListener() {
@@ -170,7 +171,7 @@ discoverService();
                         @Override
                         public void onSuccess() {
                             D.log("group removed");
-                            connectWithNoGroup(i);
+                          //  connectWithNoGroup(i);
                         }
 
                         @Override
@@ -180,7 +181,7 @@ discoverService();
                     });
                 } else {
                     D.log("no group found");
-                    connectWithNoGroup(i);
+                   // connectWithNoGroup(i);
                 }
             }
         });
@@ -263,6 +264,8 @@ discoverService();
                             D.log("Failed adding service discovery request");
                         }
                     });
+        }else{
+
         }
         reciever.getWifiP2pManager().discoverServices(reciever.getChannel(), new WifiP2pManager.ActionListener() {
             @Override

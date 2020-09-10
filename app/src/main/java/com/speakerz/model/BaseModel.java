@@ -26,6 +26,7 @@ import com.speakerz.util.ThreadSafeEvent;
 
 import java.lang.reflect.Type;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -80,7 +81,7 @@ public abstract class BaseModel {
     }
 
 
-    public BaseModel(final Context context, WifiBroadcastReciever reciever, Boolean isHost, Event<PermissionCheckEventArgs> PermissionCheckEvent){
+    public BaseModel(final Context context, WifiBroadcastReciever reciever, final Boolean isHost, Event<PermissionCheckEventArgs> PermissionCheckEvent){
         this.context = context;
         this.PermissionCheckEvent=PermissionCheckEvent;
         musicPlayerModel = new MusicPlayerModel(this, isHost);
@@ -93,11 +94,7 @@ public abstract class BaseModel {
         subscribeToNameChange();
 
 
-        reciever.WirelessStatusChanged.addListener(new EventListener<WirelessStatusChangedEventArgs>() {
-            @Override
-            public void action(WirelessStatusChangedEventArgs args) {
-            }
-        });
+
         TextChanged.addListener(new EventListener<TextChangedEventArgs>() {
             @Override
             public void action(final TextChangedEventArgs args) {
@@ -112,7 +109,23 @@ public abstract class BaseModel {
             }
         });
 
+        ExceptionEvent.addListener(new EventListener<EventArgs1<Exception>>() {
+            @Override
+            public void action(final EventArgs1<Exception> args) {
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(args.arg1() instanceof CannotReadException)
+                            Toast.makeText(context,"Not supported format",Toast.LENGTH_SHORT).show();
+                        else{
+                            Toast.makeText(context,args.arg1().getMessage(),Toast.LENGTH_LONG).show();
+                            D.log(args.arg1().getMessage());
+                        }
 
+                    }
+                });
+            }
+        });
     }
 
 

@@ -25,7 +25,7 @@ import java.net.InetAddress;
 
 
 public class WifiBroadcastReciever extends BroadcastReceiver {
-    public Event<WirelessStatusChangedEventArgs> WirelessStatusChanged = new Event<>();
+    public Event<EventArgs1<Boolean>> WirelessStatusChanged = new Event<>();
     public Event<BooleanEventArgs> ConnectionChangedEvent = new Event<>();
     public Event<EventArgs1<Boolean>> DiscoveryStatusChangedEvent = new Event<>();
     public Event<PermissionCheckEventArgs> PermissionCheckEvent = new Event<>();
@@ -61,7 +61,6 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                 // Do whatever tasks are specific to the group owner.
                 // One common case is creating a group owner thread and accepting
                 // incoming connections.
-                // ConnectionChangedEvent.invoke(new ConnectionChangedEventArgs(self, wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner));
                 HostAddressAvailableEvent.invoke(new HostAddressEventArgs(self,info.groupOwnerAddress,true));
             }else if (info.groupFormed&&!isHost) {
 
@@ -70,6 +69,7 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                     // The other device acts as the peer (client). In this case,
                     // you'll want to create a peer thread that connects
                     // to the group owner.
+                ConnectionChangedEvent.invoke(new BooleanEventArgs(self,true));
 
             }else{
                 D.log("ROSSZ EMBER A GROUP OWNER");
@@ -121,12 +121,16 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
         if(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)){
             int state=intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE,-1);
 
-            WirelessStatusChanged.invoke(new WirelessStatusChangedEventArgs(this, state==WifiP2pManager.WIFI_P2P_STATE_ENABLED));
 
             if(state==WifiP2pManager.WIFI_P2P_STATE_ENABLED){
                 Toast.makeText(context,"Wifi is on", Toast.LENGTH_SHORT).show();
+
+                    self.WirelessStatusChanged.invoke(new EventArgs1<Boolean>(self,true));
+
             }
             else {
+                self.WirelessStatusChanged.invoke(new EventArgs1<Boolean>(self,false));
+
                 Toast.makeText(context,"Wifi is off", Toast.LENGTH_SHORT).show();
             }
         }
@@ -162,7 +166,6 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
             }else{
                 //disconnected
                 D.log("disconnected");
-
                 ConnectionChangedEvent.invoke(new BooleanEventArgs(self,false));
             }
         }

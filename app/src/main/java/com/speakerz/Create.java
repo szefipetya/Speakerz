@@ -57,65 +57,6 @@ public class Create extends Activity {
         lvSongsList.setAdapter(songListAdapter);
 
         //Basemodel Events
-        model.ExceptionEvent.addListener(new EventListener<EventArgs1<Exception>>() {
-            @Override
-            public void action(final EventArgs1<Exception> args) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if(args.arg1() instanceof CannotReadException)
-                        Toast.makeText(selfActivity,"Not supported format",Toast.LENGTH_SHORT).show();
-                        else{
-                            Toast.makeText(selfActivity,args.arg1().getMessage(),Toast.LENGTH_LONG).show();
-
-                        }
-                    }
-                });
-            }
-        });
-        _service.getModel().SongQueueUpdatedEvent.addListener(new EventListener<EventArgs>() {
-            @Override
-            public void action(final EventArgs args) {
-                D.log("ServerUI: got an object. ");
-                if(songListAdapter!=null) {
-                    //must run on Ui thread:
-                    D.log("SonglistAdapter is not null. ");
-
-                    Runnable run=new Runnable() {
-                        @Override
-                        public void run() {
-                            //TEMPORARY FIXME 1 vvv
-                            // ^^^ FIXME 1 ^^^
-                            synchronized(songListAdapter){
-                                songListAdapter.notifyDataSetChanged();
-                                songListAdapter.notify();
-                            }
-                            lvSongsList.invalidateViews();
-                            D.log("dataset updated.");
-                            D.log("size: "+_service.getModel().getMusicPlayerModel().getSongQueue().size());
-                        }
-                    };
-                    RunnableFuture<Void> task = new FutureTask<>(run, null);
-                    selfActivity.runOnUiThread(task);
-                    try {
-                        task.get(); // this will block until Runnable completes
-                    } catch (InterruptedException | ExecutionException e) {
-                        D.log("UiRefresh exception. "+e.getMessage());
-                        // handle exception
-                    }
-                }
-            }
-        },SongListChangedEvent_EVT_ID);
-
-        // Wireless changed event
-        model.getNetwork().getReciever().WirelessStatusChanged.addListener(new EventListener<WirelessStatusChangedEventArgs>() {
-            @Override
-            public void action(WirelessStatusChangedEventArgs args) {
-                _service.getTextValueStorage().autoConfigureTexts(selfActivity);
-            }
-        },WirelessStatusChanged_EVT_ID);
-
-
         model.getNetwork().TextChanged.addListener(new EventListener<TextChangedEventArgs>() {
             @Override
             public void action(TextChangedEventArgs args) {
@@ -129,26 +70,8 @@ public class Create extends Activity {
                 }
             }
         },TextChanged_EVT_ID);
-        model.getNetwork().GroupConnectionChangedEvent.addListener(new EventListener<BooleanEventArgs>() {
-            @Override
-            public void action(BooleanEventArgs args) {
-                if (args.event() == EVT.host_group_creation) {
-                    if (args.getValue())
-                        ((TextView) findViewById(R.id.h_group_status)).setText("Group created");
-                    else {
-                        ((TextView) findViewById(R.id.h_group_status)).setText("Group creation Failed");
-                    }
-                }
 
-            }
-        },GroupConnectionChangedEvent_EVT_ID);
-        Button advertiseMe = (Button) findViewById(R.id.create_btn_advertise_me);
-        advertiseMe.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View view){
-                model.getNetwork().advertiseMe();
-            }
 
-        });
 
     }
 
@@ -262,26 +185,13 @@ public class Create extends Activity {
         setContentView(R.layout.activity_create);
 
 
-        /*Button nameChange = (Button) findViewById(R.id.temp);
-        nameChange.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View view){
-                //TODO: change "en" to sender put this into recycleview
-                NameItem item = new NameItem(editName.getText().toString(),"en",_service.getModel().deviceID);
-                PutNameChangeRequestBody body1 = new PutNameChangeRequestBody(null,item);
-                _service.getModel().NameChangeEvent.invoke(new EventArgs1<Body>(null,body1));
-            }
-
-        });*/
-
 
 
 
         Button buttonBack = (Button) findViewById(R.id.back);
         buttonBack.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                // Intent Act2 = new Intent(getApplicationContext(),MainActivity.class);
-                //  Act2.putExtra("Hello","Hello World");
-                //  startActivity(Act2);
+
                 finish();
 
             }
@@ -298,14 +208,6 @@ public class Create extends Activity {
 
         });
 
-       /* Button startSession = (Button) findViewById(R.id.btn_start_session);
-        startSession.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View view) {
-                ((HostModel) (_service.getModel())).startAdvertising();
-
-            }
-
-        });*/
 
     }
     //ITS A FIXME ATTEMT TO FIXME1

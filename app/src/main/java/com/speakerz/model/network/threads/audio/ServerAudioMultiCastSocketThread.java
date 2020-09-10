@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -299,6 +300,7 @@ private void mainLoop(){
 
         } catch (SocketException e) {
             e.printStackTrace();
+        ExceptionEvent.invoke(new EventArgs1<Exception>(self,e));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -393,7 +395,7 @@ ServerAudioMultiCastSocketThread self=this;
         }
     }
     public void acceptClients() {
-        while (!receiverServerSocket.isClosed()) {
+        while (receiverServerSocket!=null&&!receiverServerSocket.isClosed()) {
           //  initSockets();
             final ClientSocketStructWrapper newClient;
             newClient=new ClientSocketStructWrapper();
@@ -447,19 +449,14 @@ ServerAudioMultiCastSocketThread self=this;
                     }
                 });
                 t.start();
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+
                 D.log("client added, NO ERRORS");
 
             } catch (IOException e) {
                 e.printStackTrace();
+               // ExceptionEvent.invoke(new EventArgs1<Exception>(this,new ConnectException("Problem at creating AudioServer, please Restart the App")));
+
             }
-
-
-
         }
 
     }

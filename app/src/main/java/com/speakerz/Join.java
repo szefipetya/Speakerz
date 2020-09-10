@@ -150,13 +150,7 @@ public class Join extends Activity {
         });
 
         // Wireless changed event
-        model.getNetwork().getReciever().WirelessStatusChanged.addListener(new EventListener<WirelessStatusChangedEventArgs>() {
-            @Override
-            public void action(WirelessStatusChangedEventArgs args) {
-                _service.getTextValueStorage().setTextValue(R.id.wifi_status, args.status() ? "Wifi is on" : "Wifi is off");
-                _service.getTextValueStorage().autoConfigureTexts(selfActivity);
-            }
-        });
+
 
 
         model.getNetwork().TextChanged.addListener(new EventListener<TextChangedEventArgs>() {
@@ -195,6 +189,10 @@ public class Join extends Activity {
                     D.log("recieved disconnect");
                     _service.getTextValueStorage().setTextValue(R.id.host_name, ("Disconnected"));
                     ((TextView) findViewById(R.id.host_name)).setText("Disconnected");
+                }else{
+                    //connected
+                    Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);
+                    startActivity(Act2);
                 }
 
             }
