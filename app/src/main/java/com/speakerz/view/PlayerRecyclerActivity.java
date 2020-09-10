@@ -203,24 +203,32 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
                 if (!args.getValue()) {
                     if(!model.isHost()){
                         ((TextView) findViewById(R.id.discover_status)).setText("Disconnected");
+                        _service.getTextValueStorage().setTextValue(R.id.discover_status, "Disconnected");
+
                         goBackToJoinPage();
                     }
 
                 }else{
                     //connected
                     if(!model.isHost()){
-                        ((TextView) findViewById(R.id.discover_status)).setText("Connected, Host: "+ _service.getModel().NickNames.get("/192.168.49.1").toString());
+                        ((TextView) findViewById(R.id.discover_status)).setText("Connected, Host: "+ _service.getModel().NickNames.get("/192.168.49.1"));
+                        _service.getTextValueStorage().setTextValue(R.id.discover_status, "Connected, Host: "+ _service.getModel().NickNames.get("/192.168.49.1"));
+
                     }
 
                 }
 
             }
         });
-             if(!model.isHost()){
+        if(!model.isHost()){
+            if(_service.getModel().getNetwork().getReciever().isConnected()){
+            String s=_service.getModel().NickNames.get("/192.168.49.1");
+            ((TextView) findViewById(R.id.discover_status)).setText("Connected, Host: "+s);
+                _service.getTextValueStorage().setTextValue(R.id.discover_status, "Connected, Host: "+s);
 
-                 String s=_service.getModel().NickNames.get("/192.168.49.1");
-                 ((TextView) findViewById(R.id.discover_status)).setText("Connected, Host: "+s);
-             }
+            }
+        }
+
     }
     private Integer TextChanged_EVT_ID=10;
     private void subscribeModel(final SpeakerzService _service,final HostModel model) {
@@ -261,12 +269,13 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
 
 private void goBackToJoinPage(){
         D.log("backtoJoin");
+    if(!model.isHost())
     if(recyclerViewFab.getSongPickerOpen()){
         self.onBackPressed(true);
-        self.onBackPressed(true);
+      finish();
     }else{
-        if(!model.isHost())
-            self.onBackPressed(true);
+
+         finish();
 
     }
 }

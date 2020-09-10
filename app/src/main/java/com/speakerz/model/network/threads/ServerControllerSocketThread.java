@@ -127,9 +127,9 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                      e.printStackTrace();
                  }
              }
-             else{
+             else if(struct.socket!=null&&struct.socket.isClosed()){
                  D.log("client "+struct.socket.getInetAddress().getHostAddress()+" disconnected");
-
+                 closeClient(struct);
                  break;
              }
          }

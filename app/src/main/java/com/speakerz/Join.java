@@ -189,14 +189,21 @@ public class Join extends Activity {
                     D.log("recieved disconnect");
                     _service.getTextValueStorage().setTextValue(R.id.host_name, ("Disconnected"));
                     ((TextView) findViewById(R.id.host_name)).setText("Disconnected");
+                    isPlayerInstanceAlive=false;
                 }else{
                     //connected
-                    Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);
-                    startActivity(Act2);
+                    D.log("CONNECTED YEEY");
+                    if(!isPlayerInstanceAlive) {
+                        Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);
+                        startActivity(Act2);
+                        isPlayerInstanceAlive=true;
+                    }
                 }
 
             }
         });
+
+
 
          model.MetaInfoReceivedEvent.addListener(new EventListener<EventArgs1<Body>>() {
             @Override
@@ -217,7 +224,7 @@ public class Join extends Activity {
 
 
     }
-
+    Boolean isPlayerInstanceAlive=false;
 
     Join selfActivity = this;
     private ServiceConnection connection = new ServiceConnection() {
@@ -315,7 +322,7 @@ public class Join extends Activity {
         });
 
         Button buttonMusicPlayer = (Button) findViewById(R.id.Musicplayer);
-        buttonMusicPlayer.setOnClickListener(new View.OnClickListener() {
+       /* buttonMusicPlayer.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);
                 // Act2.putExtra("Hello", "Hello World");
@@ -323,7 +330,7 @@ public class Join extends Activity {
 
             }
 
-        });
+        });*/
 
         ((Button) findViewById(R.id.btn_add_song)).setOnClickListener(new View.OnClickListener() {
             @Override

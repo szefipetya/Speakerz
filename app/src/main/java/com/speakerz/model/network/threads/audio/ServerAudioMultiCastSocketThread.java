@@ -455,7 +455,7 @@ ServerAudioMultiCastSocketThread self=this;
             } catch (IOException e) {
                 e.printStackTrace();
                // ExceptionEvent.invoke(new EventArgs1<Exception>(this,new ConnectException("Problem at creating AudioServer, please Restart the App")));
-
+            shutdown();
             }
         }
 

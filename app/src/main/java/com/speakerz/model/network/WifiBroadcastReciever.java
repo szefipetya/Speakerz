@@ -62,6 +62,7 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                 // One common case is creating a group owner thread and accepting
                 // incoming connections.
                 HostAddressAvailableEvent.invoke(new HostAddressEventArgs(self,info.groupOwnerAddress,true));
+                isConnected=true;
             }else if (info.groupFormed&&!isHost) {
 
                     D.log("client " + info.groupOwnerAddress);
@@ -69,14 +70,22 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                     // The other device acts as the peer (client). In this case,
                     // you'll want to create a peer thread that connects
                     // to the group owner.
-                ConnectionChangedEvent.invoke(new BooleanEventArgs(self,true));
 
+              if(!isConnected) {
+                  ConnectionChangedEvent.invoke(new BooleanEventArgs(self, true));
+                  isConnected = true;
+              }
             }else{
                 D.log("ROSSZ EMBER A GROUP OWNER");
             }
         }
     };
 
+    public boolean isConnected() {
+        return isConnected;
+    }
+
+    boolean isConnected=false;
 
     @SuppressLint("MissingPermission")
     public void discoverPeers(WifiP2pManager.ActionListener actionListener) {
@@ -167,6 +176,7 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                 //disconnected
                 D.log("disconnected");
                 ConnectionChangedEvent.invoke(new BooleanEventArgs(self,false));
+                isConnected=false;
             }
         }
         else if(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)){

@@ -20,6 +20,7 @@ import com.speakerz.model.DeviceModel;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.enums.PERM;
 import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.HostAddressEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
@@ -82,6 +83,16 @@ public class DeviceNetwork extends BaseNetwork {
         });
 
         initServiceListeners();
+
+        reciever.ConnectionChangedEvent.addListener(new EventListener<BooleanEventArgs>() {
+            @Override
+            public void action(BooleanEventArgs args) {
+                if(!args.getValue()){
+                    serviceDevices.clear();
+                    ListChanged.invoke(null);
+                }
+            }
+        });
 
     }
 
