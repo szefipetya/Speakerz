@@ -7,10 +7,10 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="62dp"
 
-        android:layout_marginTop="2dp"
         android:layout_marginStart="2dp"
+        android:layout_marginTop="2dp"
         android:layout_marginEnd="2dp"
         android:layout_marginBottom="6dp"
         android:background="#1f4068">
@@ -19,8 +19,9 @@
             android:id="@+id/coverImageView"
             android:layout_width="50dp"
             android:layout_height="50dp"
+            android:layout_marginStart="8dp"
             android:padding="1dp"
-            android:src="@mipmap/ic_launcher_round"
+            android:src="@drawable/speaker_logo_kor"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -29,7 +30,8 @@
             android:id="@+id/songNameTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="8dp"
             android:text="Line 1"
             android:textColor="@android:color/white"
             android:textSize="18sp"
@@ -41,7 +43,7 @@
             android:id="@+id/songArtistTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
+            android:layout_marginStart="8dp"
             android:text="Line 2"
             android:textColor="@android:color/white"
             android:textSize="15sp"

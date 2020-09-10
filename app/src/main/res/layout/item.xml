@@ -8,7 +8,7 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="59dp"
         android:layout_margin="4dp"
         android:background="#1c355b">
 
@@ -16,24 +16,28 @@
             android:id="@+id/albumArt"
             android:layout_width="50dp"
             android:layout_height="50dp"
+            android:layout_marginStart="4dp"
             android:padding="2dp"
-            android:src="@mipmap/ic_launcher_round"
+            android:src="@drawable/speaker_logo_kor"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintVertical_bias="0.444" />
 
         <TextView
             android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
+            android:layout_marginStart="64dp"
             android:text="Line 1"
             android:textColor="@android:color/white"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:layout_marginTop="3dp"
-            app:layout_constraintStart_toEndOf="@+id/imageView"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.142" />
 
         <TextView
             android:id="@+id/textView2"
@@ -43,10 +47,10 @@
             android:layout_below="@+id/textView"
             android:layout_marginStart="8dp"
             android:layout_marginTop="-3dp"
+            android:layout_toEndOf="@+id/imageView"
             android:text="Line 2"
             android:textColor="@android:color/white"
             android:textSize="15sp"
-            android:layout_toEndOf="@+id/imageView"
             app:layout_constraintStart_toStartOf="@+id/textView"
             app:layout_constraintTop_toBottomOf="@+id/textView"
             tools:ignore="UnknownId" />
@@ -58,21 +62,21 @@
             android:layout_height="40dp"
             android:layout_marginTop="0dp"
             android:layout_marginEnd="15dp"
-            app:srcCompat="@drawable/ic_delete"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:srcCompat="@drawable/ic_delete" />
+
         <TextView
             android:id="@+id/text_song_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="20dp"
             android:text="0:00"
             android:textColor="@android:color/white"
-            android:layout_marginEnd="20dp"
-            app:layout_constraintEnd_toStartOf="@+id/image_delete"
-            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            />
+            app:layout_constraintEnd_toStartOf="@+id/image_delete"
+            app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.cardview.widget.CardView>

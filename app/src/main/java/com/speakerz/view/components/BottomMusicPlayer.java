@@ -66,8 +66,8 @@ public class BottomMusicPlayer {
             activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    titleSongTV.setText(song.getTitle());
-                    detailsTV.setText(song.getArtist());
+                    titleSongTV.setText(song.getTitle().length()>28? song.getTitle().substring(0,28)+"...":song.getTitle());
+                    detailsTV.setText(song.getArtist().length()>28?song.getArtist().substring(0,28)+"...":song.getArtist());
                 }
             });
         }
