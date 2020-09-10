@@ -19,14 +19,24 @@ public class Song implements Serializable {
     private String artist;
     private Long albumId;
     private String owner;
+    Bitmap songCoverArt = null;
 
-    public Song(String data, String title, String album, String artist,String owner,Long albumId) {
+    public Song(String data, String title, String album, String artist,String owner,Long albumId,Bitmap songCoverArt) {
         this.data = data;
         this.title = title;
         this.album = album;
         this.artist = artist;
         this.owner = owner;
         this.albumId = albumId;
+        this.songCoverArt = songCoverArt;
+    }
+
+    public Bitmap getSongCoverArt() {
+        return songCoverArt;
+    }
+
+    public void setSongCoverArt(Bitmap songCoverArt) {
+        this.songCoverArt = songCoverArt;
     }
 
     public Long getAlbumId() {

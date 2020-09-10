@@ -43,11 +43,13 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
         Song currentItem = mItemList.get(position);
         /*TODO: sikerült csak elfailel ha nemtudja megnyitni -->minden songnak van album artja csak van akinek nulla ettől függetlenül van helyefoglalva de az értéke null így nem lehet megnyitni ->exception de akinek van arra működik
          */
-        if(currentItem.getAlbumId() == null){
+        if(currentItem.getSongCoverArt() == null){
             holder.mImageView.setImageResource(R.drawable.ic_song);
             System.out.println("nincs");
         }
         else{
+            holder.mImageView.setImageBitmap(currentItem.getSongCoverArt());
+
             /*File F = new File(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()).getPath());
             if(!F.exists()){
                 System.out.println("nincs");

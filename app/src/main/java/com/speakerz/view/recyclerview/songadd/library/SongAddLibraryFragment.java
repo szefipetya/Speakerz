@@ -47,7 +47,7 @@ public class SongAddLibraryFragment extends Fragment {
     private void fillAudioList(List<Song> input, List<libraryItem> output) {
         if (output.isEmpty())
             for (Song s : input) {
-                libraryItem e = new libraryItem(s.getTitle(), s.getArtist(), "kép_path", "idő");
+                libraryItem e = new libraryItem(s.getTitle(), s.getArtist(), s.getSongCoverArt(), "idő");
                 output.add(e);
             }
     }

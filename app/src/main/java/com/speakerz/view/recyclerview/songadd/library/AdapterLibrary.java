@@ -1,6 +1,9 @@
 package com.speakerz.view.recyclerview.songadd.library;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +16,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.speakerz.R;
 import com.speakerz.debug.D;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 
 public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHolderLibrary> {
@@ -36,8 +41,9 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolderLibrary holder, int position) {
         libraryItem currentItem = listItems.get(position);
+        ContentResolver res = contextLibrary.getContentResolver();
 
-        String imageURL = currentItem.getCoverImagePath();
+
         String songName = currentItem.getSongName();
         String artist = currentItem.getArtist();
         String songLengthTime = currentItem.getSongLengthTime();
@@ -45,7 +51,12 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
         holder.songNameTextView.setText(songName);
         holder.songArtistTextView.setText(artist);
         holder.songLengthTimeTextView.setText(songLengthTime);
-        holder.coverImageView.setImageResource(R.mipmap.ic_launcher_round);
+        if(currentItem.getCoverImage() != null){
+            holder.coverImageView.setImageBitmap(currentItem.getCoverImage());
+        }
+        else{
+            holder.coverImageView.setImageResource(R.mipmap.ic_launcher_round);
+        }
         D.log("clicked:"+position);
 
     }
