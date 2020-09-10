@@ -24,6 +24,9 @@ import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -276,13 +279,45 @@ public class MusicPlayerModel{
 
         if (cursor != null && cursor.getCount() > 0) {
             audioList = new ArrayList<>();
-            while (cursor.moveToNext()) {
+            int i =0;
+            while (cursor.moveToNext() && i <20) {
+                //TODO: fail at to big number (250 mar fail)
                 String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                 String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
                 String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
                 String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+                Bitmap songCoverArt = null;
                 int albumID = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
                 Long thisalbumId = cursor.getLong(albumID);
+                Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisalbumId);
+                ContentResolver res = context.getContentResolver();
+                i++;
+                D.log("Cover : " +thisalbumId +" " + title);
+                //File f = new File(uriSongCover.getPath());
+                //TODO: handle corrupted files
+                if(!title.equals("I Hope You Rot") && !title.equals("Shadow Boxing") ){
+                    InputStream in = null;
+                    try {
+                        in = res.openInputStream(uriSongCover);
+                        songCoverArt = BitmapFactory.decodeStream(in);
+                        D.log("van CoverArt" + title);
+                        in.close();
+
+                    } catch (FileNotFoundException e) {
+                        //e.printStackTrace();
+                        D.log("nincs Coverart" + title);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    D.log(uriSongCover.toString());
+                }
+                /*try {
+                    InputStream in = res.openInputStream(uriSongCover);
+                    songCoverArt = BitmapFactory.decodeStream(in);
+                    D.log("van CoverArt");
+                }catch (FileNotFoundException e){
+                    D.log("nincs Coverart");
+                }*/
 
 
 
@@ -290,7 +325,7 @@ public class MusicPlayerModel{
 
                 // Save to audioList
                 //TODO: replace alma to unique identifier
-                audioList.add(new Song(data, title, album, artist,"alma",thisalbumId));
+                audioList.add(new Song(data, title, album, artist,"alma",thisalbumId,songCoverArt));
             }
         }
         cursor.close();
