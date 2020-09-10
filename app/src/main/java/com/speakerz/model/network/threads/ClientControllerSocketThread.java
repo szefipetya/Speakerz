@@ -40,7 +40,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
 
     public Event<EventArgs1<Body>> DisconectedNameErase;
     volatile boolean externalShutdown=false;
-    private int timeout;
+    private int timeout=10000;
 
     public ClientControllerSocketThread(){
 
@@ -54,19 +54,18 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             struct=new SocketStruct();
 
 
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
-                    try {
+
+                  /*  try {
                         Thread.sleep(5000);
                     } catch (InterruptedException ex) {
                         ex.printStackTrace();
-                    }
-                }
+                    }*/
 
                 try {
                     //Thread.sleep(2000);
                     struct.socket=new Socket();
                     struct.socket.setReuseAddress(true);
-                    struct.socket.connect(new InetSocketAddress(hostAddress, 8040), timeout);
+                    struct.socket.connect(new InetSocketAddress(hostAddress, 8040));
 
 
                 }catch (IOException e){
@@ -79,6 +78,8 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
             struct.objectOutputStream = new ObjectOutputStream(struct.socket.getOutputStream());
             struct.objectInputStream = new ObjectInputStream(struct.socket.getInputStream());
             D.log("connection succesful to "+ hostAddress);
+            D.log("my ip: "+ struct.socket.getLocalAddress());
+
             this.INITDeviceAddressEvent.invoke(new EventArgs1<Body>("senki",new INITDeviceAddressBody(struct.socket.getLocalAddress())));
             listen(struct);
 

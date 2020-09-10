@@ -10,6 +10,9 @@ import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.widget.Toast;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.EVT;
@@ -51,6 +54,30 @@ public class HostNetwork extends BaseNetwork {
             }
           }
        });
+       reciever.DiscoveryStatusChangedEvent.addListener(new EventListener<EventArgs1<Boolean>>() {
+           @Override
+           public void action(EventArgs1<Boolean> args) {
+               if(args.arg1()){
+                   //true
+                   new Handler(Looper.getMainLooper()).post(new Runnable() {
+                       @Override
+                       public void run() {
+                           TextChanged.invoke(new TextChangedEventArgs(self,EVT.update_discovery_status,"Advertising..."));
+
+                       }
+                   });
+               }else{
+                   advertiseMe();
+                   new Handler(Looper.getMainLooper()).post(new Runnable() {
+                       @Override
+                       public void run() {
+                           TextChanged.invoke(new TextChangedEventArgs(self,EVT.update_discovery_status,"Not visible..."));
+
+                       }
+                   });
+               }
+           }
+       });
    }
 
    private void startServerThread(InetAddress addr){
@@ -70,8 +97,9 @@ public class HostNetwork extends BaseNetwork {
    ServerSocketWrapper serverSocketWrapper=new ServerSocketWrapper();
 
    public Event<BooleanEventArgs> GroupConnectionChangedEvent = new Event<>();
+
     @SuppressLint("MissingPermission")
-    private void startRegistration() {
+    public void startRegistration() {
         Map<String, String> record = new HashMap<String, String>();
         record.put(TXTRECORD_PROP_AVAILABLE, "visible");
         record.put("host_name", nickName);
@@ -97,7 +125,7 @@ public class HostNetwork extends BaseNetwork {
     //  startRegistration();
        advertiseMe();
        //if device is under 6
-      /* if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
+
            reciever.getWifiP2pManager().createGroup(reciever.getChannel(), new WifiP2pManager.ActionListener() {
                @Override
                public void onSuccess() {
@@ -112,26 +140,31 @@ public class HostNetwork extends BaseNetwork {
            });
 
 
-       }*/
+
    }
 
    @SuppressLint("MissingPermission")
    public void advertiseMe(){
-       getReciever().getWifiP2pManager().discoverPeers(getReciever().getChannel(), new WifiP2pManager.ActionListener() {
-           @Override
-           public void onSuccess() {
-               D.log("advertising...");
-               TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Advertising... "));
 
-           }
+                getReciever().getWifiP2pManager().discoverPeers(getReciever().getChannel(), new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        D.log("advertising...");
+                        //TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Advertising... "));
 
-           @Override
-           public void onFailure(int i) {
-               D.log("advertising init failed");
-              TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Advertise init failed"));
+                    }
 
-           }
-       });
+                    @Override
+                    public void onFailure(int i) {
+                        D.log("advertising init failed");
+                       // TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Advertise init failed"));
+
+                    }
+                });
+
+
+
+
    }
 
    @SuppressLint("MissingPermission")

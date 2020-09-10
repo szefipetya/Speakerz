@@ -1,10 +1,12 @@
-package com.speakerz;
+package com.speakerz.view.components;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
+
+import com.speakerz.R;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -47,7 +49,7 @@ public class HashAdapter extends BaseAdapter {
         Map.Entry<String, String> item = getItem(position);
 
         // TODO replace findViewById by ViewHolder
-        ((TextView) result.findViewById(android.R.id.text1)).setText("#"+item.getKey().substring(0,4));
+        ((TextView) result.findViewById(android.R.id.text1)).setText(item.getKey());
         ((TextView) result.findViewById(android.R.id.text2)).setText(item.getValue());
 
         return result;
