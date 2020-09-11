@@ -15,18 +15,29 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.speakerz.R;
 import com.speakerz.debug.D;
+import com.speakerz.model.MusicPlayerModel;
+import com.speakerz.model.enums.EVT;
+import com.speakerz.model.enums.VIEW_EVT;
+import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs2;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHolderLibrary> {
+    private final MusicPlayerModel model;
     Context contextLibrary;
     ArrayList<libraryItem> listItems;
 
-    public AdapterLibrary(Context mContext, ArrayList<libraryItem> mList){
+    public AdapterLibrary(Context mContext, ArrayList<libraryItem> mList, MusicPlayerModel model){
         contextLibrary = mContext;
         listItems = mList;
+        this.model=model;
+        this.AdapterLibraryEvent=model.AdapterLibraryEvent;
     }
 
 
@@ -58,8 +69,16 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
             holder.coverImageView.setImageResource(R.mipmap.ic_launcher_round);
         }
         D.log("clicked:"+position);
+        //ez azért kell, hogyha vissza görget, akkor azokat már ne adja hozzá.
+        if(!tabooPositions.contains(position)){
+        AdapterLibraryEvent.invoke(new EventArgs2<VIEW_EVT, Integer>(this,VIEW_EVT.ADAPTER_SONG_SCROLL,position));
+        tabooPositions.add(position);
+        }
 
     }
+
+    List<Integer> tabooPositions=new ArrayList<>();
+    Event<EventArgs2<VIEW_EVT,Integer>> AdapterLibraryEvent;
 
     @Override
     public int getItemCount() {

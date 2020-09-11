@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
+import com.speakerz.model.enums.VIEW_EVT;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
@@ -61,6 +62,10 @@ public class MusicPlayerModel{
     public final Event<EventArgs2<Song, Integer>> songAddedEvent = new Event<>();
     public final Event<EventArgs2<Song, Integer>> songRemovedEvent = new Event<>();
     public final Event<EventArgs1<Song>> songChangedEvent = new Event<>();
+    public final Event<EventArgs1<Song>> AudioListUpdate=new Event<>();
+    public final Event<EventArgs2<VIEW_EVT,Integer>> AdapterLibraryEvent=new Event<>();
+
+
 
     // Event handlers
     EventListener<EventArgs1<Body>> musicPlayerActionListener = new EventListener<EventArgs1<Body>>() {
@@ -160,6 +165,13 @@ public class MusicPlayerModel{
 
         // Subscribe to model events
         model.MusicPlayerActionEvent.addListener(musicPlayerActionListener);
+        AdapterLibraryEvent.addListener(new EventListener<EventArgs2<VIEW_EVT, Integer>>() {
+            @Override
+            public void action(EventArgs2<VIEW_EVT, Integer> args) {
+                if(args.arg1()==VIEW_EVT.ADAPTER_SONG_SCROLL)
+                    loadNextAudio(audioReaderCursor,args.arg2());
+            }
+        });
     }
 
     // Getters
@@ -268,49 +280,42 @@ public class MusicPlayerModel{
     }
 
     //Load All Audio from the device To AudioList ( you will be bale to choose from these to add to the SongQueue
-    private void loadAudioWithPermission(){
-        ContentResolver contentResolver = context.getContentResolver();
+    private void loadNextAudio(Cursor cursor,int index){
+        cursor.moveToPosition(index);
+        loadNextAudio(cursor);
+    }
+    private void loadNextAudio(Cursor cursor){
 
-        Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
-        String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
-        Cursor cursor = contentResolver.query(uri, null, selection, null, sortOrder);
+        //TODO: fail at to big number (250 mar fail)
+        String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+        String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
+        String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
+        String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+        Bitmap songCoverArt = null;
+        int albumID = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+        Long thisalbumId = cursor.getLong(albumID);
+        Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisalbumId);
+        ContentResolver res = context.getContentResolver();
 
+        D.log("Cover : " +thisalbumId +" " + title);
+        //File f = new File(uriSongCover.getPath());
+        //TODO: handle corrupted files
+        if(!title.equals("I Hope You Rot") && !title.equals("Shadow Boxing") ){
+            InputStream in = null;
+            try {
+                in = res.openInputStream(uriSongCover);
+                songCoverArt = BitmapFactory.decodeStream(in);
+                D.log("van CoverArt" + title);
+                in.close();
 
-        if (cursor != null && cursor.getCount() > 0) {
-            audioList = new ArrayList<>();
-            int i =0;
-            while (cursor.moveToNext() && i <20) {
-                //TODO: fail at to big number (250 mar fail)
-                String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
-                String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
-                String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
-                String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-                Bitmap songCoverArt = null;
-                int albumID = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
-                Long thisalbumId = cursor.getLong(albumID);
-                Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisalbumId);
-                ContentResolver res = context.getContentResolver();
-                i++;
-                D.log("Cover : " +thisalbumId +" " + title);
-                //File f = new File(uriSongCover.getPath());
-                //TODO: handle corrupted files
-                if(!title.equals("I Hope You Rot") && !title.equals("Shadow Boxing") ){
-                    InputStream in = null;
-                    try {
-                        in = res.openInputStream(uriSongCover);
-                        songCoverArt = BitmapFactory.decodeStream(in);
-                        D.log("van CoverArt" + title);
-                        in.close();
-
-                    } catch (FileNotFoundException e) {
-                        //e.printStackTrace();
-                        D.log("nincs Coverart" + title);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    D.log(uriSongCover.toString());
-                }
+            } catch (FileNotFoundException e) {
+                //e.printStackTrace();
+                D.log("nincs Coverart" + title);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            D.log(uriSongCover.toString());
+        }
                 /*try {
                     InputStream in = res.openInputStream(uriSongCover);
                     songCoverArt = BitmapFactory.decodeStream(in);
@@ -321,14 +326,33 @@ public class MusicPlayerModel{
 
 
 
-                //Print the title of the song that it found.
+        //Print the title of the song that it found.
 
-                // Save to audioList
-                //TODO: replace alma to unique identifier
-                audioList.add(new Song(data, title, album, artist,"alma",thisalbumId,songCoverArt));
+        // Save to audioList
+        //TODO: replace alma to unique identifier
+        Song s=new Song(data, title, album, artist,"alma",thisalbumId,songCoverArt);
+        audioList.add(s);
+        AudioListUpdate.invoke(new EventArgs1<Song>(self,s));
+    }
+    Cursor audioReaderCursor;
+    private void loadAudioWithPermission(){
+        ContentResolver contentResolver = context.getContentResolver();
+
+        Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
+        String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
+        audioReaderCursor = contentResolver.query(uri, null, selection, null, sortOrder);
+        audioList = new ArrayList<>();
+
+        if (audioReaderCursor != null && audioReaderCursor.getCount() > 0) {
+
+            int i =0;
+            while (audioReaderCursor.moveToNext() && i <10) {
+                i++;
+                loadNextAudio(audioReaderCursor);
             }
         }
-        cursor.close();
+       // audioReaderCursor.close();
 
 
     }

@@ -19,11 +19,14 @@ import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventListener;
 import com.speakerz.view.PlayerRecyclerActivity;
 import com.speakerz.view.recyclerview.RecyclerItemClickListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class SongAddLibraryFragment extends Fragment {
 
@@ -34,10 +37,32 @@ public class SongAddLibraryFragment extends Fragment {
     public final Event<EventArgs> CloseEvent=new Event<>();
     public void setModel(MusicPlayerModel model) {
         this.model = model;
-        synchronized (modelIsNullLocker) {
-            modelIsNullLocker.notify();
-        }
+
         fillAudioList(model.getAudioList(), listLibrary);
+        AudioListUpdate=model.AudioListUpdate;
+        AudioListUpdate.addListener(new EventListener<EventArgs1<Song>>() {
+            @Override
+            public void action(EventArgs1<Song> args) {
+                Song s=args.arg1();
+                libraryItem e = new libraryItem(s.getTitle(), s.getArtist(), s.getSongCoverArt(), "idő");
+                listLibrary.add(e);
+                if(adapterLibrary!=null){
+                    if(getActivity()!=null)
+                         getActivity().runOnUiThread(new Runnable() {
+                             @Override
+                             public void run() {
+                                 recyclerViewLibrary.post(new Runnable()
+                                 {
+                                     @Override
+                                     public void run() {
+                                         adapterLibrary.notifyDataSetChanged();
+                                     }
+                                 });
+                             }
+                         });
+                }
+            }
+        });
         //  listLibrary = new ArrayList<>();
         // listLibrary.add(new libraryItem("Egy két há", "Belga", "mindegy", "2:45"));
         // listLibrary.add(new libraryItem("Daylight", "JOJI", "mindegy", "2:43"));
@@ -45,15 +70,18 @@ public class SongAddLibraryFragment extends Fragment {
 
     }
 
-    private void fillAudioList(List<Song> input, List<libraryItem> output) {
+    private void fillAudioList(List<Song> input, ArrayList<libraryItem> output) {
+        List<Song> copy = new ArrayList<Song>(input);
+
         if (output.isEmpty())
-            for (Song s : input) {
+            for (Song s : copy) {
                 libraryItem e = new libraryItem(s.getTitle(), s.getArtist(), s.getSongCoverArt(), "idő");
                 output.add(e);
             }
     }
 
-    Object modelIsNullLocker=new Object();
+    public Event<EventArgs1<Song>>AudioListUpdate;
+
     SongAddLibraryFragment self = this;
     private MusicPlayerModel model;
 
@@ -80,16 +108,8 @@ public class SongAddLibraryFragment extends Fragment {
         });
 
 
-       /* if (model == null) {
-            synchronized (modelIsNullLocker) {
-                try {
-                    modelIsNullLocker.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }*/
-        adapterLibrary = new AdapterLibrary(mView.getContext(), listLibrary);
+
+        adapterLibrary = new AdapterLibrary(mView.getContext(), listLibrary,model);
 
         recyclerViewLibrary.setAdapter(adapterLibrary);
         recyclerViewLibrary.addOnItemTouchListener(
@@ -104,6 +124,7 @@ public class SongAddLibraryFragment extends Fragment {
                     }
                 })
         );
+
 
 
         return mView;

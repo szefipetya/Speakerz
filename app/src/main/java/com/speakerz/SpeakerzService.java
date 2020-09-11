@@ -46,6 +46,7 @@ import ealvatag.audio.exceptions.CannotReadException;
 public class SpeakerzService extends Service {
 
 
+    public final int PERMISSIONS_REQUEST_CODE_WRITE_EXTERNAL_STORAGE =104 ;
 
     private final class ServiceHandler extends Handler {
         private  SpeakerzService service;

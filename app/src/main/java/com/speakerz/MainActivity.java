@@ -76,7 +76,7 @@ public class MainActivity extends Activity {
             subscribePermissionEvents();
             _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.READ_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED));
             _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
-
+            checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,_service.PERMISSIONS_REQUEST_CODE_WRITE_EXTERNAL_STORAGE);
 
 
         }
