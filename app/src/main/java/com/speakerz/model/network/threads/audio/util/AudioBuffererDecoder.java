@@ -191,6 +191,7 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
 
             }
         }
+
         actualBufferedPackageNumber.set(0);
         maxPackageNumber.set(0);
         for(ClientSocketStructWrapper cli:clients){
