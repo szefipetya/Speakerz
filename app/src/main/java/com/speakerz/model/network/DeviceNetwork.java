@@ -20,6 +20,7 @@ import com.speakerz.model.DeviceModel;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.enums.PERM;
 import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.HostAddressEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
@@ -30,6 +31,7 @@ import com.speakerz.model.network.threads.audio.ClientAudioMultiCastReceiverSock
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
 
 import java.util.ArrayList;
@@ -64,11 +66,15 @@ public class DeviceNetwork extends BaseNetwork {
                         tmp.MusicPlayerActionEvent = clientSocketWrapper.controllerSocket.MusicPlayerActionEvent;
                         tmp.MetaInfoReceivedEvent = clientSocketWrapper.controllerSocket.MetaInfoReceivedEvent;
                         tmp.ExceptionEvent = clientSocketWrapper.controllerSocket.ExceptionEvent;
-                        clientSocketWrapper.controllerSocket = tmp;
+                        tmp.INITDeviceAddressEvent=clientSocketWrapper.controllerSocket.INITDeviceAddressEvent;
+                        tmp.NameChangeEvent=clientSocketWrapper.controllerSocket.NameChangeEvent;
+                        tmp.NameListInitEvent=clientSocketWrapper.controllerSocket.NameListInitEvent;
 
+                        clientSocketWrapper.controllerSocket = tmp;
                         ClientAudioMultiCastReceiverSocketThread tmp2 = new ClientAudioMultiCastReceiverSocketThread();
                         tmp2.MusicPlayerActionEvent = tmp.MusicPlayerActionEvent;
                         tmp2.ExceptionEvent = tmp.ExceptionEvent;
+
                         clientSocketWrapper.audioSocket = tmp2;
                         D.log("its not the first start.");
                     }
@@ -89,7 +95,7 @@ public class DeviceNetwork extends BaseNetwork {
             public void action(BooleanEventArgs args) {
                 if(!args.getValue()){
                     serviceDevices.clear();
-                    ListChanged.invoke(null);
+                    ListChanged.invoke(new EventArgs(this));
                 }
             }
         });
@@ -251,6 +257,21 @@ discoverService();
     final HashMap<String, String> buddies = new HashMap<String, String>();
    public final ArrayList<WifiP2pService> serviceDevices = new ArrayList<>();
 
+    public void createServiceRequest(){
+        serviceRequest = WifiP2pDnsSdServiceRequest.newInstance();
+        reciever.getWifiP2pManager().addServiceRequest(reciever.getChannel(), serviceRequest,
+                new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        D.log("Added service discovery request");
+                    }
+
+                    @Override
+                    public void onFailure(int arg0) {
+                        D.log("Failed adding service discovery request");
+                    }
+                });
+    }
 
     @SuppressLint("MissingPermission")
     private void discoverService() {
@@ -262,19 +283,7 @@ discoverService();
         // After attaching listeners, create a service request and initiate
         // discovery.
         if(serviceRequest==null) {
-            serviceRequest = WifiP2pDnsSdServiceRequest.newInstance();
-            reciever.getWifiP2pManager().addServiceRequest(reciever.getChannel(), serviceRequest,
-                    new WifiP2pManager.ActionListener() {
-                        @Override
-                        public void onSuccess() {
-                            D.log("Added service discovery request");
-                        }
-
-                        @Override
-                        public void onFailure(int arg0) {
-                            D.log("Failed adding service discovery request");
-                        }
-                    });
+            createServiceRequest();
         }else{
 
         }
@@ -287,7 +296,7 @@ discoverService();
             @Override
             public void onFailure(int arg0) {
                 TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Discovering failed. errcode: "+arg0));
-
+                if(arg0==WifiP2pManager.NO_SERVICE_REQUESTS)
                 D.log("Service discovery failed");
             }
         });

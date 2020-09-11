@@ -13,6 +13,7 @@ import com.speakerz.model.network.BaseNetwork;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
+import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
@@ -126,8 +127,20 @@ public abstract class BaseModel {
                 });
             }
         });
+        reciever.ConnectionChangedEvent.addListener(new EventListener<BooleanEventArgs>() {
+            @Override
+            public void action(BooleanEventArgs args) {
+                if(args.getValue()){
+                    isConnected=true;
+                }
+                if(!args.getValue()&&isConnected) {
+                    isConnected=false;
+                    stop();
+                }
+            }
+        });
     }
-
+    boolean isConnected=false;
 
 
     public abstract BaseNetwork getNetwork();

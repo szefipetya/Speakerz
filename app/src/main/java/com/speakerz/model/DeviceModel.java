@@ -150,22 +150,17 @@ isAppRunning=false;
 
         if(network.getClientSocketWrapper().controllerSocket!=null) {
             network.getClientSocketWrapper().controllerSocket.shutdown();
-            network.getClientSocketWrapper().audioSocket.shutdown();
-            try {
-                network.getClientSocketWrapper().controllerSocket.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            network.getReciever().clearConnections();
         }
-        network.PermissionCheckEvent.removeAllListeners();
-        network.PermissionCheckEvent=null;
-        network.ListChanged.removeAllListeners();
-        network.ListChanged=null;
-        network.TextChanged.removeAllListeners();
-        network.TextChanged=null;
-        deletePersistentGroups();
+        if( network.getClientSocketWrapper().audioSocket!=null) {
+            network.getClientSocketWrapper().audioSocket.shutdown();
+        }
+        network.getReciever().clearConnections();
 
+        deletePersistentGroups();
+        musicPlayerModel.close();
+        network.stop();
+        network.createServiceRequest();
+        network.discoverPeers();
     }
 
     private void deletePersistentGroups(){

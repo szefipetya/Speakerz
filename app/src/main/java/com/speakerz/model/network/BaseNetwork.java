@@ -1,8 +1,11 @@
 package com.speakerz.model.network;
 
+import android.annotation.SuppressLint;
 import android.content.IntentFilter;
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.util.Log;
 
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.event.EventHandler;
@@ -103,7 +106,34 @@ public abstract class BaseNetwork  {
     protected String SERVICE_INSTANCE="SPEAKERZ";
     protected String TXTRECORD_PROP_AVAILABLE="AVAILABLE";
 
+    public void stop(){
+        disconnect();
+    }
 
+    @SuppressLint("MissingPermission")
+    public void disconnect() {
+        if (reciever.getWifiP2pManager() != null && reciever.getChannel() != null) {
+            reciever.getWifiP2pManager().requestGroupInfo(reciever.getChannel(), new WifiP2pManager.GroupInfoListener() {
+                @Override
+                public void onGroupInfoAvailable(WifiP2pGroup group) {
+                    if (group != null && reciever.getWifiP2pManager() != null && reciever.getChannel() != null) {
+                        reciever.getWifiP2pManager().removeGroup(reciever.getChannel(), new WifiP2pManager.ActionListener() {
+
+                            @Override
+                            public void onSuccess() {
+                                Log.d("TAG", "removeGroup onSuccess -");
+                            }
+
+                            @Override
+                            public void onFailure(int reason) {
+                                Log.d("TAG", "removeGroup onFailure -" + reason);
+                            }
+                        });
+                    }
+                }
+            });
+        }
+    }
     //SETTERS
 
 }

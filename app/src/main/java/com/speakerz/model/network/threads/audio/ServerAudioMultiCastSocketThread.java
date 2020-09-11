@@ -606,6 +606,20 @@ ServerAudioMultiCastSocketThread self=this;
                 e.printStackTrace();e.printStackTrace();
             }
         }
+        if(senderServerSocket !=null) {
+            try {
+                senderServerSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();e.printStackTrace();
+            }
+        }
+        if(rdataServerSocket !=null) {
+            try {
+                rdataServerSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();e.printStackTrace();
+            }
+        }
         for(ClientSocketStructWrapper ds: clients){
             if(ds!=null){
                 try {

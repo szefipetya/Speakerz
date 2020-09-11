@@ -38,8 +38,6 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     public Event<EventArgs1<Body>> INITDeviceAddressEvent;
     public Event<EventArgs2<Body,TYPE>> NameChangeEvent;
     public Event<EventArgs1<Body>> NameListInitEvent;
-
-    public Event<EventArgs1<Body>> DisconectedNameErase;
     volatile boolean externalShutdown=false;
     private int timeout=10000;
 

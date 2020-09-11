@@ -233,32 +233,13 @@ public class HostModel extends BaseModel {
         D.log("Model stopped");
         if(   network.getServerSocketWrapper().controllerSocket!=null) {
             network.getServerSocketWrapper().controllerSocket.shutdown();
-            network.getServerSocketWrapper().audioSocket.shutdown();
         }
-
+        if(   network.getServerSocketWrapper().audioSocket!=null)
+            network.getServerSocketWrapper().audioSocket.shutdown();
         musicPlayerModel.close();
         network.getReciever().clearConnections();
-        network.getReciever().getWifiP2pManager().removeGroup(network.getReciever().getChannel(), new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                D.log("group removed by stop()");
-
-            }
-
-            @Override
-            public void onFailure(int i) {
-                D.log("fail: group can't be removed by stop() errcode: "+i);
-
-            }
-        });
-      //  getNetwork().getReciever().abortBroadcast();
-        network.PermissionCheckEvent.removeAllListeners();
-        network.PermissionCheckEvent=null;
-        network.ListChanged.removeAllListeners();
-        network.ListChanged=null;
-        network.TextChanged.removeAllListeners();
-        network.TextChanged=null;
-deletePersistentGroups();
+        deletePersistentGroups();
+        network.stop();
 
     }
 

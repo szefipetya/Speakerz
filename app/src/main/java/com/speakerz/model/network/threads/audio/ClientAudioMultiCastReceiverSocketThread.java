@@ -384,9 +384,11 @@ handlerRunning=true;
 
         if(wrapper.receiverInfoSocket.socket!=null){
             try {
+                if(wrapper.receiverInfoSocket.objectOutputStream!=null)
                 wrapper.receiverInfoSocket.objectOutputStream.close();
+                if(wrapper.receiverInfoSocket.objectInputStream!=null)
                 wrapper.receiverInfoSocket.objectInputStream.close();
-
+                if(wrapper.receiverInfoSocket.socket!=null)
                 wrapper.receiverInfoSocket.socket.close();
 
             } catch (IOException e) {
@@ -396,9 +398,11 @@ handlerRunning=true;
         }
             if(wrapper.senderInfoSocket.socket!=null){
                 try {
+                    if( wrapper.senderInfoSocket.objectOutputStream!=null)
                     wrapper.senderInfoSocket.objectOutputStream.close();
+                    if( wrapper.senderInfoSocket.objectInputStream!=null)
                     wrapper.senderInfoSocket.objectInputStream.close();
-
+                    if( wrapper.senderInfoSocket.socket!=null)
                     wrapper.senderInfoSocket.socket.close();
 
                 } catch (IOException e) {
@@ -406,9 +410,11 @@ handlerRunning=true;
                 }
             }
         if(wrapper.dataSocket.socket!=null){
-            try {
+            try {if( wrapper.dataSocket.objectOutputStream!=null)
                 wrapper.dataSocket.objectOutputStream.close();
+                if( wrapper.dataSocket.objectInputStream!=null)
                 wrapper.dataSocket.objectInputStream.close();
+                if( wrapper.dataSocket.socket!=null)
                 wrapper.dataSocket.socket.close();
 
             } catch (IOException e) {
