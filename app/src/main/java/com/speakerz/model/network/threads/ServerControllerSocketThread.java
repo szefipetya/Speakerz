@@ -48,6 +48,8 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     public Event<EventArgs1<Body>> INITDeviceAddressEvent;
     public Event<EventArgs1<Body>> NameListInitEvent;
     public Event<EventArgs2<Body,TYPE>> NameChangeEvent=null;
+    public Event<EventArgs1<Body>> DeleteSongEvent;
+    public Event<EventArgs1<Body>> DeleteSongRequestEvent;
 
     volatile boolean externalShutdown=false;
     @Override
@@ -214,6 +216,15 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
             }
             D.log(" server: NameChange Happened: ");
 
+        }
+
+        if(chObject.TYPE== TYPE.DELETE_SONG) {
+            DeleteSongEvent.invoke(new EventArgs1<Body>(TYPE.DELETE_SONG,chObject.body));
+            D.log(" Song " + (Integer)chObject.body.getContent()+ "deleted");
+        }
+
+        if(chObject.TYPE== TYPE.DELETE_SONG_REQUEST) {
+            DeleteSongEvent.invoke(new EventArgs1<Body>(TYPE.DELETE_SONG,chObject.body));
         }
     }
 

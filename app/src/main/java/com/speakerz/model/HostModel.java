@@ -15,6 +15,7 @@ import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameListInitRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.DeleteSongRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.Serializable.body.controller.content.NameList;
@@ -123,6 +124,27 @@ public class HostModel extends BaseModel {
                 //a server hozzáadja magát a listához.
                 NickNames.put(self.deviceID,self.NickName);
                 DeviceListChangedEvent.invoke(null);
+            }
+        });
+
+        DeleteSongEvent.addListener(new EventListener<EventArgs1<Body>>(){
+            @Override
+            public void action(EventArgs1<Body> args) {
+                musicPlayerModel.removeSong(musicPlayerModel.getSongQueue().get((Integer) args.arg1().getContent()));
+                try {
+                    network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new DeleteSongRequestBody((Integer) args.arg1().getContent()), TYPE.DELETE_SONG));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                D.log("deleteSong");
+            }
+        });
+
+        DeleteSongRequestEvent.addListener(new EventListener<EventArgs1<Body>>(){
+            @Override
+            public void action(EventArgs1<Body> args) {
+                DeleteSongEvent.invoke(new EventArgs1<Body>(TYPE.DELETE_SONG,new DeleteSongRequestBody((Integer) args.arg1().getContent())));
             }
         });
     }
@@ -255,5 +277,8 @@ public class HostModel extends BaseModel {
         network.getServerSocketWrapper().controllerSocket.NameChangeEvent =NameChangeEvent;
         network.getServerSocketWrapper().controllerSocket.NameListInitEvent= NameListInitEvent;
         network.getServerSocketWrapper().controllerSocket.INITDeviceAddressEvent= INITDeviceAddressEvent;
+        network.getServerSocketWrapper().controllerSocket.DeleteSongEvent = DeleteSongEvent;
+        network.getServerSocketWrapper().controllerSocket.DeleteSongRequestEvent = DeleteSongRequestEvent;
+
     }
 }

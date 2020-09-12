@@ -64,6 +64,8 @@ public abstract class BaseModel {
     public final Event<EventArgs2<Body, TYPE>> NameChangeEvent=new Event<>();
     public final Event<EventArgs1<Body>> INITDeviceAddressEvent = new Event<>();
     public Event<TextChangedEventArgs> TextChanged=new Event<>();
+    public Event<EventArgs1<Body>> DeleteSongEvent;
+    public Event<EventArgs1<Body>> DeleteSongRequestEvent;
 
     public boolean deleteFromNicknamesByAddress(String address){
         D.log("in the map----");

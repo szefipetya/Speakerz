@@ -38,6 +38,8 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     public Event<EventArgs1<Body>> INITDeviceAddressEvent;
     public Event<EventArgs2<Body,TYPE>> NameChangeEvent;
     public Event<EventArgs1<Body>> NameListInitEvent;
+    public Event<EventArgs1<Body>> DeleteSongEvent;
+    public Event<EventArgs1<Body>> DeleteSongRequestEvent;
     volatile boolean externalShutdown=false;
     private int timeout=10000;
 
@@ -136,6 +138,17 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
         if(chObject.TYPE== TYPE.INITNAMELIST) {
             NameListInitEvent.invoke(new EventArgs1<Body>(TYPE.INITNAMELIST,chObject.body));
             D.log(" Client:got NameList ");
+        }
+
+        if(chObject.TYPE== TYPE.DELETE_SONG) {
+            DeleteSongEvent.invoke(new EventArgs1<Body>(TYPE.DELETE_SONG,chObject.body));
+            D.log(" Song " + (Integer)chObject.body.getContent()+ "deleteed");
+        }
+
+        //technikailag ő nem fog ilyet kapni
+        if(chObject.TYPE== TYPE.DELETE_SONG_REQUEST) {
+            DeleteSongEvent.invoke(new EventArgs1<Body>(TYPE.DELETE_SONG,chObject.body));
+            D.log(" Song " + (Integer)chObject.body.getContent()+ "deleteed");
         }
     }
 

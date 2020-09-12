@@ -93,6 +93,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
                     }
                 }
             });
+
             mDeleteImage.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {

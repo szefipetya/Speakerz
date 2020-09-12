@@ -9,6 +9,7 @@ import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.controller.DeleteSongRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
@@ -71,6 +72,9 @@ public class DeviceModel extends BaseModel {
         network.getClientSocketWrapper().controllerSocket.NameChangeEvent = NameChangeEvent;
         network.getClientSocketWrapper().controllerSocket.NameListInitEvent= NameListInitEvent;
         network.getClientSocketWrapper().controllerSocket.INITDeviceAddressEvent= INITDeviceAddressEvent;
+        network.getClientSocketWrapper().controllerSocket.DeleteSongEvent = DeleteSongEvent;
+        network.getClientSocketWrapper().controllerSocket.DeleteSongRequestEvent = DeleteSongRequestEvent;
+
     }
 
 DeviceModel self=this;
@@ -135,6 +139,27 @@ DeviceModel self=this;
             public void action(EventArgs1<Body> args) {
                deviceID=args.arg1().getContent().toString();
                deviceAddress= (InetAddress) args.arg1().getContent();
+            }
+        });
+
+        DeleteSongEvent.addListener(new EventListener<EventArgs1<Body>>(){
+            @Override
+            public void action(EventArgs1<Body> args) {
+                D.log("deleteSong Client");
+                musicPlayerModel.removeSong(musicPlayerModel.getSongQueue().get((Integer) args.arg1().getContent()));
+            }
+        });
+
+        DeleteSongRequestEvent.addListener(new EventListener<EventArgs1<Body>>(){
+            @Override
+            public void action(EventArgs1<Body> args) {
+                D.log("deleteSong Request Sended");
+                try {
+                    network.getClientSocketWrapper().controllerSocket.send(new ChannelObject(new DeleteSongRequestBody( (Integer) args.arg1().getContent()),TYPE.DELETE_SONG_REQUEST));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
             }
         });
         //a network jelzi, hogy songObjectet kapott.

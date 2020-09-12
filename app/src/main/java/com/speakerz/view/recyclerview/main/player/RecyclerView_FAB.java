@@ -15,11 +15,18 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.speakerz.R;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
+import com.speakerz.model.network.Serializable.ChannelObject;
+import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
 import com.speakerz.view.PlayerRecyclerActivity;
 import com.speakerz.view.recyclerview.songadd.library.SongAddLibraryFragment;
+
+
+import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.controller.DeleteSongRequestBody;
 
 import java.util.ArrayList;
 
@@ -226,7 +233,8 @@ public class RecyclerView_FAB  {
 
             @Override
             public void onDeleteClick(int position) {
-                model.removeSong(model.getSongQueue().get(position));
+                //TODO: DELETE SONG
+                model.getModel().DeleteSongRequestEvent.invoke(new EventArgs1<Body>(TYPE.DELETE_SONG_REQUEST,new DeleteSongRequestBody(position)));
             }
         });
         model.songAddedEvent.addListener(songAddedListener);
