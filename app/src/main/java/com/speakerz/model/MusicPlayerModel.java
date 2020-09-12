@@ -34,6 +34,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
 
+import static java.lang.Integer.parseInt;
+
 
 public class MusicPlayerModel{
     // Context variables
@@ -284,9 +286,10 @@ public class MusicPlayerModel{
         cursor.moveToPosition(index);
         loadNextAudio(cursor);
     }
+
+    //TODO: nem rosszötlet depicit laggol mikor keres az ember Kéne egy szűrés a listára hogy lehessen keresni benne ahoz viszont az egésznek bekell töltve lennie
     private void loadNextAudio(Cursor cursor){
 
-        //TODO: fail at to big number (250 mar fail)
         String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
         String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
         String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
@@ -297,33 +300,21 @@ public class MusicPlayerModel{
         Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisalbumId);
         ContentResolver res = context.getContentResolver();
 
-        D.log("Cover : " +thisalbumId +" " + title);
-        //File f = new File(uriSongCover.getPath());
-        //TODO: handle corrupted files
+
         if(!title.equals("I Hope You Rot") && !title.equals("Shadow Boxing") ){
             InputStream in = null;
             try {
                 in = res.openInputStream(uriSongCover);
                 songCoverArt = BitmapFactory.decodeStream(in);
-                D.log("van CoverArt" + title);
                 in.close();
 
             } catch (FileNotFoundException e) {
                 //e.printStackTrace();
-                D.log("nincs Coverart" + title);
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            D.log(uriSongCover.toString());
         }
-                /*try {
-                    InputStream in = res.openInputStream(uriSongCover);
-                    songCoverArt = BitmapFactory.decodeStream(in);
-                    D.log("van CoverArt");
-                }catch (FileNotFoundException e){
-                    D.log("nincs Coverart");
-                }*/
-
 
 
         //Print the title of the song that it found.
@@ -331,9 +322,31 @@ public class MusicPlayerModel{
         // Save to audioList
         //TODO: replace alma to unique identifier
         Song s=new Song(data, title, album, artist,"alma",thisalbumId,songCoverArt);
+        int durMili= parseInt(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
+        String duration;
+        durMili= durMili/1000;
+        Integer durH = durMili/3600;
+        durMili= durMili%3600;
+        Integer durM= durMili/60;
+        durMili= durMili%60;
+        Integer durS= durMili;
+        if(durH>0){
+            s.setDuration(durH.toString()+ ":" + durM.toString() + ":" +durS.toString());
+        }
+        else {
+            if(durS<10){
+                s.setDuration(durM.toString() + ":0" + durS.toString());
+            }
+            else{
+                s.setDuration(durM.toString() + ":" + durS.toString());
+            }
+
+        }
         audioList.add(s);
         AudioListUpdate.invoke(new EventArgs1<Song>(self,s));
     }
+
+
     Cursor audioReaderCursor;
     private void loadAudioWithPermission(){
         ContentResolver contentResolver = context.getContentResolver();

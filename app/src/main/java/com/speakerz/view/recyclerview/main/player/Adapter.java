@@ -41,36 +41,16 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Song currentItem = mItemList.get(position);
-        /*TODO: sikerült csak elfailel ha nemtudja megnyitni -->minden songnak van album artja csak van akinek nulla ettől függetlenül van helyefoglalva de az értéke null így nem lehet megnyitni ->exception de akinek van arra működik
-         */
         if(currentItem.getSongCoverArt() == null){
             holder.mImageView.setImageResource(R.drawable.ic_song);
             System.out.println("nincs");
         }
         else{
             holder.mImageView.setImageBitmap(currentItem.getSongCoverArt());
-
-            /*File F = new File(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()).getPath());
-            if(!F.exists()){
-                System.out.println("nincs");
-                holder.mImageView.setImageResource(R.drawable.ic_song);
-            }
-            else{
-                System.out.println("van");
-                holder.mImageView.setImageURI(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()));
-            }*/
-
-           /* try{
-                holder.mImageView.setImageURI(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()));
-            }
-            catch(IOException e){
-                holder.mImageView.setImageResource(R.drawable.ic_song);
-            }*/
-            //holder.mImageView.setImageURI(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()));
-            //System.out.println(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), currentItem.getAlbumId()));
         }
-        holder.mTextView1.setText(currentItem.getTitle());
-        holder.mTextView2.setText(currentItem.getArtist());
+        holder.titleView.setText(currentItem.getTitle());
+        holder.artistView.setText(currentItem.getArtist());
+        holder.durationView.setText(currentItem.getDuration());
     }
 
     @Override
@@ -89,15 +69,17 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public ImageView mImageView;
-        public TextView mTextView1;
-        public TextView mTextView2;
+        public TextView titleView;
+        public TextView artistView;
+        public TextView durationView;
         public ImageView mDeleteImage;
 
         public ViewHolder(View itemView, final OnItemClickListener listener) {
             super(itemView);
             mImageView = itemView.findViewById(R.id.albumArt);
-            mTextView1 = itemView.findViewById(R.id.textView);
-            mTextView2 = itemView.findViewById(R.id.textView2);
+            titleView = itemView.findViewById(R.id.textView);
+            artistView = itemView.findViewById(R.id.textView2);
+            durationView = itemView.findViewById(R.id.text_song_time);
             mDeleteImage = itemView.findViewById(R.id.image_delete);
 
             itemView.setOnClickListener(new View.OnClickListener() {

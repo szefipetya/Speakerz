@@ -44,7 +44,7 @@ public class SongAddLibraryFragment extends Fragment {
             @Override
             public void action(EventArgs1<Song> args) {
                 Song s=args.arg1();
-                libraryItem e = new libraryItem(s.getTitle(), s.getArtist(), s.getSongCoverArt(), "idő");
+                libraryItem e = new libraryItem(s.getTitle(), s.getArtist(), s.getSongCoverArt(), s.getDuration());
                 listLibrary.add(e);
                 if(adapterLibrary!=null){
                     if(getActivity()!=null)
@@ -75,7 +75,7 @@ public class SongAddLibraryFragment extends Fragment {
 
         if (output.isEmpty())
             for (Song s : copy) {
-                libraryItem e = new libraryItem(s.getTitle(), s.getArtist(), s.getSongCoverArt(), "idő");
+                libraryItem e = new libraryItem(s.getTitle(), s.getArtist(), s.getSongCoverArt(), s.getDuration());
                 output.add(e);
             }
     }
