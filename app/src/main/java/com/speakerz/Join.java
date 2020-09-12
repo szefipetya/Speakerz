@@ -322,6 +322,7 @@ public class Join extends Activity {
         });
 
         Button buttonMusicPlayer = (Button) findViewById(R.id.Musicplayer);
+
        /* buttonMusicPlayer.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);

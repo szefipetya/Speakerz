@@ -3,10 +3,8 @@ package com.speakerz.model;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.ConnectivityManager;
-import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.text.format.Formatter;
-import android.widget.Toast;
+
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.EVT;
@@ -30,14 +28,12 @@ import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
-import java.io.File;
+
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.util.List;
 
-import static android.content.Context.WIFI_SERVICE;
-import static androidx.core.content.ContextCompat.getSystemService;
 
 public class HostModel extends BaseModel {
     HostNetwork network;

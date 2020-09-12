@@ -2,10 +2,7 @@ package com.speakerz.model;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.MediaMetadataRetriever;
-import android.net.Uri;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 
@@ -21,6 +18,7 @@ public class Song implements Serializable {
     private String artist;
     private Long albumId;
     private String owner;
+    private String duration;
     byte[] songCoverArt = null;
 
     public Song(String data, String title, String album, String artist,String owner,Long albumId,Bitmap songCoverArt) {
@@ -31,6 +29,7 @@ public class Song implements Serializable {
         this.owner = owner;
         this.albumId = albumId;
        this.setSongCoverArt(songCoverArt);
+       duration= "0";
     }
 
 
@@ -103,11 +102,11 @@ public class Song implements Serializable {
         return title;
     }
 
-    public Bitmap getAlbumImage(String path) {
-        android.media.MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-        mmr.setDataSource(path);
-        byte[] data = mmr.getEmbeddedPicture();
-        if (data != null) return BitmapFactory.decodeByteArray(data, 0, data.length);
-        return null;
+    public String getDuration() {
+        return duration;
+    }
+
+    public void setDuration(String duration) {
+        this.duration = duration;
     }
 }

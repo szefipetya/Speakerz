@@ -51,7 +51,6 @@ public class MainActivity extends Activity {
     //REQUIRED_BEG MODEL
     SpeakerzService _service;
     boolean _isBounded;
-    Button nameChange;
 
     CommonModel_ViewEventHandler viewEventHandler;
 
@@ -136,7 +135,6 @@ Activity self=this;
             _service.getTextValueStorage().autoConfigureTexts(this);
         //a bánat tudja, hogy ez mit csinál, de kell
 
-        //D.log("main_onResume");
     }
 
     @Override
@@ -165,7 +163,6 @@ Activity self=this;
 
         setContentView(R.layout.activity_main);
 
-        //D.log("oncreate_main");
 
         Button buttonJoin = (Button) findViewById(R.id.join);
         buttonJoin.setOnClickListener(new View.OnClickListener(){
@@ -188,18 +185,6 @@ Activity self=this;
                 Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);
                 startActivity(Act2);
 
-
-            }
-
-        });
-
-
-        Button buttonOptions = (Button) findViewById(R.id.options);
-        buttonOptions.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View view){
-                Intent Act2 = new Intent(getApplicationContext(),Options.class);
-                Act2.putExtra("Hello","Hello World");
-                startActivity(Act2);
 
             }
 
@@ -277,6 +262,7 @@ Activity self=this;
 
         }
     }
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void checkCoarseLocationPermission(){
 

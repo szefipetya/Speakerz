@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
-import android.telephony.TelephonyManager;
+
 import android.widget.Toast;
 
 import com.speakerz.debug.D;
@@ -17,7 +17,7 @@ import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
-import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
+
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
@@ -26,11 +26,10 @@ import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 import com.speakerz.util.ThreadSafeEvent;
 
-import java.lang.reflect.Type;
+
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.util.HashMap;
-import java.util.UUID;
+
 
 import ealvatag.audio.exceptions.CannotReadException;
 
@@ -93,12 +92,13 @@ public abstract class BaseModel {
         this.PermissionCheckEvent=PermissionCheckEvent;
         musicPlayerModel = new MusicPlayerModel(this, isHost);
 
+
+        //Name peristing in memory init
         sharedpreferences = context.getSharedPreferences(mypreference,Context.MODE_PRIVATE);
         editor = sharedpreferences.edit();
         NickName = sharedpreferences.getString(myName, "placeholder");
         deviceID = "ip::null";
         NickNames= new HashMap<>();
-
 
 
         subscribeToNameChange();
