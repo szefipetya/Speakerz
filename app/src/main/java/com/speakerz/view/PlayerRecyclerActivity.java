@@ -314,7 +314,7 @@ private void goBackToJoinPage(){
         model.getModel().NickName=username;
         model.getModel().editor.putString(model.getModel().myName,username);
         model.getModel().editor.commit();
-        System.out.println(model.getModel().sharedpreferences.getString(model.getModel().myName,"nincs"));
+        System.out.println(model.getModel().sharedpreferences.getString(model.getModel().myName,"nincs Név"));
         PutNameChangeRequestBody body1 = new PutNameChangeRequestBody(null,item);
         model.getModel().NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(null,body1,TYPE.NAME));
     }

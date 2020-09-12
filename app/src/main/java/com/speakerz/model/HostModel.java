@@ -137,7 +137,7 @@ public class HostModel extends BaseModel {
                     e.printStackTrace();
                 }
 
-                D.log("deleteSong");
+                D.log("deleteSong Sended");
             }
         });
 
