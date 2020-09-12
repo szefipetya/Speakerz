@@ -224,9 +224,6 @@ public class HostModel extends BaseModel {
     @SuppressLint("MissingPermission")
     public void startAdvertising() {
 
-
-        //stop();st
-       // network.getReciever().getWifiP2pManager().d
         network.getReciever().getWifiP2pManager().discoverPeers(network.getReciever().getChannel(), new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {

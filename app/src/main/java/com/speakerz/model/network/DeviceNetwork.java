@@ -69,7 +69,8 @@ public class DeviceNetwork extends BaseNetwork {
                         tmp.INITDeviceAddressEvent=clientSocketWrapper.controllerSocket.INITDeviceAddressEvent;
                         tmp.NameChangeEvent=clientSocketWrapper.controllerSocket.NameChangeEvent;
                         tmp.NameListInitEvent=clientSocketWrapper.controllerSocket.NameListInitEvent;
-
+                        tmp.DeleteSongEvent=clientSocketWrapper.controllerSocket.DeleteSongEvent;
+                        tmp.DeleteSongRequestEvent=clientSocketWrapper.controllerSocket.DeleteSongRequestEvent;
                         clientSocketWrapper.controllerSocket = tmp;
                         ClientAudioMultiCastReceiverSocketThread tmp2 = new ClientAudioMultiCastReceiverSocketThread();
                         tmp2.MusicPlayerActionEvent = tmp.MusicPlayerActionEvent;
