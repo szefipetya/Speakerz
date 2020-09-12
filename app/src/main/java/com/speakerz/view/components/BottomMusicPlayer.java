@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -25,6 +26,7 @@ public class BottomMusicPlayer {
     TextView detailsTV;
     ImageButton playButton;
     SeekBar seekBar;
+    ImageView albumArt;
     MusicPlayerModel mpModel = null;
 
     // Event listeners
@@ -68,6 +70,7 @@ public class BottomMusicPlayer {
                 public void run() {
                     titleSongTV.setText(song.getTitle().length()>28? song.getTitle().substring(0,28)+"...":song.getTitle());
                     detailsTV.setText(song.getArtist().length()>28?song.getArtist().substring(0,28)+"...":song.getArtist());
+                    albumArt.setImageBitmap(song.getSongCoverArt());
                 }
             });
         }
@@ -125,6 +128,8 @@ public class BottomMusicPlayer {
                 setPlayIcon(mpModel.isPlaying());
             }
         });
+
+        albumArt = (ImageView) activity.findViewById(R.id.imageAlbum);
     }
 
 
