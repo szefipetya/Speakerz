@@ -1,6 +1,7 @@
 package com.speakerz.model;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.telephony.TelephonyManager;
@@ -38,9 +39,14 @@ public abstract class BaseModel {
     public abstract void start();
     public abstract void stop();
 
+    public SharedPreferences sharedpreferences;
+    public SharedPreferences.Editor editor;
+    public static final String mypreference = "mypref";
+    public static final String myName= "Name";
+
     public Boolean isAppRunning=true;
 
-    public String NickName = "placeholder";
+    public String NickName;
     public String deviceID= "";
     public InetAddress deviceAddress;
     public HashMap<String,String> NickNames;
@@ -86,10 +92,13 @@ public abstract class BaseModel {
         this.context = context;
         this.PermissionCheckEvent=PermissionCheckEvent;
         musicPlayerModel = new MusicPlayerModel(this, isHost);
-        
-        NickName = "placeholder";
+
+        sharedpreferences = context.getSharedPreferences(mypreference,Context.MODE_PRIVATE);
+        editor = sharedpreferences.edit();
+        NickName = sharedpreferences.getString(myName, "placeholder");
         deviceID = "ip::null";
         NickNames= new HashMap<>();
+
 
 
         subscribeToNameChange();

@@ -46,7 +46,6 @@ public class HostModel extends BaseModel {
     public HostModel(Context context, WifiBroadcastReciever reciever, ConnectivityManager connectivityManager, Event<PermissionCheckEventArgs> PermissionCheckEvent) {
 
         super(context, reciever,true,PermissionCheckEvent);
-        NickName="Host";
         network = new HostNetwork(reciever);
         network.PermissionCheckEvent=this.PermissionCheckEvent;
         network.ExceptionEvent=this.ExceptionEvent;
