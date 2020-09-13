@@ -71,7 +71,7 @@ public class SongAddLibraryFragment extends Fragment {
     }
 
     private void fillAudioList(List<Song> input, ArrayList<libraryItem> output) {
-        List<Song> copy = new ArrayList<>(input);
+        List<Song> copy = new ArrayList<Song>(input);
 
         if (output.isEmpty())
             for (Song s : copy) {
@@ -96,7 +96,7 @@ public class SongAddLibraryFragment extends Fragment {
         LinearLayoutManager mLinearLayoutManager = new LinearLayoutManager(mView.getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerViewLibrary.setLayoutManager(mLinearLayoutManager);
 
-        ImageButton backButton = mView.findViewById(R.id.button_back_to_main);
+        ImageButton backButton = (ImageButton) mView.findViewById(R.id.button_back_to_main);
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

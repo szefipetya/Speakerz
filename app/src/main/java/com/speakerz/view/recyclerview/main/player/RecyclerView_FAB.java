@@ -1,14 +1,21 @@
 package com.speakerz.view.recyclerview.main.player;
 
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.view.View;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.speakerz.R;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
+import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
@@ -16,8 +23,11 @@ import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
 import com.speakerz.view.PlayerRecyclerActivity;
 import com.speakerz.view.recyclerview.songadd.library.SongAddLibraryFragment;
+
+
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.DeleteSongRequestBody;
+
 import java.util.ArrayList;
 
 public class RecyclerView_FAB  {
@@ -27,9 +37,9 @@ public class RecyclerView_FAB  {
 
     private RecyclerView mRecyclerView;
     private Adapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
 
-    private FloatingActionButton mLibraryFab;
-    private FloatingActionButton mYoutubeFab; //Floating Action Button
+    private FloatingActionButton mMainFab, mLibraryFab, mYoutubeFab; //Floating Action Button
     private TextView mLibraryText, mYoutubeText;
     private boolean isFabOpen;
     private MusicPlayerModel model;
@@ -106,7 +116,7 @@ public class RecyclerView_FAB  {
     public void buildRecyclerView() {
         mRecyclerView = activity.findViewById(R.id.recyclerView);
         //mRecyclerView.setHasFixedSize(true);
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(activity);
+        mLayoutManager = new LinearLayoutManager(activity);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
     }
@@ -116,7 +126,7 @@ public class RecyclerView_FAB  {
         // mFabOpenAnim = AnimationUtils.loadAnimation(activity, R.anim.fab_open);
         // mFabCloseAnim = AnimationUtils.loadAnimation(activity, R.anim.fab_close);
 
-        FloatingActionButton mMainFab = activity.findViewById(R.id.fab_basic);
+        mMainFab = activity.findViewById(R.id.fab_basic);
         mMainFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

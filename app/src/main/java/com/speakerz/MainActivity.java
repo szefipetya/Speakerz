@@ -2,33 +2,57 @@ package com.speakerz;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 import android.app.Activity;
+
 import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.StrictMode;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+
 import com.speakerz.SpeakerzService.LocalBinder;
 import com.speakerz.debug.D;
+import com.speakerz.model.DeviceModel;
+import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.enums.PERM;
+import com.speakerz.model.event.CommonModel_ViewEventHandler;
+import com.speakerz.model.network.DeviceNetwork;
+import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
+import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
+import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 import com.speakerz.view.PlayerRecyclerActivity;
+
+import ealvatag.audio.exceptions.CannotReadException;
+
 
 /**REQUIRED means: it needs to be in every Activity.*/
 public class MainActivity extends Activity {
     //REQUIRED_BEG MODEL
     SpeakerzService _service;
     boolean _isBounded;
+
+    CommonModel_ViewEventHandler viewEventHandler;
 
     //REQUIRED_END MODEL
     Integer PermissionCheckEvent_EVT_ID=145;
@@ -61,8 +85,11 @@ public class MainActivity extends Activity {
             _isBounded = false;
         }
     };
-
+Activity self=this;
     private void subscribePermissionEvents(){
+
+
+
         _service.PermissionCheckEvent.addListener(new EventListener<PermissionCheckEventArgs>() {
             @Override
             public void action(PermissionCheckEventArgs args) {
@@ -87,7 +114,10 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(this, SpeakerzService.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
         if(_service!=null)
-            _service.getTextValueStorage().autoConfigureTexts(this);
+        _service.getTextValueStorage().autoConfigureTexts(this);
+        else{
+            //D.log("err: MainActivity : service is null");
+        }
     }
 
     @Override
@@ -134,7 +164,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
 
-        Button buttonJoin = findViewById(R.id.join);
+        Button buttonJoin = (Button) findViewById(R.id.join);
         buttonJoin.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
                 initAndStart(false);
@@ -146,7 +176,7 @@ public class MainActivity extends Activity {
         });
 
 
-        Button buttonCreate = findViewById(R.id.create);
+        Button buttonCreate = (Button) findViewById(R.id.create);
         buttonCreate.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
                 initAndStart(true);
@@ -180,10 +210,14 @@ public class MainActivity extends Activity {
             D.log(permission +" already granted.");
             if(requestCode==_service.PERMISSIONS_REQUEST_CODE_READ_EXTERNAL_STORAGE){
                 D.log("storage permission granted.");
+              //  if(_service.getModel()!=null)
+             //   _service.getModel().getMusicPlayerModel().loadAudioWithPermission();
             }
             if(requestCode== _service.ACCESS_FINE_LOCATION_CODE){
                 D.log("fine location permission granted originally.");
 
+                //  if(_service.getModel()!=null)
+                //   _service.getModel().getMusicPlayerModel().loadAudioWithPermission();
             }
         }
     }
@@ -218,7 +252,7 @@ public class MainActivity extends Activity {
         StrictMode.setThreadPolicy(policy);
     }
 
-/*
+
     //ujproba
     public void gpsStatusCheck() {
         final LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -227,7 +261,7 @@ public class MainActivity extends Activity {
             buildAlertMessageNoGps();
 
         }
-    }*/
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void checkCoarseLocationPermission(){
@@ -245,7 +279,7 @@ public class MainActivity extends Activity {
         }
     }
 
-/*
+
 
     private void buildAlertMessageNoGps() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -264,7 +298,7 @@ public class MainActivity extends Activity {
         final AlertDialog alert = builder.create();
         alert.show();
     }
-*/
+
 
 
 

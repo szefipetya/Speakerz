@@ -93,7 +93,7 @@ public class HostModel extends BaseModel {
                         try {
                             network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody((NameItem) args.arg1().getContent()), TYPE.NAME));
                             D.log("NameChange sent");
-                        } catch (IOException ignored) {
+                        } catch (IOException e) {
                         }
                     }
                    }
@@ -154,11 +154,11 @@ public class HostModel extends BaseModel {
     private void deletePersistentGroups(){
         try {
             Method[] methods = WifiP2pManager.class.getMethods();
-            for (Method method : methods) {
-                if (method.getName().equals("deletePersistentGroup")) {
+            for (int i = 0; i < methods.length; i++) {
+                if (methods[i].getName().equals("deletePersistentGroup")) {
                     // Delete any persistent group
                     for (int netid = 0; netid < 32; netid++) {
-                        method.invoke(network.getReciever().getWifiP2pManager(), network.getReciever().getChannel(), netid, null);
+                        methods[i].invoke(network.getReciever().getWifiP2pManager(), network.getReciever().getChannel(), netid, null);
                     }
                 }
             }

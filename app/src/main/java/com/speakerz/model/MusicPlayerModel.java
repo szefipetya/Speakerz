@@ -1,12 +1,16 @@
 package com.speakerz.model;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.widget.Toast;
+
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.enums.VIEW_EVT;
@@ -19,8 +23,13 @@ import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
+
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
@@ -113,7 +122,7 @@ public class MusicPlayerModel{
                             playbackStateChanged.invoke(new EventArgs1<>(this, true));
                             if(_song != null) {
                                 currentPlayingIndex = cp;
-                                songChangedEvent.invoke(new EventArgs1<>(self, _song));
+                                songChangedEvent.invoke(new EventArgs1<Song>(self, _song));
                             }
                             break;
                         case SONG_MAX_TIME_SECONDS:
@@ -269,7 +278,7 @@ public class MusicPlayerModel{
     }
 
     private void invokeModelCommunication(MP_EVT arg1, Object arg2, Body arg3){
-        model.ModelCommunicationEvent.invoke(new EventArgs3<>(self, arg1, arg2, arg3));
+        model.ModelCommunicationEvent.invoke(new EventArgs3<MP_EVT, Object, Body>(self, arg1, arg2, arg3));
     }
 
     //Load All Audio from the device To AudioList ( you will be bale to choose from these to add to the SongQueue
@@ -280,44 +289,61 @@ public class MusicPlayerModel{
 
     //TODO: nem rosszötlet depicit laggol mikor keres az ember Kéne egy szűrés a listára hogy lehessen keresni benne ahoz viszont az egésznek bekell töltve lennie
     private void loadNextAudio(Cursor cursor){
-        if (cursor.isAfterLast()) return;
-        if (cursor.isBeforeFirst()) return;
 
         String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
         String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
-
-        String album = "", artist = "";
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
-            artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-        }
-
+        String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
+        String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
         Bitmap songCoverArt = null;
         int albumID = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
-        long thisAlbumId = cursor.getLong(albumID);
+        Long thisalbumId = cursor.getLong(albumID);
+        Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisalbumId);
+        ContentResolver res = context.getContentResolver();
+
+
+        if(!title.equals("I Hope You Rot") && !title.equals("Shadow Boxing") ){
+            InputStream in = null;
+            try {
+                in = res.openInputStream(uriSongCover);
+                songCoverArt = BitmapFactory.decodeStream(in);
+                in.close();
+
+            } catch (FileNotFoundException e) {
+                //e.printStackTrace();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+        //Print the title of the song that it found.
 
         // Save to audioList
         //TODO: replace alma to unique identifier
-        Song s=new Song(data, title, album, artist,"alma",thisAlbumId,songCoverArt);
+        Song s=new Song(data, title, album, artist,"alma",thisalbumId,songCoverArt);
+        int durMili= parseInt(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
+        String duration;
+        durMili= durMili/1000;
+        Integer durH = durMili/3600;
+        durMili= durMili%3600;
+        Integer durM= durMili/60;
+        durMili= durMili%60;
+        Integer durS= durMili;
+        if(durH>0){
+            s.setDuration(durH.toString()+ ":" + durM.toString() + ":" +durS.toString());
+        }
+        else {
+            if(durS<10){
+                s.setDuration(durM.toString() + ":0" + durS.toString());
+            }
+            else{
+                s.setDuration(durM.toString() + ":" + durS.toString());
+            }
 
-        String duration = "";
-        // TODO: Android version check, but seems working without it
-        //if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            int durMil = parseInt(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
-            durMil= durMil/1000;
-            int durH = durMil/3600;
-            durMil= durMil%3600;
-            int durM= durMil/60;
-            durMil= durMil%60;
-            int durS= durMil;
-            if(durH>0) s.setDuration(durH + ":" + durM + ":" +durS);
-            else if(durS<10) s.setDuration(durM + ":0" + durS);
-            else s.setDuration(durM + ":" + durS);
-        //}
-        s.setDuration(duration);
-
+        }
         audioList.add(s);
-        AudioListUpdate.invoke(new EventArgs1<>(self,s));
+        AudioListUpdate.invoke(new EventArgs1<Song>(self,s));
     }
 
 
@@ -332,15 +358,30 @@ public class MusicPlayerModel{
         audioList = new ArrayList<>();
 
         if (audioReaderCursor != null && audioReaderCursor.getCount() > 0) {
+
             int i =0;
             while (audioReaderCursor.moveToNext() && i <10) {
                 i++;
                 loadNextAudio(audioReaderCursor);
             }
         }
+       // audioReaderCursor.close();
+
+
     }
+
+
 
     public void loadAudio() {
         loadAudioWithPermission();
     }
+
+    private Bitmap getAlbumImage(String path) {
+        android.media.MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+        mmr.setDataSource(path);
+        byte[] data = mmr.getEmbeddedPicture();
+        if (data != null) return BitmapFactory.decodeByteArray(data, 0, data.length);
+        return null;
+    }
+
 }

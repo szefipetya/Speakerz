@@ -23,6 +23,8 @@ import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
+
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 
@@ -188,11 +190,11 @@ isAppRunning=false;
     private void deletePersistentGroups(){
         try {
             Method[] methods = WifiP2pManager.class.getMethods();
-            for (Method method : methods) {
-                if (method.getName().equals("deletePersistentGroup")) {
+            for (int i = 0; i < methods.length; i++) {
+                if (methods[i].getName().equals("deletePersistentGroup")) {
                     // Delete any persistent group
                     for (int netid = 0; netid < 32; netid++) {
-                        method.invoke(network.getReciever().getWifiP2pManager(), network.getReciever().getChannel(), netid, null);
+                        methods[i].invoke(network.getReciever().getWifiP2pManager(), network.getReciever().getChannel(), netid, null);
                     }
                 }
             }
