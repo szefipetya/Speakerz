@@ -208,13 +208,39 @@ public class HostModel extends BaseModel {
     @Override
     public void start() {
         network.start();
-
+        network.getReciever().clearConnections();
+        deletePersistentGroups();
+        startAdvertising();
 
 
         //D.log("Model started");
     }
 
     HostModel self=this;
+
+
+
+
+    @SuppressLint("MissingPermission")
+    public void startAdvertising() {
+
+        network.getReciever().getWifiP2pManager().discoverPeers(network.getReciever().getChannel(), new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                D.log("advertising...");
+                network.removeGroupIfExists();
+                network.startRegistration();
+
+            }
+
+            @Override
+            public void onFailure(int i) {
+                D.log("advertising init failed");
+
+            }
+        });
+
+    }
     @Override
     public void stop() {
         isAppRunning=false;
