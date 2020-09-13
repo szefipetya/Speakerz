@@ -2,7 +2,6 @@ package com.speakerz.model;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 
@@ -16,12 +15,12 @@ public class Song implements Serializable {
     private String title;
     private String album;
     private String artist;
-    private long albumId;
+    private Long albumId;
     private String owner;
     private String duration;
     byte[] songCoverArt = null;
 
-    public Song(String data, String title, String album, String artist,String owner,long albumId,Bitmap songCoverArt) {
+    public Song(String data, String title, String album, String artist,String owner,Long albumId,Bitmap songCoverArt) {
         this.data = data;
         this.title = title;
         this.album = album;
@@ -49,7 +48,7 @@ public class Song implements Serializable {
         }
     }
 
-    public long getAlbumId() {
+    public Long getAlbumId() {
         return albumId;
     }
 

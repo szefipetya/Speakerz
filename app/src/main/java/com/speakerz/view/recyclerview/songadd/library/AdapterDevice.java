@@ -4,14 +4,10 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.speakerz.R;
-
 import java.util.ArrayList;
 
 public class AdapterDevice extends RecyclerView.Adapter<AdapterDevice.ViewHolderDevice> {
@@ -47,7 +43,7 @@ public class AdapterDevice extends RecyclerView.Adapter<AdapterDevice.ViewHolder
         return listDevice.size();
     }
 
-    public class ViewHolderDevice extends RecyclerView.ViewHolder{
+    public static class ViewHolderDevice extends RecyclerView.ViewHolder{
 
         public TextView deviceNameTextView;
         public TextView deviceNickNameTextView;

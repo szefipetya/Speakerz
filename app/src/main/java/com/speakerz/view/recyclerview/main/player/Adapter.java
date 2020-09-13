@@ -1,26 +1,18 @@
 package com.speakerz.view.recyclerview.main.player;
 
-import android.content.ContentUris;
-import android.net.Uri;
-import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.speakerz.R;
 import com.speakerz.model.Song;
-
 import java.util.List;
 
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     private List<Song> mItemList;
     private OnItemClickListener mLisener;
-    private int size;
 
 
     public Adapter(List<Song> exampleList) {
@@ -34,8 +26,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item, parent, false);
-        ViewHolder evh = new ViewHolder(v, mLisener);
-        return evh;
+        return new ViewHolder(v, mLisener);
     }
 
     @Override

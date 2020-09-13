@@ -12,9 +12,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.speakerz.R;
 import com.speakerz.SpeakerzService;
 import com.speakerz.debug.D;
@@ -127,7 +124,7 @@ public class ExtendedPlayerActivity extends Activity {
         nextButton = findViewById(R.id.buttonNext);
         repeatButton = findViewById(R.id.buttonRepeat);
         shuffleButton = findViewById(R.id.buttonShuffle);
-        backBtn=(ImageView)findViewById(R.id.extended_back);
+        backBtn= findViewById(R.id.extended_back);
         totalTime = findViewById(R.id.textTotalTime);
 
         prevButton.setImageResource(R.drawable.ic_m_prev);

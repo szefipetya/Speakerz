@@ -1,6 +1,5 @@
 package com.speakerz;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -9,8 +8,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
@@ -23,33 +20,18 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
-import android.view.Display;
 import android.widget.Toast;
-
 import androidx.annotation.RequiresApi;
-import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
-
 import com.speakerz.debug.D;
 import com.speakerz.model.BaseModel;
 import com.speakerz.model.DeviceModel;
 import com.speakerz.model.HostModel;
-import com.speakerz.model.enums.EVT;
-import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
-import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.util.Event;
-import com.speakerz.util.EventArgs;
-import com.speakerz.util.EventArgs1;
-import com.speakerz.util.EventListener;
 import com.speakerz.viewModel.TextValueStorage;
-
-import org.w3c.dom.Text;
-
-import ealvatag.audio.exceptions.CannotReadException;
 
 public class SpeakerzService extends Service {
 
@@ -158,17 +140,12 @@ public class SpeakerzService extends Service {
     }
 
 
-    private Looper serviceLooper;
     private ServiceHandler serviceHandler;
-    private final IBinder binder = (IBinder) new LocalBinder();
+    private final IBinder binder = new LocalBinder();
 
-    private WifiManager wifiManager;
-    private WifiP2pManager wifiP2pManager;
-    private WifiP2pManager.Channel wifiP2pChannel;
     private WifiBroadcastReciever receiver;
     private ConnectivityManager connectivityManager;
     //from App
-    private IntentFilter intentFilterForNetwork;
 
     public Event<BooleanEventArgs> ModelReadyEvent=new Event<>();
     public Event<PermissionCheckEventArgs> PermissionCheckEvent = new Event<>();
@@ -181,10 +158,10 @@ public class SpeakerzService extends Service {
 
         textValueStorage = new TextValueStorage();
 
-        wifiManager = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        wifiP2pManager = (WifiP2pManager)getApplicationContext().getSystemService(Context.WIFI_P2P_SERVICE);
-        wifiP2pChannel = wifiP2pManager.initialize(this, getMainLooper(), null);
-        receiver = new WifiBroadcastReciever(wifiManager,wifiP2pManager,wifiP2pChannel);
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        WifiP2pManager wifiP2pManager = (WifiP2pManager) getApplicationContext().getSystemService(Context.WIFI_P2P_SERVICE);
+        WifiP2pManager.Channel wifiP2pChannel = wifiP2pManager.initialize(this, getMainLooper(), null);
+        receiver = new WifiBroadcastReciever(wifiManager, wifiP2pManager, wifiP2pChannel);
         connectivityManager=(ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         // Start up the thread running the service. Note that we create a
         // separate thread because the service normally runs in the process's
@@ -195,7 +172,7 @@ public class SpeakerzService extends Service {
         thread.start();
 
         // Get the HandlerThread's Looper and use it for our Handler
-        serviceLooper = thread.getLooper();
+        Looper serviceLooper = thread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper, this);
 
     }
@@ -226,7 +203,7 @@ public class SpeakerzService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
          String channelId = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
-                 createNotificationChannel("my_service", "My Background Service") :
+                 createNotificationChannel("speakerz_service", "background_service") :
                  "";
 
         Notification notification = new NotificationCompat.Builder(this, channelId)
