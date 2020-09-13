@@ -2,13 +2,12 @@ package com.speakerz.model;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 
 public class Song implements Serializable {
 
-    private Integer id;
+    private int id;
 
 
 
@@ -57,11 +56,11 @@ public class Song implements Serializable {
         return owner;
     }
 
-    public Integer getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(int id) {
         this.id = id;
     }
 

@@ -15,7 +15,6 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.speakerz.debug.D;
 import com.speakerz.model.DeviceModel;
 import com.speakerz.model.Song;
@@ -30,18 +29,13 @@ import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiP2pService;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
-import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
 import com.speakerz.view.PlayerRecyclerActivity;
-
-
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
-import java.util.jar.Attributes;
 
 public class Join extends Activity {
     //REQUIRED_BEG MODEL
@@ -49,20 +43,10 @@ public class Join extends Activity {
     boolean _isBounded;
     ListView lvPeersList;
     ListView lvSongsList;
-   // ArrayAdapter<String> peerListAdapter;
-    ArrayAdapter<WifiP2pService> peerListAdapter;
-    ArrayAdapter<Song> songListAdapter = null;
-    private final Integer PermissionCheckEvent_EVT_ID=10;
-    private final Integer SongListChangedEvent_EVT_ID=11;
-    private final Integer WirelessStatusChanged_EVT_ID=12;
-    private final Integer TextChanged_EVT_ID=13;
-    private final Integer ConnectionChangedEvent_EVT_ID=14;
-    private final Integer ConnectionUpdatedEvent_EVT_ID=15;
-
-    boolean _isRegisterRecieverConnected;
+    private ArrayAdapter<WifiP2pService> peerListAdapter;
+    private ArrayAdapter<Song> songListAdapter;
 
     private void cleanTextValues() {
-        // _service.getTextValueStorage().cleanValue(R.id.host_name);
     }
 
     private void initAndStart() {
@@ -71,14 +55,13 @@ public class Join extends Activity {
 
             subscribeModel((DeviceModel) _service.getModel());
             subscribeServiceEvents();
-        lvSongsList = (ListView) findViewById(R.id.lv_song_list_test);
-        lvPeersList = (ListView) findViewById(R.id.lv_peers);
-        //_service.getModel().start();
+        lvSongsList = findViewById(R.id.lv_song_list_test);
+        lvPeersList = findViewById(R.id.lv_peers);
+
         songListAdapter = new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1, _service.getModel().getMusicPlayerModel().getSongQueue());
         lvSongsList.setAdapter(songListAdapter);
 
-        //peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
-        peerListAdapter = new ArrayAdapter<WifiP2pService>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).serviceDevices));
+       peerListAdapter = new ArrayAdapter<>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).serviceDevices));
         lvPeersList.setAdapter(peerListAdapter);
 
         //set up the listView's onclick, so clients can connect to hosts by klicking on a device in a listview
@@ -93,10 +76,10 @@ public class Join extends Activity {
         //setSensitiveTexts();
     }
 
-    private void setSensitiveTexts() {
+   /* private void setSensitiveTexts() {
         if (((DeviceNetwork) (_service.getModel().getNetwork())).getHostDevice() != null)
             ((TextView) (findViewById(R.id.host_name))).setText("Connected!\nHost:" + ((DeviceNetwork) (_service.getModel().getNetwork())).getHostDevice().deviceName);
-    }
+    }*/
 
 
     private void subscribeServiceEvents() {
@@ -306,14 +289,14 @@ public class Join extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_join);
-        Button discover = (Button) findViewById(R.id.discover);
+        Button discover = findViewById(R.id.discover);
         discover.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 ((DeviceModel) _service.getModel()).discoverPeers();
             }
         });
 
-        Button buttonBack = (Button) findViewById(R.id.back);
+        Button buttonBack = findViewById(R.id.back);
         buttonBack.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 finish();
@@ -321,7 +304,7 @@ public class Join extends Activity {
 
         });
 
-        Button buttonMusicPlayer = (Button) findViewById(R.id.Musicplayer);
+        Button buttonMusicPlayer = findViewById(R.id.Musicplayer);
 
        /* buttonMusicPlayer.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
@@ -333,7 +316,7 @@ public class Join extends Activity {
 
         });*/
 
-        ((Button) findViewById(R.id.btn_add_song)).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btn_add_song).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {

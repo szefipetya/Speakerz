@@ -1,9 +1,9 @@
 package com.speakerz.view.components;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -13,7 +13,6 @@ import com.speakerz.R;
 import com.speakerz.debug.D;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
-import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
@@ -25,6 +24,7 @@ public class BottomMusicPlayer {
     TextView detailsTV;
     ImageButton playButton;
     SeekBar seekBar;
+    ImageView albumArt;
     MusicPlayerModel mpModel = null;
 
     // Event listeners
@@ -68,6 +68,7 @@ public class BottomMusicPlayer {
                 public void run() {
                     titleSongTV.setText(song.getTitle().length()>28? song.getTitle().substring(0,28)+"...":song.getTitle());
                     detailsTV.setText(song.getArtist().length()>28?song.getArtist().substring(0,28)+"...":song.getArtist());
+                    albumArt.setImageBitmap(song.getSongCoverArt());
                 }
             });
         }
@@ -86,7 +87,7 @@ public class BottomMusicPlayer {
                     seekBar.setProgress(progress);
                 }
             }
-            catch (Exception e) {}
+            catch (Exception ignored) {}
         }
 
         @Override
@@ -108,16 +109,16 @@ public class BottomMusicPlayer {
     public BottomMusicPlayer(AppCompatActivity activity) {
         this.activity = activity;
 
-        titleSongTV= (TextView)activity.findViewById(R.id.titleSong);
+        titleSongTV = activity.findViewById(R.id.titleSong);
         titleSongTV.setOnClickListener(openExtendedPlayer);
 
-        detailsTV=(TextView)activity.findViewById(R.id.details);
+        detailsTV = activity.findViewById(R.id.details);
         detailsTV.setOnClickListener(openExtendedPlayer);
 
-        seekBar = (SeekBar) activity.findViewById(R.id.playerSeekBar);
+        seekBar = activity.findViewById(R.id.playerSeekBar);
         seekBar.setOnSeekBarChangeListener(seekBarChangeListener);
 
-        playButton = (ImageButton) activity.findViewById(R.id.button_pause_play);
+        playButton = activity.findViewById(R.id.button_pause_play);
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -125,6 +126,8 @@ public class BottomMusicPlayer {
                 setPlayIcon(mpModel.isPlaying());
             }
         });
+
+        albumArt = activity.findViewById(R.id.imageAlbum);
     }
 
 
