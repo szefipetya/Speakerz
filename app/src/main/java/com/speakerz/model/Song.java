@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 public class Song implements Serializable {
 
-    private Integer id;
+    private int id;
 
 
 
@@ -16,12 +16,12 @@ public class Song implements Serializable {
     private String title;
     private String album;
     private String artist;
-    private Long albumId;
+    private long albumId;
     private String owner;
     private String duration;
     byte[] songCoverArt = null;
 
-    public Song(String data, String title, String album, String artist,String owner,Long albumId,Bitmap songCoverArt) {
+    public Song(String data, String title, String album, String artist,String owner,long albumId,Bitmap songCoverArt) {
         this.data = data;
         this.title = title;
         this.album = album;
@@ -49,7 +49,7 @@ public class Song implements Serializable {
         }
     }
 
-    public Long getAlbumId() {
+    public long getAlbumId() {
         return albumId;
     }
 
@@ -57,11 +57,11 @@ public class Song implements Serializable {
         return owner;
     }
 
-    public Integer getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(int id) {
         this.id = id;
     }
 
