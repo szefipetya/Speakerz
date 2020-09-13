@@ -377,10 +377,11 @@ handlerRunning=true;
 
 
         public void stopPlayBack(){
-        swapSong.set(true);
-
+            swapSong.set(true);
         }
         public void shutdown() {
+        stopPlayBack();
+        bufferQueue.clear();
 
         if(wrapper.receiverInfoSocket.socket!=null){
             try {

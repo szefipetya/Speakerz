@@ -123,10 +123,7 @@ public class SpeakerzService extends Service {
             model.stop();
             stopSelf(startId);
             startId = -1;
-
-
             model = null;
-            System.gc();
             Toast.makeText(service,"speakerZ service shutdown\nreason: "+msg,Toast.LENGTH_SHORT).show();
         }
 
