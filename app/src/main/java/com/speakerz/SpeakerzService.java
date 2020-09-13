@@ -2,15 +2,21 @@ package com.speakerz;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -20,7 +26,9 @@ import android.os.Process;
 import android.view.Display;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
 import com.speakerz.debug.D;
@@ -192,6 +200,45 @@ public class SpeakerzService extends Service {
 
     }
 
+    private static final int NOTIFICATION_ID = 1;
+    @RequiresApi(Build.VERSION_CODES.O)
+    private String createNotificationChannel( String channelId, String channelName) {
+        NotificationChannel chan = new NotificationChannel(channelId,
+                channelName, NotificationManager.IMPORTANCE_NONE);
+        chan.setLightColor(Color.BLUE);
+        chan.setLockscreenVisibility( Notification.VISIBILITY_PRIVATE);
+        NotificationManager service = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        service.createNotificationChannel(chan);
+        return channelId;
+    }
+    private void showForegroundNotification(String contentText) {
+        // Create intent that will bring our app to the front, as if it was tapped in the app
+        // launcher
+        Intent showTaskIntent = new Intent(getApplicationContext(), MainActivity.class);
+        showTaskIntent.setAction(Intent.ACTION_MAIN);
+        showTaskIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        showTaskIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        PendingIntent contentIntent = PendingIntent.getActivity(
+                getApplicationContext(),
+                0,
+                showTaskIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
+         String channelId = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
+                 createNotificationChannel("my_service", "My Background Service") :
+                 "";
+
+        Notification notification = new NotificationCompat.Builder(this, channelId)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(contentText)
+                .setSmallIcon(R.drawable.ic_m_playbutton)
+                .setWhen(System.currentTimeMillis())
+                .setContentIntent(contentIntent)
+                .build();
+        startForeground(NOTIFICATION_ID, notification);
+    }
+
     /**
      * Start a background service
      * Use the intent's 'isHost' boolean extra to specify the mode
@@ -206,6 +253,7 @@ public class SpeakerzService extends Service {
         }else
             msg.arg2=1;
 
+        showForegroundNotification("SpeakerZ service");
         serviceHandler.sendMessage(msg);
 
         return START_STICKY;
