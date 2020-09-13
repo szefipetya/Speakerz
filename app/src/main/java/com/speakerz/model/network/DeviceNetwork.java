@@ -95,6 +95,7 @@ public class DeviceNetwork extends BaseNetwork {
             @Override
             public void action(BooleanEventArgs args) {
                 if(!args.getValue()){
+                    connectingIsInProcess=false;
                     serviceDevices.clear();
                     ListChanged.invoke(new EventArgs(this));
                 }
@@ -105,63 +106,46 @@ public class DeviceNetwork extends BaseNetwork {
 
     DeviceNetwork self = this;
 
-
-
-    public void discoverPeers() {
-       // serviceDevices.clear();
-      //  discoverService();
-
-       // PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,PackageManager.PERMISSION_GRANTED));
-
-       reciever.discoverPeers(new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Discovering..."));
-            }
-
-            @Override
-            public void onFailure(int i) {
-                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Discovering init failed..."));
-            }
-        });
-     // removeGroupIfExists(0);
-discoverService();
-      /*  peers = new ArrayList<>();
-        peerListListener = new WifiP2pManager.PeerListListener() {
-            @Override
-            public void onPeersAvailable(WifiP2pDeviceList peerList) {
-
-                D.log("Peers available");
-                //if the saved list is outdated, replace it with the fresh devices
-
-                D.log("Found peers: " + peerList.getDeviceList().size());
-                peers.clear();
-                peers.addAll(peerList.getDeviceList());
-
-                deviceNames.clear();
-                devices = new WifiP2pDevice[peerList.getDeviceList().size()];
-
-                int index = 0;
-                for (WifiP2pDevice device : peerList.getDeviceList()) {
-
-                    deviceNames.add(device.deviceName);
-                    devices[index] = device;
-                    index++;
-                    D.log("device found: " + device.deviceName);
-                }
-
-                ListChanged.invoke(new EventArgs(this));
-
-                if (peers.size() == 0) {
-                    TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "No devices found"));
-                } else {
-                    TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Found some devices"));
-                }
-            }
-        };
-        reciever.setPeerListListener(peerListListener);*/
+    @Override
+    public void start() {
+        super.start();
+        getReciever().clearConnections();
+        discoverPeers();
+        init();
     }
 
+    void init(){
+    peers = new ArrayList<>();
+    peerListListener = new WifiP2pManager.PeerListListener() {
+        @Override
+        public void onPeersAvailable(WifiP2pDeviceList peerList) {
+
+            if (peerList.getDeviceList().size() == 0) {
+                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "No devices found"));
+            } else {
+                if(!connectingIsInProcess)
+                    discoverService();
+                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Found some devices"));
+            }
+        }
+    };
+    reciever.setPeerListListener(peerListListener);
+}
+
+boolean connectingIsInProcess=false;
+public void discoverPeers(){
+    reciever.discoverPeers(new WifiP2pManager.ActionListener() {
+        @Override
+        public void onSuccess() {
+            TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Discovering..."));
+        }
+
+        @Override
+        public void onFailure(int i) {
+            TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Discovering init failed..."));
+        }
+    });
+}
     public List<String> getDeviceNames() {
         return deviceNames;
     }
@@ -221,8 +205,6 @@ discoverService();
 
         connectP2p(serviceDevices.get(i));
         //send an invoke to the service, to check the FINE_LOCATION access permission
-
-
     }
 
     @SuppressLint("MissingPermission")
@@ -253,10 +235,7 @@ discoverService();
     public WifiP2pDevice getHostDevice() {
         return hostDevice;
     }
-
-
-    final HashMap<String, String> buddies = new HashMap<String, String>();
-   public final ArrayList<WifiP2pService> serviceDevices = new ArrayList<>();
+    public final ArrayList<WifiP2pService> serviceDevices = new ArrayList<>();
 
     public void createServiceRequest(){
         serviceRequest = WifiP2pDnsSdServiceRequest.newInstance();
@@ -280,23 +259,24 @@ discoverService();
          * Register listeners for DNS-SD services. These are callbacks invoked
          * by the system when a service is actually discovered.
          */
-
         // After attaching listeners, create a service request and initiate
         // discovery.
-        if(serviceRequest==null) {
+        if(serviceRequest==null)
             createServiceRequest();
-        }else{
+        else{
+
 
         }
+
         reciever.getWifiP2pManager().discoverServices(reciever.getChannel(), new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Discovering..."));
+                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Discovering Services..."));
                 D.log("Service discovery initiated");
             }
             @Override
             public void onFailure(int arg0) {
-                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Discovering failed. errcode: "+arg0));
+                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Service Discovering failed. errcode: "+arg0));
                 if(arg0==WifiP2pManager.NO_SERVICE_REQUESTS)
                 D.log("Service discovery failed");
             }
@@ -305,6 +285,7 @@ discoverService();
 
     @SuppressLint("MissingPermission")
     public void connectP2p(WifiP2pService service) {
+        connectingIsInProcess=true;
         WifiP2pConfig config = new WifiP2pConfig();
         config.deviceAddress = service.device.deviceAddress;
         config.wps.setup = WpsInfo.PBC;
