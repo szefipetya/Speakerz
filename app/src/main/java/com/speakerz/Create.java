@@ -11,15 +11,31 @@ import android.os.IBinder;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import com.speakerz.debug.D;
 import com.speakerz.model.HostModel;
 import com.speakerz.model.Song;
 import com.speakerz.model.enums.EVT;
+import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
+import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
+import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
 import com.speakerz.view.PlayerRecyclerActivity;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RunnableFuture;
+
+import ealvatag.audio.exceptions.CannotReadException;
 
 public class Create extends Activity {
     //REQUIRED_BEG MODEL_Declare
@@ -29,10 +45,10 @@ public class Create extends Activity {
     ListView lvSongsList;
     ArrayAdapter<Song> songListAdapter=null;
 
+    Integer SongListChangedEvent_EVT_ID=1;
     Integer WirelessStatusChanged_EVT_ID=2;
     Integer TextChanged_EVT_ID=3;
     Integer GroupConnectionChangedEvent_EVT_ID=4;
-
     private void subscribeModel(final HostModel model) {
         D.log("events subscribed.");
         final Create selfActivity = this;
@@ -60,8 +76,10 @@ public class Create extends Activity {
     }
 
     private void initAndStart() {
-        lvSongsList= findViewById(R.id.lv_song_list_test);
+        lvSongsList=(ListView) findViewById(R.id.lv_song_list_test);
 
+
+            _service.getModel().setAreUiEventsSubscribed(true);
         subscribeModel((HostModel) _service.getModel());
         _service.getTextValueStorage().autoConfigureTexts(this);
 
@@ -170,7 +188,7 @@ public class Create extends Activity {
 
 
 
-        Button buttonBack = findViewById(R.id.back);
+        Button buttonBack = (Button) findViewById(R.id.back);
         buttonBack.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
 
@@ -180,7 +198,7 @@ public class Create extends Activity {
 
         });
 
-        Button buttonMusicPlayer = findViewById(R.id.Musicplayer);
+        Button buttonMusicPlayer = (Button) findViewById(R.id.Musicplayer);
         buttonMusicPlayer.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);

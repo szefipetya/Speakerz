@@ -34,16 +34,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HostNetwork extends BaseNetwork {
-    private static final String SERVICE_REG_TYPE ="REG_SPEAKERZ";
+    private static final String SERVICE_REG_TYPE ="REG_SPEAKERZ" ;
     boolean firstStart=true;
-
-    @Override
-    public void start() {
-        super.start();
-        getReciever().clearConnections();
-        createGroup();
-    }
-
     public HostNetwork(WifiBroadcastReciever reciever) {
       super(reciever);
       serverSocketWrapper.controllerSocket = new ServerControllerSocketThread();
@@ -130,7 +122,6 @@ public class HostNetwork extends BaseNetwork {
             public void onSuccess() {
                 D.log("Added Local Service");
                 TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Party Created successfully"));
-                advertiseMe();
             }
 
             @Override
@@ -151,7 +142,7 @@ public class HostNetwork extends BaseNetwork {
                @Override
                public void onSuccess() {
                    TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Party Created successfully"));
-                   startRegistration();
+                   advertiseMe();
                }
 
                @Override
@@ -167,6 +158,7 @@ public class HostNetwork extends BaseNetwork {
 
    @SuppressLint("MissingPermission")
    public void advertiseMe(){
+
                 getReciever().getWifiP2pManager().discoverPeers(getReciever().getChannel(), new WifiP2pManager.ActionListener() {
                     @Override
                     public void onSuccess() {
@@ -182,6 +174,10 @@ public class HostNetwork extends BaseNetwork {
 
                     }
                 });
+
+
+
+
    }
 
    @SuppressLint("MissingPermission")

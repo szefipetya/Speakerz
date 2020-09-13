@@ -1,17 +1,22 @@
 package com.speakerz.view;
 
 import android.os.Bundle;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import com.speakerz.R;
 import com.speakerz.view.recyclerview.songadd.library.AdapterDevice;
 import com.speakerz.view.recyclerview.songadd.library.deviceItem;
+import com.speakerz.view.recyclerview.songadd.library.libraryItem;
+
 import java.util.ArrayList;
 
 public class DevicesFragment extends Fragment {

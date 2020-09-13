@@ -12,6 +12,7 @@ package com.speakerz.view;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -21,11 +22,18 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.provider.ContactsContract;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowId;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.speakerz.Create;
 import com.speakerz.R;
 import com.speakerz.SpeakerzService;
 import com.speakerz.debug.D;
@@ -33,18 +41,23 @@ import com.speakerz.model.BaseModel;
 import com.speakerz.model.HostModel;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.enums.EVT;
+import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.PutNameListInitRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
 import com.speakerz.view.components.BottomMusicPlayer;
 import com.speakerz.view.components.NameChangeDialog;
 import com.speakerz.view.components.TopMenu;
 import com.speakerz.view.recyclerview.main.player.RecyclerView_FAB;
+
+import java.net.ConnectException;
 
 public class PlayerRecyclerActivity extends AppCompatActivity implements NameChangeDialog.NameChangeDialogListener{
     RecyclerView_FAB recyclerViewFab;
@@ -131,7 +144,7 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
             SpeakerzService.LocalBinder localBinder = (SpeakerzService.LocalBinder) binder;
             // Bind model
             model = localBinder.getService().getModel().getMusicPlayerModel();
-            _service= localBinder.getService();
+            _service=(SpeakerzService)(localBinder.getService());
 
             // Register model event handlers
             bottomPlayer.initModel(model);
@@ -217,8 +230,7 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
         }
 
     }
-
-    Integer textChanged_EVT_ID = 10;
+    private Integer TextChanged_EVT_ID=10;
     private void subscribeModel(final SpeakerzService _service,final HostModel model) {
         //Basemodel Events
         model.getNetwork().TextChanged.addListener(new EventListener<TextChangedEventArgs>() {
@@ -233,9 +245,9 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
                     _service.getTextValueStorage().autoConfigureTexts(self);
                 }
             }
-        }, textChanged_EVT_ID);
+        },TextChanged_EVT_ID);
 
-        ImageButton advertiseMe = findViewById(R.id.btn_advertise);
+        ImageButton advertiseMe = (ImageButton) findViewById(R.id.btn_advertise);
         advertiseMe.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
                 model.getNetwork().advertiseMe();
@@ -300,9 +312,9 @@ private void goBackToJoinPage(){
         System.out.println(username+"outside");
         NameItem item = new NameItem(username,"en",model.getModel().deviceID);
         model.getModel().NickName=username;
-        model.getModel().editor.putString(BaseModel.myName,username);
+        model.getModel().editor.putString(model.getModel().myName,username);
         model.getModel().editor.commit();
-        System.out.println(model.getModel().sharedpreferences.getString(BaseModel.myName, "Nincs Név"));
+        System.out.println(model.getModel().sharedpreferences.getString(model.getModel().myName,"nincs Név"));
         PutNameChangeRequestBody body1 = new PutNameChangeRequestBody(null,item);
         model.getModel().NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(null,body1,TYPE.NAME));
     }

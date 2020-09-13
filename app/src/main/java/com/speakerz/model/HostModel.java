@@ -93,7 +93,7 @@ public class HostModel extends BaseModel {
                         try {
                             network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody((NameItem) args.arg1().getContent()), TYPE.NAME));
                             D.log("NameChange sent");
-                        } catch (IOException ignored) {
+                        } catch (IOException e) {
                         }
                     }
                    }
@@ -154,11 +154,11 @@ public class HostModel extends BaseModel {
     private void deletePersistentGroups(){
         try {
             Method[] methods = WifiP2pManager.class.getMethods();
-            for (Method method : methods) {
-                if (method.getName().equals("deletePersistentGroup")) {
+            for (int i = 0; i < methods.length; i++) {
+                if (methods[i].getName().equals("deletePersistentGroup")) {
                     // Delete any persistent group
                     for (int netid = 0; netid < 32; netid++) {
-                        method.invoke(network.getReciever().getWifiP2pManager(), network.getReciever().getChannel(), netid, null);
+                        methods[i].invoke(network.getReciever().getWifiP2pManager(), network.getReciever().getChannel(), netid, null);
                     }
                 }
             }
@@ -208,13 +208,39 @@ public class HostModel extends BaseModel {
     @Override
     public void start() {
         network.start();
-
+        network.getReciever().clearConnections();
+        deletePersistentGroups();
+        startAdvertising();
 
 
         //D.log("Model started");
     }
 
     HostModel self=this;
+
+
+
+
+    @SuppressLint("MissingPermission")
+    public void startAdvertising() {
+
+        network.getReciever().getWifiP2pManager().discoverPeers(network.getReciever().getChannel(), new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                D.log("advertising...");
+                network.removeGroupIfExists();
+                network.startRegistration();
+
+            }
+
+            @Override
+            public void onFailure(int i) {
+                D.log("advertising init failed");
+
+            }
+        });
+
+    }
     @Override
     public void stop() {
         isAppRunning=false;

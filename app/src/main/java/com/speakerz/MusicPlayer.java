@@ -1,6 +1,7 @@
 package com.speakerz;
 
 import android.app.Activity;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -15,12 +16,18 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
 import com.speakerz.debug.D;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
+import com.speakerz.model.network.Serializable.ChannelObject;
+import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
+import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
+
+import java.util.List;
 
 public class MusicPlayer extends Activity {
 // TODO: 1 bug az első zene után ha a user huzza végiga seekbart valamiért a 3. indul el nema 2. eztleszámítva error nincsen amennyire én látom,kommetelés és kód rendezés
@@ -38,8 +45,8 @@ public class MusicPlayer extends Activity {
     SeekBar seekBar;
     ListView playListView;
     ListView audioListView;
-    ArrayAdapter<Song> songViewLA =null;
-    ArrayAdapter<Song> songLA;
+    ArrayAdapter songViewLA =null;
+    ArrayAdapter songLA;
 
 
 
@@ -134,13 +141,13 @@ public class MusicPlayer extends Activity {
 
 
         // Connect Song Queue to list view UI component
-        songViewLA = new ArrayAdapter<>(model.getContext(),  R.layout.list_item,model.getSongQueue());
+        songViewLA = new ArrayAdapter<Song>(model.getContext(),  R.layout.list_item,model.getSongQueue());
         playListView.setAdapter(songViewLA);
         songViewLA.setNotifyOnChange(true);
 
 
         // All audio file list
-        songLA = new ArrayAdapter<>(this, R.layout.list_item, model.getAudioList());
+        songLA = new ArrayAdapter<Song>(this, R.layout.list_item, model.getAudioList());
         audioListView.setAdapter(songLA);
         songLA.setNotifyOnChange(true);
 
@@ -171,6 +178,7 @@ public class MusicPlayer extends Activity {
     public void NextSong(){
         model.startNext();
         songPlayed.setText(model.getCurrentSong().getTitle());
+
     }
 
     private ServiceConnection connection = new ServiceConnection() {

@@ -1,7 +1,14 @@
 package com.speakerz.viewModel;
 
+import android.util.Pair;
+import android.widget.ListView;
 import android.widget.TextView;
+
+import androidx.annotation.RequiresApi;
 import android.app.Activity;
+
+import com.speakerz.debug.D;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +18,7 @@ public class TextValueStorage implements Serializable {
    private Map<Integer,String> valueMap;
     private Map<Integer, List<String>> listValueMap;
     public TextValueStorage(){
-        valueMap= new HashMap<>();
+        valueMap= new  HashMap<Integer,String>();
         listValueMap=new HashMap<>();
     }
     public String getTextValue(Integer id){

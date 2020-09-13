@@ -5,8 +5,8 @@ import java.util.LinkedList;
 import java.util.Map;
 
 public class ThreadSafeEvent<E extends EventArgs> {
-    private final LinkedList<EventListener<E>> listeners = new LinkedList<>();
-    private final Map<Integer,EventListener<E>> indexedListenerMap=new HashMap<>();
+    private LinkedList<EventListener<E>> listeners = new LinkedList<>();
+    private Map<Integer,EventListener<E>> indexedListenerMap=new HashMap<>();
 
     public synchronized void invoke(E args){
         for (EventListener<E> listener: listeners) {

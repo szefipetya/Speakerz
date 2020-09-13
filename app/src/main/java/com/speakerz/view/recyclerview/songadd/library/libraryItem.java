@@ -1,6 +1,9 @@
 package com.speakerz.view.recyclerview.songadd.library;
 
 import android.graphics.Bitmap;
+import android.net.Uri;
+
+import com.google.common.collect.AbstractIterator;
 
 public class libraryItem {
     private String SongName;

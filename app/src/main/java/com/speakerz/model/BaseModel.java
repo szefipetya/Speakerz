@@ -46,7 +46,7 @@ public abstract class BaseModel {
     public Boolean isAppRunning=true;
 
     public String NickName;
-    public String deviceID;
+    public String deviceID= "";
     public InetAddress deviceAddress;
     public HashMap<String,String> NickNames;
 
@@ -158,6 +158,15 @@ public abstract class BaseModel {
 
     public MusicPlayerModel getMusicPlayerModel(){return musicPlayerModel;}
 
+    private Boolean AreUiEventsSubscribed=false;
+
+    public Boolean getAreUiEventsSubscribed() {
+        return AreUiEventsSubscribed;
+    }
+
+    public void setAreUiEventsSubscribed(Boolean areUiEventsSubscribed) {
+        AreUiEventsSubscribed = areUiEventsSubscribed;
+    }
     protected abstract void injectNetworkDependencies();
 
     public Context getContext() { return context; }
