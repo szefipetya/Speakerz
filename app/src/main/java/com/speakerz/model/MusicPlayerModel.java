@@ -1,9 +1,11 @@
 package com.speakerz.model;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.widget.Toast;
@@ -20,6 +22,9 @@ import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -295,12 +300,30 @@ public class MusicPlayerModel{
         Bitmap songCoverArt = null;
         int albumID = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
         long thisAlbumId = cursor.getLong(albumID);
+        Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisAlbumId);
+        ContentResolver res = context.getContentResolver();
+
+
+        if(!title.equals("I Hope You Rot") && !title.equals("Shadow Boxing") ){
+            InputStream in = null;
+            try {
+                in = res.openInputStream(uriSongCover);
+                songCoverArt = BitmapFactory.decodeStream(in);
+                in.close();
+
+            } catch (FileNotFoundException e) {
+                //e.printStackTrace();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
 
         // Save to audioList
         //TODO: replace alma to unique identifier
         Song s=new Song(data, title, album, artist,"alma",thisAlbumId,songCoverArt);
 
-        String duration = "";
         // TODO: Android version check, but seems working without it
         //if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             int durMil = parseInt(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
@@ -314,7 +337,7 @@ public class MusicPlayerModel{
             else if(durS<10) s.setDuration(durM + ":0" + durS);
             else s.setDuration(durM + ":" + durS);
         //}
-        s.setDuration(duration);
+
 
         audioList.add(s);
         AudioListUpdate.invoke(new EventArgs1<>(self,s));
