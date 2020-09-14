@@ -229,7 +229,7 @@ Activity self=this;
                 && grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             D.log("ACCESS_COARSE_LOCATION Permission granted.");
         }
-        if(requestCode==_service.PERMISSIONS_REQUEST_CODE_READ_EXTERNAL_STORAGE && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+        if(requestCode==_service.PERMISSIONS_REQUEST_CODE_READ_EXTERNAL_STORAGE){
             D.log("storage permission granted.");
         //    if(_service.getModel()!=null)
              //     _service.getModel().getMusicPlayerModel().loadAudioWithPermission();
