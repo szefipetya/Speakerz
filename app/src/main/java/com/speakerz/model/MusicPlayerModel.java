@@ -171,8 +171,11 @@ public class MusicPlayerModel{
         AdapterLibraryEvent.addListener(new EventListener<EventArgs2<VIEW_EVT, Integer>>() {
             @Override
             public void action(EventArgs2<VIEW_EVT, Integer> args) {
-                if(args.arg1()==VIEW_EVT.ADAPTER_SONG_SCROLL)
-                    taskQueue.offer(MP_TASK_LOAD_40_AUDIO);
+                if(args.arg1()==VIEW_EVT.ADAPTER_SONG_SCROLL){
+                    if(args.arg2()%30==0){
+                        taskQueue.offer(MP_TASK_LOAD_40_AUDIO);
+                    }
+                }
             }
         });
         init();
@@ -190,8 +193,10 @@ public class MusicPlayerModel{
         return songQueue.get(currentPlayingIndex);
     }
 
+
     // Song managing functions
     public void addSong(Song song){
+        setExtraDataForSong(song);
         if (isHost){
             song.setId(currentSongId++);
             songQueue.add(song);
@@ -313,36 +318,38 @@ public class MusicPlayerModel{
     //TODO: nem rosszötlet depicit laggol mikor keres az ember Kéne egy szűrés a listára hogy lehessen keresni benne ahoz viszont az egésznek bekell töltve lennie
     private void loadNextAudio(Cursor cursor){
 
-        String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+
         String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
         String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
         String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+      //ez a rész most már a setExtraDataForSong-ban van.
         Bitmap songCoverArt = null;
-        int albumID = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
-        Long thisAlbumId = cursor.getLong(albumID);
+        int albumID = audioReaderCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+        Long thisAlbumId = audioReaderCursor.getLong(albumID);
         Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisAlbumId);
         ContentResolver res = context.getContentResolver();
 
 
-            InputStream in = null;
-            try {
-                in = res.openInputStream(uriSongCover);
-                songCoverArt = BitmapFactory.decodeStream(in);
-                in.close();
+        InputStream in = null;
+        try {
+            in = res.openInputStream(uriSongCover);
+            songCoverArt = BitmapFactory.decodeStream(in);
+            in.close();
 
-            } catch (FileNotFoundException e) {
-                //e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            //e.printStackTrace();
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
 
-        //Print the title of the song that it found.
 
-        // Save to audioList
+
         //TODO: replace alma to unique identifier
-        Song s=new Song(data, title, album, artist,"alma",thisAlbumId,songCoverArt);
+        Song s=new Song(audioReaderCursor.getPosition(),"", title, album, artist,"alma",thisAlbumId,songCoverArt);
+        //s.setSongCoverArt(songCoverArt);
+       // s.setAlbumId(thisAlbumId);
         int durMili= parseInt(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
         String duration;
         durMili= durMili/1000;
@@ -368,6 +375,23 @@ public class MusicPlayerModel{
     }
 
 
+    void setExtraDataForSong(Song s){
+        ContentResolver contentResolver = context.getContentResolver();
+
+        Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
+        String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
+        Cursor cursor = contentResolver.query(uri, null, selection, null, sortOrder);
+        if(cursor.moveToPosition(s.getCursorIndex() )){
+            String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+
+
+            s.setData(data);
+            //Print the title of the song that it found.
+
+            // Save to audioList
+        }
+    }
     Cursor audioReaderCursor;
     private void loadAudioWithPermission(){
         ContentResolver contentResolver = context.getContentResolver();

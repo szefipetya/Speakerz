@@ -20,14 +20,9 @@ import android.widget.TextView;
 import com.speakerz.debug.D;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
-import com.speakerz.model.network.Serializable.ChannelObject;
-import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
-import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
-
-import java.util.List;
 
 public class MusicPlayer extends Activity {
 // TODO: 1 bug az első zene után ha a user huzza végiga seekbart valamiért a 3. indul el nema 2. eztleszámítva error nincsen amennyire én látom,kommetelés és kód rendezés
@@ -174,6 +169,8 @@ public class MusicPlayer extends Activity {
 
 
     }
+
+
 
     public void NextSong(){
         model.startNext();
