@@ -2,47 +2,64 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.speakerz">
-    <uses-permission android:required="true" android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:required="true" android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:required="true" android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:required="true" android:name="android.permission.CHANGE_NETWORK_STATE"/>
-    <uses-permission android:required="true" android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:required="true" android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:required="true" android:name="android.permission.INTERNET"/>
+
+    <uses-permission
+        android:name="android.permission.ACCESS_WIFI_STATE"
+        android:required="true" />
+    <uses-permission
+        android:name="android.permission.CHANGE_WIFI_STATE"
+        android:required="true" />
+    <uses-permission
+        android:name="android.permission.ACCESS_NETWORK_STATE"
+        android:required="true" />
+    <uses-permission
+        android:name="android.permission.CHANGE_NETWORK_STATE"
+        android:required="true" />
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:required="true" />
+    <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION"
+        android:required="true" />
+    <uses-permission
+        android:name="android.permission.INTERNET"
+        android:required="true" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    <uses-permission android:name="android.permission.UPDATE_DEVICE_STATS"
+    <uses-permission
+        android:name="android.permission.UPDATE_DEVICE_STATS"
         tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
-    <!-- register singleton App class-->
-    <!-- Persistent activities-->
     <application
-        android:hardwareAccelerated="false"
-        android:largeHeap="true"
-        android:persistent="true"
         android:allowBackup="true"
+        android:hardwareAccelerated="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:largeHeap="true"
+        android:persistent="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".view.LandingActivity"></activity>
 
-        <service android:name="com.speakerz.SpeakerzService"
-            android:stopWithTask="false"
-            />
+        <service
+            android:name=".SpeakerzService"
+            android:stopWithTask="false" />
 
-        <activity android:name="com.speakerz.Create" />
-        <activity android:name="com.speakerz.Options" />
-        <activity android:name="com.speakerz.Join" />
-        <activity android:name="com.speakerz.MusicPlayer"/>
-        <activity android:name="com.speakerz.view.PlayerRecyclerActivity"/>
-        <activity android:name="com.speakerz.MainActivity">
+        <activity android:name=".Create" />
+        <activity android:name=".Options" />
+        <activity android:name=".Join" />
+        <activity android:name=".MusicPlayer" />
+        <activity android:name=".view.PlayerRecyclerActivity" />
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
     </application>
+
 </manifest>
