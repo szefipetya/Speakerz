@@ -30,10 +30,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static java.lang.Integer.parseInt;
 
@@ -172,9 +172,10 @@ public class MusicPlayerModel{
             @Override
             public void action(EventArgs2<VIEW_EVT, Integer> args) {
                 if(args.arg1()==VIEW_EVT.ADAPTER_SONG_SCROLL)
-                    loadNextAudio(audioReaderCursor,args.arg2());
+                    taskQueue.offer(MP_TASK_LOAD_40_AUDIO);
             }
         });
+        init();
     }
 
     // Getters
@@ -220,8 +221,10 @@ public class MusicPlayerModel{
     // Stop playing
     public void stop(){
         // TODO stop music
+        externalShutdown=true;
     }
 
+    boolean externalShutdown=false;
     public void startNext(){
         if (currentPlayingIndex>= songQueue.size()-1)
             start(0);
@@ -283,11 +286,30 @@ public class MusicPlayerModel{
     }
 
     //Load All Audio from the device To AudioList ( you will be bale to choose from these to add to the SongQueue
-    private void loadNextAudio(Cursor cursor,int index){
-        cursor.moveToPosition(index);
-        loadNextAudio(cursor);
+    private void loadSomeAudio(final Cursor cursor){
+                   int i=0;
+                   while(!cursor.isLast()&&cursor.moveToNext() &&i<40) {
+                       i++;
+                       loadNextAudio(cursor);
+                   }
     }
 
+    final Integer MP_TASK_LOAD_40_AUDIO =1;
+    LinkedBlockingQueue<Integer> taskQueue=new  LinkedBlockingQueue<Integer>();
+    void init(){
+        Thread t=new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(!externalShutdown){
+                    if(taskQueue.size()>0)
+                        if(taskQueue.poll()== MP_TASK_LOAD_40_AUDIO){
+                            loadSomeAudio(audioReaderCursor);
+                        }
+                }
+            }
+        });
+        t.start();
+    }
     //TODO: nem rosszötlet depicit laggol mikor keres az ember Kéne egy szűrés a listára hogy lehessen keresni benne ahoz viszont az egésznek bekell töltve lennie
     private void loadNextAudio(Cursor cursor){
 
@@ -302,7 +324,6 @@ public class MusicPlayerModel{
         ContentResolver res = context.getContentResolver();
 
 
-        if(!title.equals("I Hope You Rot") && !title.equals("Shadow Boxing") ){
             InputStream in = null;
             try {
                 in = res.openInputStream(uriSongCover);
@@ -315,7 +336,6 @@ public class MusicPlayerModel{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
 
 
         //Print the title of the song that it found.
@@ -360,8 +380,8 @@ public class MusicPlayerModel{
 
         if (audioReaderCursor != null && audioReaderCursor.getCount() > 0) {
 
-            int i =0;
-            while (audioReaderCursor.moveToNext() && i <10) {
+           int i =0;
+            while (audioReaderCursor.moveToNext() && i <1) {
                 i++;
                 loadNextAudio(audioReaderCursor);
             }
