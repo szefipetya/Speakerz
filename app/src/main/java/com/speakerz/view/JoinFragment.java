@@ -1,4 +1,4 @@
-package com.speakerz.view.recyclerview;
+package com.speakerz.view;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
