@@ -27,10 +27,12 @@ import com.speakerz.util.EventListener;
 public class ExtendedPlayerActivity extends Activity {
 
     ImageView backBtn;
+    ImageView albumArt;
     MusicPlayerModel model;
 
     TextView titleSongTV;
     TextView detailsTV;
+    TextView totalTime;
     ImageButton playButton;
     ImageButton prevButton;
     ImageButton nextButton;
@@ -125,6 +127,8 @@ public class ExtendedPlayerActivity extends Activity {
         repeatButton = findViewById(R.id.buttonRepeat);
         shuffleButton = findViewById(R.id.buttonShuffle);
         backBtn=(ImageView)findViewById(R.id.extended_back);
+        albumArt = findViewById(R.id.imageAlbum);
+        totalTime = findViewById(R.id.textTotalTime);
 
         prevButton.setImageResource(R.drawable.ic_m_prev);
         nextButton.setImageResource(R.drawable.ic_m_next);
@@ -168,8 +172,10 @@ public class ExtendedPlayerActivity extends Activity {
             public void run() {
                 titleSongTV.setText(song.getTitle());
                 detailsTV.setText(song.getArtist());
+                totalTime.setText(song.getDuration());
             }
         });
+        albumArt.setImageBitmap(song.getSongCoverArt());
     }
 
     @Override

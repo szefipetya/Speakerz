@@ -48,7 +48,6 @@
         android:id="@+id/imageAlbum"
         android:layout_width="260dp"
         android:layout_height="260dp"
-        android:scaleType="center"
         android:src="@drawable/album_chainsmokers"
         app:layout_constraintBottom_toBottomOf="@id/viewSupporterForAlbum"
         app:layout_constraintEnd_toEndOf="parent"
