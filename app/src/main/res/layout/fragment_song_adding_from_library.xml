@@ -30,7 +30,7 @@
                 android:background="@drawable/playbutton_background"
                 android:clickable="true"
                 android:rotation="-180"
-                android:src="@drawable/ic_m_up_white"
+                app:srcCompat="@drawable/ic_m_up_white"
                 android:tint="@android:color/darker_gray"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"

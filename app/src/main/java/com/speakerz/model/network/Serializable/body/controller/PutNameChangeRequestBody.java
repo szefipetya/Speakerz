@@ -5,6 +5,7 @@ import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 
 import java.io.Serializable;
+import java.net.InetAddress;
 
 public class PutNameChangeRequestBody extends Body implements Serializable {
     private NameItem nameitem;
@@ -14,7 +15,7 @@ public class PutNameChangeRequestBody extends Body implements Serializable {
     }
 
 
-    public  PutNameChangeRequestBody ( String sender, NameItem item){
+    public  PutNameChangeRequestBody (InetAddress sender, NameItem item){
         nameitem=item;
         this.senderAddress=sender;
     }

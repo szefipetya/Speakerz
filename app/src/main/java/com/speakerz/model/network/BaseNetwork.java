@@ -1,8 +1,11 @@
 package com.speakerz.model.network;
 
+import android.annotation.SuppressLint;
 import android.content.IntentFilter;
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.util.Log;
 
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.event.EventHandler;
@@ -13,6 +16,7 @@ import com.speakerz.model.network.event.channel.ConnectionUpdatedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +24,11 @@ import java.util.List;
 
 public abstract class BaseNetwork  {
 
+    public void setNickName(String nickName) {
+        this.nickName = nickName;
+    }
+
+    protected String nickName;
     public Event<EventArgs1<Exception>> ExceptionEvent;
     protected WifiBroadcastReciever reciever;
 
@@ -28,14 +37,18 @@ public abstract class BaseNetwork  {
     }
 
     protected IntentFilter intentFilter;
-
-    public Event<TextChangedEventArgs> TextChanged = new Event<>();
+    public Event<TextChangedEventArgs> TextChanged=null;
     public Event<EventArgs> ListChanged = new Event<>();
     //@Injected
     public Event<PermissionCheckEventArgs> PermissionCheckEvent =null;
     //Music player events
     //
 
+    public void setAppRunning(Boolean appRunning) {
+        isAppRunning = appRunning;
+    }
+
+    protected Boolean isAppRunning;
     List<WifiP2pDevice> peers;
     List<String> deviceNames = new ArrayList<>();
     WifiP2pDevice[] devices = new WifiP2pDevice[0];
@@ -47,12 +60,15 @@ public abstract class BaseNetwork  {
     WifiP2pManager.PeerListListener peerListListener;
     UpdateEventManager updateEventManagerToModel;
 
+    public void setTextChanged(Event<TextChangedEventArgs> textChanged) {
+        TextChanged = textChanged;
+    }
+
     public BaseNetwork(WifiBroadcastReciever reciever) {
         this.reciever = reciever;
-        if(reciever!=null) {
+        if (reciever != null) {
             reciever.setPeerListListener(peerListListener);
-        }
-        else{
+        } else {
             //D.log("err: reviecer was null.");
         }
         intentFilter = new IntentFilter();
@@ -60,8 +76,9 @@ public abstract class BaseNetwork  {
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
-    }
 
+
+    }
     public void addUpdateEventListener(EventHandler event) {
         updateEventManagerToModel.addListener(event);
         //D.log("event added");
@@ -86,7 +103,37 @@ public abstract class BaseNetwork  {
 
         }
     }
+    protected String SERVICE_INSTANCE="SPEAKERZ";
+    protected String TXTRECORD_PROP_AVAILABLE="AVAILABLE";
 
+    public void stop(){
+        disconnect();
+    }
+
+    @SuppressLint("MissingPermission")
+    public void disconnect() {
+        if (reciever.getWifiP2pManager() != null && reciever.getChannel() != null) {
+            reciever.getWifiP2pManager().requestGroupInfo(reciever.getChannel(), new WifiP2pManager.GroupInfoListener() {
+                @Override
+                public void onGroupInfoAvailable(WifiP2pGroup group) {
+                    if (group != null && reciever.getWifiP2pManager() != null && reciever.getChannel() != null) {
+                        reciever.getWifiP2pManager().removeGroup(reciever.getChannel(), new WifiP2pManager.ActionListener() {
+
+                            @Override
+                            public void onSuccess() {
+                                Log.d("TAG", "removeGroup onSuccess -");
+                            }
+
+                            @Override
+                            public void onFailure(int reason) {
+                                Log.d("TAG", "removeGroup onFailure -" + reason);
+                            }
+                        });
+                    }
+                }
+            });
+        }
+    }
     //SETTERS
 
 }

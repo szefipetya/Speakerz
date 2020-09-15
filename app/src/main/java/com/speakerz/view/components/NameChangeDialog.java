@@ -26,7 +26,7 @@ public class NameChangeDialog extends AppCompatDialogFragment {
         View view = inflater.inflate(R.layout.namechange_dialog, null);
 
         builder.setView(view)
-                .setTitle("Login")
+                .setTitle("Name Change")
                 .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {

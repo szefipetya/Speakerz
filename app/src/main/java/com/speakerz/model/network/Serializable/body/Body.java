@@ -8,7 +8,7 @@ import java.net.InetAddress;
 
 public abstract class Body implements Serializable {
 
-    public String senderAddress;
+    public InetAddress senderAddress;
     abstract  public SUBTYPE SUBTYPE();
     abstract  public void setContent(Object obj);
     abstract  public Object getContent();

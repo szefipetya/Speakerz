@@ -1,7 +1,9 @@
 package com.speakerz.model;
 
-import android.net.Uri;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 
 public class Song implements Serializable {
@@ -14,14 +16,41 @@ public class Song implements Serializable {
     private String title;
     private String album;
     private String artist;
+    private Long albumId;
     private String owner;
+    private String duration;
+    byte[] songCoverArt = null;
 
-    public Song(String data, String title, String album, String artist,String owner) {
+    public Song(String data, String title, String album, String artist,String owner,Long albumId,Bitmap songCoverArt) {
         this.data = data;
         this.title = title;
         this.album = album;
         this.artist = artist;
         this.owner = owner;
+        this.albumId = albumId;
+       this.setSongCoverArt(songCoverArt);
+       duration= "0";
+    }
+
+
+    public Bitmap getSongCoverArt() {
+        if(songCoverArt!=null){
+            return BitmapFactory.decodeByteArray(songCoverArt, 0, songCoverArt.length);
+
+        }
+        else return null;
+    }
+
+    public void setSongCoverArt(Bitmap songCoverArt1) {
+        if(songCoverArt1!=null) {
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            songCoverArt1.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            this.songCoverArt = stream.toByteArray();
+        }
+    }
+
+    public Long getAlbumId() {
+        return albumId;
     }
 
     public String getOwner() {
@@ -71,5 +100,13 @@ public class Song implements Serializable {
     @Override
     public String toString() {
         return title;
+    }
+
+    public String getDuration() {
+        return duration;
+    }
+
+    public void setDuration(String duration) {
+        this.duration = duration;
     }
 }

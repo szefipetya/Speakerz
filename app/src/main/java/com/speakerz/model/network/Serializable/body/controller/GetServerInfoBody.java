@@ -5,13 +5,14 @@ import com.speakerz.model.network.Serializable.body.controller.content.ServerInf
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 
 import java.io.Serializable;
+import java.net.InetAddress;
 
 
 public class GetServerInfoBody extends Body implements  Serializable {
     public GetServerInfoBody(  ServerInfo info){
         this.info=info;
     }
-    public GetServerInfoBody(String sender, ServerInfo info){
+    public GetServerInfoBody(InetAddress sender, ServerInfo info){
         this.senderAddress=sender;
         this.info=info;
     }

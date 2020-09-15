@@ -5,13 +5,14 @@ import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 
 import java.io.Serializable;
+import java.net.InetAddress;
 
 public class PutSongRequestBody  extends Body implements Serializable {
 
    public PutSongRequestBody( Song item){
         song=item;
     }
-   public PutSongRequestBody( String sender, Song item){
+   public PutSongRequestBody(InetAddress sender, Song item){
         song=item;
         this.senderAddress=sender;
     }

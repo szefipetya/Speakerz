@@ -6,12 +6,13 @@ import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 
 import java.io.Serializable;
+import java.net.InetAddress;
 
 public class NetworkEventBody extends Body implements Serializable {
     public NetworkEventBody(  NET_EVT netEvt){
         this.netEvt =netEvt;
     }
-    public NetworkEventBody(String sender, NET_EVT netEvt){
+    public NetworkEventBody(InetAddress sender, NET_EVT netEvt){
         this.senderAddress=sender;
         this.netEvt =netEvt;
     }

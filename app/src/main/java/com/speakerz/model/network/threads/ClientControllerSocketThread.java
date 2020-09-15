@@ -1,5 +1,6 @@
 package com.speakerz.model.network.threads;
 
+import android.os.Build;
 import android.widget.Toast;
 
 import com.speakerz.debug.D;
@@ -7,16 +8,21 @@ import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.NetworkEventBody;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
+import com.speakerz.model.network.Serializable.body.controller.INITDeviceAddressBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.PutNameListInitRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs2;
 import com.speakerz.util.ThreadSafeEvent;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -29,39 +35,52 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     //injection
    public Event<EventArgs1<Body>> MetaInfoReceivedEvent;
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
-    public Event<EventArgs1<Body>> NameChangeEvent;
-    public Event<EventArgs1<Body>> DisconectedNameErase;
+    public Event<EventArgs1<Body>> INITDeviceAddressEvent;
+    public Event<EventArgs2<Body,TYPE>> NameChangeEvent;
+    public Event<EventArgs1<Body>> NameListInitEvent;
+    public Event<EventArgs1<Body>> DeleteSongEvent;
+    public Event<EventArgs1<Body>> DeleteSongRequestEvent;
     volatile boolean externalShutdown=false;
+    private int timeout=10000;
+
     public ClientControllerSocketThread(){
 
     }
 
     @Override
     public void run() {
-        try {
+
             D.log("client running");
             externalShutdown=false;
             struct=new SocketStruct();
-            struct.socket=new Socket();
-            struct.socket.setReuseAddress(true);
-            struct.socket.connect(new InetSocketAddress(hostAddress,8040));
 
-            D.log("connection succesful to "+ hostAddress);
-            //PrintWriter pr=new PrintWriter(socket.getOutputStream());
-          //  pr.println("Hello, i am a client");
-            //pr.flush();
-            struct.objectOutputStream = new ObjectOutputStream(struct.socket.getOutputStream());
-            struct.objectInputStream = new ObjectInputStream(struct.socket.getInputStream());
-            listen(struct);
-        } catch (IOException  e) {
-            if(e.getMessage()!=null)
-               D.log(e.getMessage());
-            e.printStackTrace();
+                try {
+                    struct.socket=new Socket();
+                    struct.socket.setReuseAddress(true);
+                    struct.socket.connect(new InetSocketAddress(hostAddress, 8040));
+                    struct.objectOutputStream = new ObjectOutputStream(struct.socket.getOutputStream());
+                    struct.objectInputStream = new ObjectInputStream(struct.socket.getInputStream());
+                    D.log("connection succesful to "+ hostAddress);
+                    D.log("my ip: "+ struct.socket.getLocalAddress());
+
+                    this.INITDeviceAddressEvent.invoke(new EventArgs1<Body>("senki",new INITDeviceAddressBody(struct.socket.getLocalAddress())));
+                    listen(struct);
+
+                }catch (IOException e){
+                    e.printStackTrace();
+                    if(e.getMessage()!=null)
+                        D.log(e.getMessage());
+                    e.printStackTrace();
+
+                    ExceptionEvent.invoke(new EventArgs1<Exception>(this,new ConnectException("CTRL_CONN_REFUSED")));
+                    shutdown();
+                }
 
 
-             shutdown();
 
-        }
+
+
+
         //send and recieve
     }
 
@@ -78,6 +97,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
                 e.printStackTrace();
                 break;
             } catch (IOException e) {
+                ExceptionEvent.invoke(new EventArgs1<Exception>(this,new ConnectException("Connection Lost")));
                 e.printStackTrace();
                 shutdown();
                 break;
@@ -91,13 +111,44 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
         D.log("got a ChObj");
         if(chObject.TYPE== TYPE.META){
             MetaInfoReceivedEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+            try {
+                D.log("address is: "+struct.socket.getInetAddress().getHostAddress());
+
+                send(new ChannelObject(new PutNameListInitRequestBody(null),TYPE.INITNAMELIST));
+
+                D.log("sended namelistinit request");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         }if(chObject.TYPE==TYPE.MP){
             MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,chObject.body));
         }
         if(chObject.TYPE== TYPE.NAME){
-            NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
-            D.log(" server: NameChange Happened: ");
+            NameChangeEvent.invoke(new EventArgs2<Body,TYPE>(this,chObject.body,TYPE.NAME));
+            D.log(" Client: NameChange Happened: ");
 
+        }
+
+        if(chObject.TYPE== TYPE.DELETENAME) {
+            NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(this, chObject.body, TYPE.DELETENAME));
+            D.log(" Client: NameChange DELETE Happened: ");
+
+        }
+        if(chObject.TYPE== TYPE.INITNAMELIST) {
+            NameListInitEvent.invoke(new EventArgs1<Body>(TYPE.INITNAMELIST,chObject.body));
+            D.log(" Client:got NameList ");
+        }
+
+        if(chObject.TYPE== TYPE.DELETE_SONG) {
+            DeleteSongEvent.invoke(new EventArgs1<Body>(TYPE.DELETE_SONG,chObject.body));
+            D.log(" Song " + (Integer)chObject.body.getContent()+ "deleteed");
+        }
+
+        //technikailag ő nem fog ilyet kapni
+        if(chObject.TYPE== TYPE.DELETE_SONG_REQUEST) {
+            DeleteSongEvent.invoke(new EventArgs1<Body>(TYPE.DELETE_SONG,chObject.body));
+            D.log(" Song " + (Integer)chObject.body.getContent()+ "deleteed");
         }
     }
 
@@ -106,7 +157,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     public boolean send(ChannelObject chobj) throws Exception{
         if(struct.socket!=null&&!struct.socket.isClosed())
         {
-            chobj.body.senderAddress=struct.socket.getInetAddress().getHostAddress();
+            chobj.body.senderAddress=struct.socket.getLocalAddress();
             struct.objectOutputStream.writeObject(chobj);
             struct.objectOutputStream.flush();
             return true;
@@ -117,6 +168,7 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
     @Override
     public void shutdown(){
         try {
+            D.log("SHUTDOWN");
             externalShutdown=true;
 
           //  send(new ChannelObject(new NetworkEventBody(struct.socket.getInetAddress().getHostAddress(), NET_EVT.DISCONNECT),TYPE.NET));
@@ -142,5 +194,9 @@ public class ClientControllerSocketThread extends Thread implements SocketThread
 
     public void setAddress(InetAddress address) {
         this.hostAddress=address.getHostAddress();
+    }
+
+    public InetAddress getAddress(){
+        return this.struct.socket.getInetAddress();
     }
 }

@@ -41,6 +41,7 @@ import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
+import com.speakerz.view.PlayerRecyclerActivity;
 
 import ealvatag.audio.exceptions.CannotReadException;
 
@@ -50,7 +51,6 @@ public class MainActivity extends Activity {
     //REQUIRED_BEG MODEL
     SpeakerzService _service;
     boolean _isBounded;
-    Button nameChange;
 
     CommonModel_ViewEventHandler viewEventHandler;
 
@@ -75,7 +75,7 @@ public class MainActivity extends Activity {
             subscribePermissionEvents();
             _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.READ_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED));
             _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
-
+            checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,_service.PERMISSIONS_REQUEST_CODE_WRITE_EXTERNAL_STORAGE);
 
 
         }
@@ -135,7 +135,6 @@ Activity self=this;
             _service.getTextValueStorage().autoConfigureTexts(this);
         //a bánat tudja, hogy ez mit csinál, de kell
 
-        //D.log("main_onResume");
     }
 
     @Override
@@ -164,7 +163,6 @@ Activity self=this;
 
         setContentView(R.layout.activity_main);
 
-        //D.log("oncreate_main");
 
         Button buttonJoin = (Button) findViewById(R.id.join);
         buttonJoin.setOnClickListener(new View.OnClickListener(){
@@ -182,41 +180,17 @@ Activity self=this;
         buttonCreate.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
                 initAndStart(true);
-                Intent Act2 = new Intent(getApplicationContext(),Create.class);
+             /*   Intent Act2 = new Intent(getApplicationContext(),Create.class);
+                startActivity(Act2);*/
+                Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);
                 startActivity(Act2);
-                Act2.putExtra("Hello","Hello World");
 
 
             }
 
         });
 
-
-        Button buttonOptions = (Button) findViewById(R.id.options);
-        buttonOptions.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View view){
-                Intent Act2 = new Intent(getApplicationContext(),Options.class);
-                Act2.putExtra("Hello","Hello World");
-                startActivity(Act2);
-
-            }
-
-        });
-
-
-
-
-
-
-        gpsStatusCheck();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            //checkCoarseLocationPermission();
-        }
-
-        //ez Android 8.0 felett kell
-
-
+     //   gpsStatusCheck();
     }
 
     //Permission&Policy
@@ -288,13 +262,14 @@ Activity self=this;
 
         }
     }
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void checkCoarseLocationPermission(){
 
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-            //requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                    //service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
+            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                    _service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
             //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
 
         }else{

@@ -7,5 +7,7 @@ public enum MP_EVT {
     SONG_PAUSE,
     SONG_ACT_TIME_SECONDS,
     SONG_MAX_TIME_SECONDS,
-    SONG_EOF
+    SONG_EOF,
+    ADD_SONG_CLIENT,
+     SONG_NEXT
 }

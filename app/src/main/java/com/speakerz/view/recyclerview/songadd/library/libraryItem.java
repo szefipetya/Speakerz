@@ -1,16 +1,21 @@
 package com.speakerz.view.recyclerview.songadd.library;
 
+import android.graphics.Bitmap;
+import android.net.Uri;
+
+import com.google.common.collect.AbstractIterator;
+
 public class libraryItem {
     private String SongName;
     private String Artist;
-    private String CoverImagePath;
+    private Bitmap img;
     private String SongLengthTime;
 
 
-    public libraryItem(String songName, String artist, String coverImagePath, String songLengthTime) {
+    public libraryItem(String songName, String artist, Bitmap img, String songLengthTime) {
         SongName = songName;
         Artist = artist;
-        CoverImagePath = coverImagePath;
+        this.img = img;
         SongLengthTime = songLengthTime;
     }
 
@@ -22,8 +27,8 @@ public class libraryItem {
         return Artist;
     }
 
-    public String getCoverImagePath() {
-        return CoverImagePath;
+    public Bitmap getCoverImage() {
+        return img;
     }
 
     public String getSongLengthTime() {

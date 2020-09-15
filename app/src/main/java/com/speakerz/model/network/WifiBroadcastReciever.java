@@ -18,13 +18,16 @@ import com.speakerz.model.network.event.HostAddressEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.Event;
+import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 
 import java.net.InetAddress;
 
 
 public class WifiBroadcastReciever extends BroadcastReceiver {
-    public Event<WirelessStatusChangedEventArgs> WirelessStatusChanged = new Event<>();
+    public Event<EventArgs1<Boolean>> WirelessStatusChanged = new Event<>();
     public Event<BooleanEventArgs> ConnectionChangedEvent = new Event<>();
+    public Event<EventArgs1<Boolean>> DiscoveryStatusChangedEvent = new Event<>();
     public Event<PermissionCheckEventArgs> PermissionCheckEvent = new Event<>();
     public Event<HostAddressEventArgs> HostAddressAvailableEvent = new Event<>();
     private WifiBroadcastReciever self = this;
@@ -45,29 +48,44 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
             //inform the view about the connection changes
 
          InetAddress hostAddress=info.groupOwnerAddress;
-            D.log("onCOnnectionInfoavailable "+hostAddress);
+         if(hostAddress==null){
+             Toast.makeText(context,"Connection failed. Try again!", Toast.LENGTH_SHORT).show();
+             return;
+         }
+
+            D.log("onConnectionInfoavailable "+hostAddress);
             // After the group negotiation, we can determine the group owner
             // (server).
-            if (info.groupFormed && info.isGroupOwner&&isHost) {
+            if (info.groupFormed &&isHost&&info.isGroupOwner) {
                 D.log("owner");
                 // Do whatever tasks are specific to the group owner.
                 // One common case is creating a group owner thread and accepting
                 // incoming connections.
-                // ConnectionChangedEvent.invoke(new ConnectionChangedEventArgs(self, wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner));
                 HostAddressAvailableEvent.invoke(new HostAddressEventArgs(self,info.groupOwnerAddress,true));
-            } if (info.groupFormed&&!isHost) {
-                if (info.groupOwnerAddress != null) {
+                isConnected=true;
+            }else if (info.groupFormed&&!isHost) {
+
                     D.log("client " + info.groupOwnerAddress);
                     HostAddressAvailableEvent.invoke(new HostAddressEventArgs(self,info.groupOwnerAddress,false));
                     // The other device acts as the peer (client). In this case,
                     // you'll want to create a peer thread that connects
                     // to the group owner.
-                }
 
+              if(!isConnected) {
+                  ConnectionChangedEvent.invoke(new BooleanEventArgs(self, true));
+                  isConnected = true;
+              }
+            }else{
+                D.log("ROSSZ EMBER A GROUP OWNER");
             }
         }
     };
 
+    public boolean isConnected() {
+        return isConnected;
+    }
+
+    boolean isConnected=false;
 
     @SuppressLint("MissingPermission")
     public void discoverPeers(WifiP2pManager.ActionListener actionListener) {
@@ -103,19 +121,25 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
         });
     }
 
+    Context context;
     @SuppressLint("MissingPermission")
     @Override
     public void onReceive(Context context, Intent intent) {
+        this.context=context;
         String action=intent.getAction();
         if(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)){
             int state=intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE,-1);
 
-            WirelessStatusChanged.invoke(new WirelessStatusChangedEventArgs(this, state==WifiP2pManager.WIFI_P2P_STATE_ENABLED));
 
             if(state==WifiP2pManager.WIFI_P2P_STATE_ENABLED){
                 Toast.makeText(context,"Wifi is on", Toast.LENGTH_SHORT).show();
+
+                    self.WirelessStatusChanged.invoke(new EventArgs1<Boolean>(self,true));
+
             }
             else {
+                self.WirelessStatusChanged.invoke(new EventArgs1<Boolean>(self,false));
+
                 Toast.makeText(context,"Wifi is off", Toast.LENGTH_SHORT).show();
             }
         }
@@ -132,9 +156,15 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                 return;
             }
 
+           /* NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+            if (activeNetwork != null) {
+                wifiP2pManager.requestConnectionInfo(channel, connectionInfoListener);
+            } else {
+                ConnectionChangedEvent.invoke(new BooleanEventArgs(self,false));
+                // not connected to the internet
+            }*/
             NetworkInfo networkInfo = (NetworkInfo) intent
                     .getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
-
             if (networkInfo.isConnected()) {
 
                 // We are connected with the other device, request connection
@@ -146,12 +176,21 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
                 //disconnected
                 D.log("disconnected");
                 ConnectionChangedEvent.invoke(new BooleanEventArgs(self,false));
+                isConnected=false;
             }
         }
         else if(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)){
 
+        }else if(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action) ){
+            int state=intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE,-1);
+            if(state==WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED){
+                DiscoveryStatusChangedEvent.invoke(new EventArgs1<Boolean>(this,false));
+            }else if(state==WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED) {
+                DiscoveryStatusChangedEvent.invoke(new EventArgs1<Boolean>(this, true));
+            }
         }
     }
+
 
 
     //getters

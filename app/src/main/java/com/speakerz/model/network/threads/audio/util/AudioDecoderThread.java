@@ -82,7 +82,7 @@ public class AudioDecoderThread {
 
 
     AudioMetaDto metaDto=new AudioMetaDto();
-    public void startPlay(String path) throws IOException, CannotReadException {
+    public void startPlay(String path) throws IOException, CannotReadException,NullPointerException {
         currentFile=new File(path);
        startPlay(currentFile);
     }
@@ -93,11 +93,14 @@ public class AudioDecoderThread {
 
     AudioTrack audioTrack=null;
     AUDIO audioType=AUDIO.NONE;
-    public void startPlay(File file) throws IOException, CannotReadException {
+    public void startPlay(File file) throws IOException, CannotReadException,NullPointerException {
         this.audioType=audioType;
         eosReceived = false;
         currentFile=file;
+        eosReceived=false;
+        actualPackageNumber.set(0);
         AudioMetaInfo metaInfo=new AudioMetaInfo(file) ;
+        if(metaInfo.getAudioHeader()==null) throw new NullPointerException("Playback from client resource is not yet implemented");
         if(metaInfo.getAudioHeader().getEncodingType()=="mp3") {
             playMP3(file);
         }
@@ -110,9 +113,6 @@ public class AudioDecoderThread {
 
 
     private void playMP3(File file) throws IOException, CannotReadException {
-        eosReceived=false;
-        actualPackageNumber.set(0);
-
        // Create a jlayer Decoder instance.
         D.log("PLAYING MP3 ");
         Decoder decoder = new Decoder();
@@ -148,7 +148,7 @@ public class AudioDecoderThread {
         int framesReaded = 0;
         while (!eosReceived) {
             if(isPaused.get()){
-                synchronized (isPaused){
+                synchronized (isPaused) {
                     try {
                         isPaused.wait();
                     } catch (InterruptedException e) {
@@ -158,9 +158,9 @@ public class AudioDecoderThread {
             }
                      try {
                 if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
-                    D.log("readed tha whole music");
-
-                    break;
+                    //TODO: Ez nem érkezik meg a musicplayermodelbe
+                    MusicPlayerActionEvent.invoke(new EventArgs1<Body>(self,new MusicPlayerActionBody(MP_EVT.SONG_NEXT,null)));
+                    D.log("played tha whole music");
                 }
 
             } catch (BitstreamException e) {
@@ -194,6 +194,7 @@ public class AudioDecoderThread {
         synchronized (playStoppedLocker) {
             playStoppedLocker.notify();
         }
+        //TODO: Ez nem érkezik meg a musicplayermodelbe
         MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_EOF,null)));
 
     }

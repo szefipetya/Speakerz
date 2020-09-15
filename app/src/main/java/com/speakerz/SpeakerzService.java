@@ -27,21 +27,26 @@ import com.speakerz.debug.D;
 import com.speakerz.model.BaseModel;
 import com.speakerz.model.DeviceModel;
 import com.speakerz.model.HostModel;
+import com.speakerz.model.enums.EVT;
 import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
+import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
 import com.speakerz.viewModel.TextValueStorage;
 
+import org.w3c.dom.Text;
+
 import ealvatag.audio.exceptions.CannotReadException;
 
 public class SpeakerzService extends Service {
 
 
+    public final int PERMISSIONS_REQUEST_CODE_WRITE_EXTERNAL_STORAGE =104 ;
 
     private final class ServiceHandler extends Handler {
         private  SpeakerzService service;
@@ -74,7 +79,10 @@ public class SpeakerzService extends Service {
                 model = new HostModel(service, service.receiver,service.connectivityManager,PermissionCheckEvent);
                 model.start();
                 model.getMusicPlayerModel().loadAudio();
+
+
                 registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
+
 
                 startId = sId;
                 ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
@@ -86,15 +94,14 @@ public class SpeakerzService extends Service {
                 if(model!=null){stopService("changing service type");}
 
                 model = new DeviceModel(service, service.receiver,service.connectivityManager,PermissionCheckEvent);
-
                 registerReceiver(model.getNetwork().getReciever(), model.getNetwork().getIntentFilter());
                 model.start();
                 model.getMusicPlayerModel().loadAudio();
 
+
                 startId = sId;
                 ModelReadyEvent.invoke(new BooleanEventArgs(service,isHost));
                 this.subscribeEvents();
-
                 D.log("devicemodel created");
             }
             else { // nem kell service csere
@@ -141,6 +148,7 @@ public class SpeakerzService extends Service {
             return model;
         }
     }
+
 
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
@@ -227,6 +235,12 @@ public class SpeakerzService extends Service {
     public void onDestroy() {
         serviceHandler.stopService("terminated by system");
         D.log("onDestroy");
+        super.onDestroy();
+    }
+
+    public void onUserDestroy() {
+        serviceHandler.stopService("terminated by user");
+        D.log("onUserDestroy");
         super.onDestroy();
     }
 

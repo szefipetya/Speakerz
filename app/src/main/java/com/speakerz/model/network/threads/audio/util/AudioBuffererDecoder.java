@@ -8,6 +8,7 @@ import com.speakerz.debug.D;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioMetaDto;
 import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
+import com.speakerz.model.network.threads.util.ClientSocketStructWrapper;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +44,7 @@ public class AudioBuffererDecoder {
     public Event<EventArgs1<AudioPacket>> AudioTrackBufferUpdateEvent;
     public Event<EventArgs1<AudioMetaDto>> MetaDtoReadyEvent;
     public Event<EventArgs1<Exception>>ExceptionEvent;
+    public List<ClientSocketStructWrapper> clients=null;
 
     public final Queue<AudioPacket> bufferQueue=new ConcurrentLinkedQueue<>();
 
@@ -64,7 +67,11 @@ public class AudioBuffererDecoder {
         this.audioType=audioType;
         eosReceived.set(false);
         currentFile=file;
+        actualBufferedPackageNumber.set(0);
+        maxPackageNumber.set(0);
+        eosReceived.set(false);
         AudioMetaInfo metaInfo=new AudioMetaInfo(file) ;
+        if(metaInfo.getAudioHeader()==null) throw new NullPointerException("Playback from client resource is not yet implemented");
         if(metaInfo.getAudioHeader().getEncodingType()=="mp3") {
             playMP3(file,songId);
         }
@@ -75,9 +82,7 @@ public AtomicInteger actualBufferedPackageNumber=new AtomicInteger(0);
 public AtomicInteger maxPackageNumber=new AtomicInteger(0);
 
     private void playMP3(File file,Integer songId) throws IOException, CannotReadException {
-        actualBufferedPackageNumber.set(0);
-        maxPackageNumber.set(0);
-        eosReceived.set(false);
+
         // Create a jlayer Decoder instance.
         D.log("PLAYING MP3 ");
         Decoder decoder = new Decoder();
@@ -144,8 +149,12 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
 
                 AudioPacket pack=new AudioPacket(bytes.length,bytes);
                 pack.packageNumber=actualBufferedPackageNumber.get();
-                bufferQueue.add(pack);
+
                 synchronized (bufferQueue){
+                    bufferQueue.offer(pack);
+                    for(ClientSocketStructWrapper cli:clients){
+                        cli.bufferQueue.offer(pack);
+                    }
                     bufferQueue.notify();
                 }
 
@@ -182,8 +191,12 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
 
             }
         }
+
         actualBufferedPackageNumber.set(0);
         maxPackageNumber.set(0);
+        for(ClientSocketStructWrapper cli:clients){
+            cli.bufferQueue.clear();
+        }
         bufferQueue.clear();
 
     }

@@ -32,8 +32,6 @@ import java.util.List;
 public class MusicPlayer extends Activity {
 // TODO: 1 bug az első zene után ha a user huzza végiga seekbart valamiért a 3. indul el nema 2. eztleszámítva error nincsen amennyire én látom,kommetelés és kód rendezés
 
-    int playedSongnum=0;
-    int totalTime;
     boolean playSong=false;
 
     MusicPlayerModel model = null;
@@ -141,13 +139,6 @@ public class MusicPlayer extends Activity {
     // Called after model binding
     public void initAndStart(){
 
-        // Add songs to model's Song Queue
-        /*Field[] fields = R.raw.class.getFields();
-        for( int i = 0 ; i < fields.length ; i++){
-            if(!model.songNameQueue.contains(fields[i].getName())){
-                model.songNameQueue.add(fields[i].getName());
-            }
-        }*/
 
         // Connect Song Queue to list view UI component
         songViewLA = new ArrayAdapter<Song>(model.getContext(),  R.layout.list_item,model.getSongQueue());
@@ -182,18 +173,7 @@ public class MusicPlayer extends Activity {
         });
 
 
-
-        // starting music if not playing,
-        // EZ itt bugos, ha ez bent van akkor automatikusan elkezd lejátszani egy zenét és nem lehet leállítani
-        //if(!model.isPlaying()){
-            //model.startNext();
-
-        //}
     }
-
-
-
-    Integer currentSongId=1;
 
     public void NextSong(){
         model.startNext();

@@ -4,28 +4,37 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.widget.Toast;
+
 
 import com.speakerz.debug.D;
+import com.speakerz.model.enums.EVT;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.*;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.PutNameListInitRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.DeleteSongRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
+import com.speakerz.model.network.Serializable.body.controller.content.NameList;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
+import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 
-import java.io.File;
+
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.util.List;
+
 
 public class HostModel extends BaseModel {
     HostNetwork network;
@@ -37,33 +46,126 @@ public class HostModel extends BaseModel {
         network = new HostNetwork(reciever);
         network.PermissionCheckEvent=this.PermissionCheckEvent;
         network.ExceptionEvent=this.ExceptionEvent;
+        network.TextChanged=this.TextChanged;
         network.getReciever().setConnectivityManager(connectivityManager);
+        network.setAppRunning(isAppRunning);
+
         injectNetworkDependencies();
 
         subscribeMusicPlayerModelEvents();
         subscribeNetWorkEvents();
         network.getServerSocketWrapper().audioSocket.setContext(context);
-        //NickNames.put("Host",this.NickName);
+        network.setNickName(NickName);
     }
 
     private void subscribeNetWorkEvents() {
-        NameChangeEvent.addListener(new EventListener<EventArgs1<Body>>() {
+        NameChangeEvent.addListener(new EventListener<EventArgs2<Body,TYPE>>(){
+            @Override
+            public void action(EventArgs2<Body,TYPE> args) {
+                if(args.arg2() == TYPE.DELETENAME){
+                    D.log("NAME DELETE HAPPEND.");
+                    try {
+                        NameItem delname = (NameItem) args.arg1().getContent();
 
+
+                        D.log("id=="+delname.id);
+                        D.log("name=="+NickNames.get(delname.id));
+                        TextChanged.invoke(new TextChangedEventArgs(self, EVT.toast,( NickNames.get(delname.id)+" left the party")));
+                        deleteFromNicknamesByAddress(delname.id);
+                        DeviceListChangedEvent.invoke(null);
+
+                            network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody((NameItem) args.arg1().getContent()), TYPE.DELETENAME));
+
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if(args.arg2() == TYPE.NAME){
+                    D.log("name:"+NickNames.get(((PutNameChangeRequestBody)args.arg1()).getContent().id));
+                    if(NickNames.get(((NameItem) args.arg1().getContent()).id) ==null || !NickNames.get(((NameItem) args.arg1().getContent()).id).equals(((NameItem) args.arg1().getContent()).name)) {
+                        D.log("NAME CHANGE HAPPEND.");
+                        TextChanged.invoke(new TextChangedEventArgs(self, EVT.toast,((NameItem) args.arg1().getContent()).name+" joined the party"));
+
+                        NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
+                        DeviceListChangedEvent.invoke(null);
+
+                        try {
+                            network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody((NameItem) args.arg1().getContent()), TYPE.NAME));
+                            D.log("NameChange sent");
+                        } catch (IOException e) {
+                        }
+                    }
+                   }
+
+            }
+
+            });
+
+        NameListInitEvent.addListener(new EventListener<EventArgs1<Body>>(){
             @Override
             public void action(EventArgs1<Body> args) {
-                D.log("NAME CHANGE HAPPEND.");
-                NickNames.put(((PutNameChangeRequestBody)args.arg1()).getContent().id,((PutNameChangeRequestBody)args.arg1()).getContent().name);
-                D.log("name:"+NickNames.get(((PutNameChangeRequestBody)args.arg1()).getContent().id));
+                D.log("NAMELIST INIT REQUEST HAPPEND. SERVER");
                 try {
-                    network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutNameChangeRequestBody( (NameItem) args.arg1().getContent()),TYPE.NAME));
-                    //SongQueueUpdatedEvent.invoke(null);
-                    D.log("NameChange sent");
-                } catch (IOException e) { }
+                    PutNameListInitRequestBody body = (PutNameListInitRequestBody) args.arg1();
+                    network.getServerSocketWrapper().controllerSocket.send(body.senderAddress,new ChannelObject(new PutNameListInitRequestBody(new NameList(NickNames)),TYPE.INITNAMELIST));
 
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+        INITDeviceAddressEvent.addListener(new EventListener<EventArgs1<Body>>(){
+            @Override
+            public void action(EventArgs1<Body> args) {
+                deviceID=args.arg1().getContent().toString();
+                deviceAddress= (InetAddress) args.arg1().getContent();
+                //a server hozzáadja magát a listához.
+                NickNames.put(self.deviceID,self.NickName);
+                DeviceListChangedEvent.invoke(null);
+            }
+        });
+
+        DeleteSongEvent.addListener(new EventListener<EventArgs1<Body>>(){
+            @Override
+            public void action(EventArgs1<Body> args) {
+                musicPlayerModel.removeSong(musicPlayerModel.getSongQueue().get((Integer) args.arg1().getContent()));
+                try {
+                    network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new DeleteSongRequestBody((Integer) args.arg1().getContent()), TYPE.DELETE_SONG));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                D.log("deleteSong Sended");
+            }
+        });
+
+        DeleteSongRequestEvent.addListener(new EventListener<EventArgs1<Body>>(){
+            @Override
+            public void action(EventArgs1<Body> args) {
+                DeleteSongEvent.invoke(new EventArgs1<Body>(TYPE.DELETE_SONG,new DeleteSongRequestBody((Integer) args.arg1().getContent())));
             }
         });
     }
 
+
+
+    private void deletePersistentGroups(){
+        try {
+            Method[] methods = WifiP2pManager.class.getMethods();
+            for (int i = 0; i < methods.length; i++) {
+                if (methods[i].getName().equals("deletePersistentGroup")) {
+                    // Delete any persistent group
+                    for (int netid = 0; netid < 32; netid++) {
+                        methods[i].invoke(network.getReciever().getWifiP2pManager(), network.getReciever().getChannel(), netid, null);
+                    }
+                }
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
     private void subscribeMusicPlayerModelEvents() {
 
 
@@ -81,7 +183,7 @@ public class HostModel extends BaseModel {
                 if(args.arg1()==MP_EVT.SEND_SONG){
                     try {
                         network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new PutSongRequestBody((Song)args.arg2()),TYPE.MP));
-                        SongQueueUpdatedEvent.invoke(null);
+                      //  SongQueueUpdatedEvent.invoke(null);
                         D.log("song sent to clients");
                     } catch (IOException e) {
                         D.log("could not send a single song");
@@ -107,6 +209,7 @@ public class HostModel extends BaseModel {
     public void start() {
         network.start();
         network.getReciever().clearConnections();
+        deletePersistentGroups();
         startAdvertising();
 
 
@@ -121,14 +224,12 @@ public class HostModel extends BaseModel {
     @SuppressLint("MissingPermission")
     public void startAdvertising() {
 
-
-        //stop();st
-       // network.getReciever().getWifiP2pManager().d
         network.getReciever().getWifiP2pManager().discoverPeers(network.getReciever().getChannel(), new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
                 D.log("advertising...");
                 network.removeGroupIfExists();
+                network.startRegistration();
 
             }
 
@@ -142,40 +243,17 @@ public class HostModel extends BaseModel {
     }
     @Override
     public void stop() {
+        isAppRunning=false;
         D.log("Model stopped");
         if(   network.getServerSocketWrapper().controllerSocket!=null) {
             network.getServerSocketWrapper().controllerSocket.shutdown();
-            network.getServerSocketWrapper().audioSocket.shutdown();
-            try {
-                network.getServerSocketWrapper().controllerSocket.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
-
+        if(   network.getServerSocketWrapper().audioSocket!=null)
+            network.getServerSocketWrapper().audioSocket.shutdown();
         musicPlayerModel.close();
         network.getReciever().clearConnections();
-        network.getReciever().getWifiP2pManager().removeGroup(network.getReciever().getChannel(), new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                D.log("group removed by stop()");
-
-            }
-
-            @Override
-            public void onFailure(int i) {
-                D.log("fail: group can't be removed by stop() errcode: "+i);
-
-            }
-        });
-      //  getNetwork().getReciever().abortBroadcast();
-        network.PermissionCheckEvent.removeAllListeners();
-        network.PermissionCheckEvent=null;
-        network.ListChanged.removeAllListeners();
-        network.ListChanged=null;
-        network.TextChanged.removeAllListeners();
-        network.TextChanged=null;
-
+        deletePersistentGroups();
+        network.stop();
 
     }
 
@@ -194,5 +272,10 @@ public class HostModel extends BaseModel {
         network.getServerSocketWrapper().controllerSocket.MetaInfoEvent =MetaInfoReceivedEvent;
         network.getServerSocketWrapper().controllerSocket.ExceptionEvent =ExceptionEvent;
         network.getServerSocketWrapper().controllerSocket.NameChangeEvent =NameChangeEvent;
+        network.getServerSocketWrapper().controllerSocket.NameListInitEvent= NameListInitEvent;
+        network.getServerSocketWrapper().controllerSocket.INITDeviceAddressEvent= INITDeviceAddressEvent;
+        network.getServerSocketWrapper().controllerSocket.DeleteSongEvent = DeleteSongEvent;
+        network.getServerSocketWrapper().controllerSocket.DeleteSongRequestEvent = DeleteSongRequestEvent;
+
     }
 }

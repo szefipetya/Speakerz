@@ -2,7 +2,6 @@ package com.speakerz.view.recyclerview.main.player;
 
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.view.View;
 import android.widget.TextView;
@@ -16,14 +15,23 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.speakerz.R;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
+import com.speakerz.model.network.Serializable.ChannelObject;
+import com.speakerz.model.network.Serializable.enums.TYPE;
+import com.speakerz.util.EventArgs;
+import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
+import com.speakerz.view.PlayerRecyclerActivity;
 import com.speakerz.view.recyclerview.songadd.library.SongAddLibraryFragment;
+
+
+import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.controller.DeleteSongRequestBody;
 
 import java.util.ArrayList;
 
 public class RecyclerView_FAB  {
-    AppCompatActivity activity;
+    PlayerRecyclerActivity activity;
 
     private ArrayList<Item> itemList;
 
@@ -35,10 +43,11 @@ public class RecyclerView_FAB  {
     private TextView mLibraryText, mYoutubeText;
     private boolean isFabOpen;
     private MusicPlayerModel model;
+   private Boolean isSongPickerOpen=false;
 
     // private Animation mFabOpenAnim, mFabCloseAnim; //Jelenleg nem működik
 
-    public RecyclerView_FAB(AppCompatActivity activity){
+    public RecyclerView_FAB(PlayerRecyclerActivity activity){
         this.activity = activity;
         itemList = new ArrayList<>();
         buildRecyclerView();
@@ -47,31 +56,61 @@ public class RecyclerView_FAB  {
 
     final EventListener<EventArgs2<Song, Integer>> songAddedListener = new EventListener<EventArgs2<Song, Integer>>() {
         @Override
-        public void action(EventArgs2<Song, Integer> args) {
-            if(mAdapter == null) return;
-            mAdapter.notifyItemInserted(args.arg2());
+        public void action(final EventArgs2<Song, Integer> args) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if(mAdapter == null) return;
+                    mAdapter.notifyItemInserted(args.arg2());
+                }
+            });
+
         }
     };    final EventListener<EventArgs2<Song, Integer>> songRemovedListener = new EventListener<EventArgs2<Song, Integer>>() {
         @Override
-        public void action(EventArgs2<Song, Integer> args) {
-            if(mAdapter == null) return;
-            mAdapter.notifyItemRemoved(args.arg2());
+        public void action(final EventArgs2<Song, Integer> args) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if(mAdapter == null) return;
+                    mAdapter.notifyItemRemoved(args.arg2());
+                }
+            });
+
         }
     };
 
-    public void insertItem(int position, String from, int pic) {
-        itemList.add(new Item(pic, from + ": New Item at position: " + (position), "Artist"));
-        mAdapter.notifyItemInserted(position);
+    public void insertItem(final int position,final String from,final int pic) {
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                itemList.add(new Item(pic, from + ": New Item at position: " + (position), "Artist"));
+                mAdapter.notifyItemInserted(position);
+            }
+        });
+
     }
 
-    public void removeItem(int position) {
-        itemList.remove(position);
-        mAdapter.notifyItemRemoved(position);
+    public void removeItem(final int position) {
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                itemList.remove(position);
+                mAdapter.notifyItemRemoved(position);
+            }
+        });
+
     }
 
-    public void changeItem(int position, String text) {
-        itemList.get(position).changeText1(text);
-        mAdapter.notifyItemChanged(position);
+    public void changeItem(final int position,final String text) {
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                itemList.get(position).changeText1(text);
+                mAdapter.notifyItemChanged(position);
+            }
+        });
+
     }
 
     public void buildRecyclerView() {
@@ -100,6 +139,7 @@ public class RecyclerView_FAB  {
                     //mYoutubeFab.setAnimation(mFabCloseAnim);
 
                     isFabOpen = false;
+                    activity.lightOverlay();
                 }else {
                     mLibraryFab.setVisibility(View.VISIBLE);
                     mYoutubeFab.setVisibility(View.VISIBLE);
@@ -109,13 +149,12 @@ public class RecyclerView_FAB  {
                     //mYoutubeFab.setAnimation(mFabOpenAnim);
 
                     isFabOpen = true;
+                    activity.darkOverlay();
                 }
 
                 //Darker background + Toolbar -> Ezt kell visszaállítani az eredeti színekkel a listában lévő plusz gomb lenyomása után
                 //Sötétítés
-                ConstraintLayout mConstraintLayout = activity.findViewById(R.id.layout_darker);
-                mConstraintLayout.setBackgroundResource(R.color.darkerBackground);
-                activity.getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.rgb(12,26,42)));
+
 
                 //Visszavilágosítás
                 /*
@@ -125,6 +164,7 @@ public class RecyclerView_FAB  {
                 * */
             }
         });
+
 
         mLibraryFab = activity.findViewById(R.id.fab_library);
         mLibraryText = activity.findViewById(R.id.library_text);
@@ -140,13 +180,24 @@ public class RecyclerView_FAB  {
                 mYoutubeFab.setVisibility(View.INVISIBLE);
                 mLibraryText.setVisibility(View.INVISIBLE);
                 mYoutubeText.setVisibility(View.INVISIBLE);
+                SongAddLibraryFragment fragment=new SongAddLibraryFragment();
+                fragment.setModel(model);
 
                 //Song add from library fragment open
                 activity.getSupportFragmentManager()
                         .beginTransaction()
-                        .replace(R.id.fragment_container_song_import, new SongAddLibraryFragment())
+                        .replace(R.id.fragment_container_song_import,fragment)
                         .addToBackStack(null)
                         .commit();
+                isSongPickerOpen=true;
+                fragment.CloseEvent.addListener(new EventListener<EventArgs>() {
+                    @Override
+                    public void action(EventArgs args) {
+                        //set the darkness back when the dialog is closed
+                       activity.lightOverlay();
+                       isSongPickerOpen=false;
+                    }
+                });
             }
         });
 
@@ -163,9 +214,12 @@ public class RecyclerView_FAB  {
                 mYoutubeFab.setVisibility(View.INVISIBLE);
                 mLibraryText.setVisibility(View.INVISIBLE);
                 mYoutubeText.setVisibility(View.INVISIBLE);
+                activity.lightOverlay();
             }
         });
     }
+
+
 
     public void initModel(final MusicPlayerModel model) {
         mAdapter = new Adapter(model.getSongQueue());
@@ -173,15 +227,14 @@ public class RecyclerView_FAB  {
         mAdapter.setOnItemClickListener(new Adapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
-
-
                 model.startONE(model.getContext(), Uri.parse(model.getSongQueue().get(position).getData()),model.getSongQueue().get(position).getId());
 
             }
 
             @Override
             public void onDeleteClick(int position) {
-                model.removeSong(model.getSongQueue().get(position));
+                //TODO: DELETE SONG
+                model.getModel().DeleteSongRequestEvent.invoke(new EventArgs1<Body>(TYPE.DELETE_SONG_REQUEST,new DeleteSongRequestBody(position)));
             }
         });
         model.songAddedEvent.addListener(songAddedListener);
@@ -197,5 +250,8 @@ public class RecyclerView_FAB  {
 
         mAdapter = null;
         model = null;
+    }
+    public Boolean getSongPickerOpen() {
+        return isSongPickerOpen;
     }
 }

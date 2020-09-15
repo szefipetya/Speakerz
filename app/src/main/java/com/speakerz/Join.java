@@ -27,12 +27,15 @@ import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBod
 import com.speakerz.model.network.Serializable.body.controller.content.ServerInfo;
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 import com.speakerz.model.network.Serializable.enums.TYPE;
+import com.speakerz.model.network.WifiP2pService;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.event.WirelessStatusChangedEventArgs;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
+import com.speakerz.view.PlayerRecyclerActivity;
+
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -46,7 +49,8 @@ public class Join extends Activity {
     boolean _isBounded;
     ListView lvPeersList;
     ListView lvSongsList;
-    ArrayAdapter<String> peerListAdapter;
+   // ArrayAdapter<String> peerListAdapter;
+    ArrayAdapter<WifiP2pService> peerListAdapter;
     ArrayAdapter<Song> songListAdapter = null;
     private final Integer PermissionCheckEvent_EVT_ID=10;
     private final Integer SongListChangedEvent_EVT_ID=11;
@@ -73,7 +77,8 @@ public class Join extends Activity {
         songListAdapter = new ArrayAdapter<>(selfActivity.getApplicationContext(), android.R.layout.simple_list_item_1, _service.getModel().getMusicPlayerModel().getSongQueue());
         lvSongsList.setAdapter(songListAdapter);
 
-        peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
+        //peerListAdapter = new ArrayAdapter<String>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).getDeviceNames()));
+        peerListAdapter = new ArrayAdapter<WifiP2pService>(this.getApplicationContext(), android.R.layout.simple_list_item_1, (((DeviceNetwork) _service.getModel().getNetwork()).serviceDevices));
         lvPeersList.setAdapter(peerListAdapter);
 
         //set up the listView's onclick, so clients can connect to hosts by klicking on a device in a listview
@@ -145,13 +150,7 @@ public class Join extends Activity {
         });
 
         // Wireless changed event
-        model.getNetwork().getReciever().WirelessStatusChanged.addListener(new EventListener<WirelessStatusChangedEventArgs>() {
-            @Override
-            public void action(WirelessStatusChangedEventArgs args) {
-                _service.getTextValueStorage().setTextValue(R.id.wifi_status, args.status() ? "Wifi is on" : "Wifi is off");
-                _service.getTextValueStorage().autoConfigureTexts(selfActivity);
-            }
-        });
+
 
 
         model.getNetwork().TextChanged.addListener(new EventListener<TextChangedEventArgs>() {
@@ -178,6 +177,7 @@ public class Join extends Activity {
         model.getNetwork().ListChanged.addListener(new EventListener<EventArgs>() {
             @Override
             public void action(EventArgs args) {
+
                 peerListAdapter.notifyDataSetChanged();
             }
         });
@@ -189,10 +189,21 @@ public class Join extends Activity {
                     D.log("recieved disconnect");
                     _service.getTextValueStorage().setTextValue(R.id.host_name, ("Disconnected"));
                     ((TextView) findViewById(R.id.host_name)).setText("Disconnected");
+                    isPlayerInstanceAlive=false;
+                }else{
+                    //connected
+                    D.log("CONNECTED YEEY");
+                    if(!isPlayerInstanceAlive) {
+                        Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);
+                        startActivity(Act2);
+                        isPlayerInstanceAlive=true;
+                    }
                 }
 
             }
         });
+
+
 
          model.MetaInfoReceivedEvent.addListener(new EventListener<EventArgs1<Body>>() {
             @Override
@@ -213,7 +224,7 @@ public class Join extends Activity {
 
 
     }
-
+    Boolean isPlayerInstanceAlive=false;
 
     Join selfActivity = this;
     private ServiceConnection connection = new ServiceConnection() {
@@ -311,15 +322,16 @@ public class Join extends Activity {
         });
 
         Button buttonMusicPlayer = (Button) findViewById(R.id.Musicplayer);
-        buttonMusicPlayer.setOnClickListener(new View.OnClickListener() {
+
+       /* buttonMusicPlayer.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                Intent Act2 = new Intent(getApplicationContext(), MusicPlayer.class);
+                Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);
                 // Act2.putExtra("Hello", "Hello World");
                 startActivity(Act2);
 
             }
 
-        });
+        });*/
 
         ((Button) findViewById(R.id.btn_add_song)).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -329,7 +341,7 @@ public class Join extends Activity {
                     if (((DeviceNetwork) (_service.getModel().getNetwork())).getClientSocketWrapper().controllerSocket != null) {
                         if (((DeviceNetwork) (_service.getModel().getNetwork())).getClientSocketWrapper().controllerSocket.send(
                                 // TODO replace "alma" to UUID
-                            new ChannelObject(new PutSongRequestBody(new Song("","Title","album","artist", "alma")), TYPE.MP)
+                            new ChannelObject(new PutSongRequestBody(new Song("","Title","album","artist", "alma",null,null)), TYPE.MP)
                            )) {
                             Toast.makeText(selfActivity, "Song request sent.", Toast.LENGTH_SHORT).show();
                         } else {

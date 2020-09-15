@@ -1,5 +1,8 @@
 package com.speakerz.view.recyclerview.main.player;
 
+import android.content.ContentUris;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,9 +41,16 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Song currentItem = mItemList.get(position);
-        holder.mImageView.setImageResource(R.drawable.ic_song);
-        holder.mTextView1.setText(currentItem.getTitle());
-        holder.mTextView2.setText(currentItem.getArtist());
+        if(currentItem.getSongCoverArt() == null){
+            holder.mImageView.setImageResource(R.drawable.ic_song);
+            System.out.println("nincs Art");
+        }
+        else{
+            holder.mImageView.setImageBitmap(currentItem.getSongCoverArt());
+        }
+        holder.titleView.setText(currentItem.getTitle());
+        holder.artistView.setText(currentItem.getArtist());
+        holder.durationView.setText(currentItem.getDuration());
     }
 
     @Override
@@ -59,15 +69,17 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public ImageView mImageView;
-        public TextView mTextView1;
-        public TextView mTextView2;
+        public TextView titleView;
+        public TextView artistView;
+        public TextView durationView;
         public ImageView mDeleteImage;
 
         public ViewHolder(View itemView, final OnItemClickListener listener) {
             super(itemView);
-            mImageView = itemView.findViewById(R.id.imageView);
-            mTextView1 = itemView.findViewById(R.id.textView);
-            mTextView2 = itemView.findViewById(R.id.textView2);
+            mImageView = itemView.findViewById(R.id.albumArt);
+            titleView = itemView.findViewById(R.id.textView);
+            artistView = itemView.findViewById(R.id.textView2);
+            durationView = itemView.findViewById(R.id.text_song_time);
             mDeleteImage = itemView.findViewById(R.id.image_delete);
 
             itemView.setOnClickListener(new View.OnClickListener() {
@@ -81,6 +93,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
                     }
                 }
             });
+
             mDeleteImage.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {

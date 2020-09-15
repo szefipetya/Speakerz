@@ -6,13 +6,14 @@ import com.speakerz.model.network.Serializable.body.audio.content.AudioMetaDto;
 import com.speakerz.model.network.Serializable.enums.SUBTYPE;
 
 import java.io.Serializable;
+import java.net.InetAddress;
 
 
 public class AudioControlBody extends Body implements Serializable {
     public AudioControlBody(  AudioControlDto dto){
         this.dto=dto;
     }
-    public AudioControlBody(String sender, AudioControlDto dto){
+    public AudioControlBody(InetAddress sender, AudioControlDto dto){
         this.senderAddress=sender;
         this.dto=dto;
     }

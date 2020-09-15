@@ -9,17 +9,22 @@ import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.controller.GetServerInfoBody;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.ChannelObject;
+import com.speakerz.model.network.Serializable.body.controller.INITDeviceAddressBody;
+import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.Serializable.body.controller.content.ServerInfo;
 import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
+import com.speakerz.util.EventArgs2;
 import com.speakerz.util.ThreadSafeEvent;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -30,6 +35,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
 
     public Event<EventArgs1<Exception>> ExceptionEvent;
     LinkedList<SocketStruct> socketList=new LinkedList<>();
+    private InetAddress address;
 
     public ServerSocket getServerSocket() {
         return dataSocket;
@@ -39,7 +45,11 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     //dependency injection
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent =null;
     public Event<EventArgs1<Body>> MetaInfoEvent = null;
-    public Event<EventArgs1<Body>> NameChangeEvent=null;
+    public Event<EventArgs1<Body>> INITDeviceAddressEvent;
+    public Event<EventArgs1<Body>> NameListInitEvent;
+    public Event<EventArgs2<Body,TYPE>> NameChangeEvent=null;
+    public Event<EventArgs1<Body>> DeleteSongEvent;
+    public Event<EventArgs1<Body>> DeleteSongRequestEvent;
 
     volatile boolean externalShutdown=false;
     @Override
@@ -48,12 +58,11 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
             dataSocket = new ServerSocket();
             dataSocket.setReuseAddress(true);
             dataSocket.bind(new InetSocketAddress(8040));
-            D.log("server address: "+dataSocket.getInetAddress());
+            D.log("server address: "+dataSocket.getInetAddress().getHostAddress());
             D.log("localsocketaddress : "+dataSocket.getLocalSocketAddress());
-            //serverSocket.bind(new InetSocketAddress(5048));
-            //waiting for someone
-            D.log("server running");
 
+            D.log("server running");
+            this.INITDeviceAddressEvent.invoke(new EventArgs1<Body>(this,new INITDeviceAddressBody(address)));
             while(!externalShutdown) {
                 final Socket socket = dataSocket.accept();
                 if(socket == null){
@@ -70,6 +79,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
 
 
                 D.log("client connected: "+socket.getInetAddress());
+
 
                 //új szálon elindítjuk a socketet, hogy hallgassuk a bejövő adatokat.
                 new Thread() {
@@ -114,14 +124,13 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                  } catch (IOException e) {
                      e.printStackTrace();
                      closeClient(struct);
-                     break;
                  } catch (ClassNotFoundException e) {
                      e.printStackTrace();
                  }
              }
-             else{
+             if(struct.socket==null||struct.socket.isClosed()||!struct.socket.isConnected()){
                  D.log("client "+struct.socket.getInetAddress().getHostAddress()+" disconnected");
-
+                 closeClient(struct);
                  break;
              }
          }
@@ -131,9 +140,9 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     //be careful with that!
    volatile SocketStruct recentStruct=null;
 
-    private SocketStruct getSocketStructByAddress(String address){
+    private SocketStruct getSocketStructByAddress(InetAddress address){
         for(SocketStruct s: socketList){
-            if(s.socket.getInetAddress().getHostAddress()==address){
+            if(s.socket.getInetAddress().equals(address)){
                 return s;
             }
         }
@@ -141,7 +150,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     }
 
     //be careful with null value!
-    public void send(String address,ChannelObject channelObject) throws IOException{
+    public void send(InetAddress address,ChannelObject channelObject) throws IOException{
 
 
         if(address==null&& recentStruct!=null){
@@ -180,9 +189,20 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
         }
 
         if(chObject.TYPE== TYPE.NAME){
-            NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
+            NameChangeEvent.invoke(new EventArgs2<Body,TYPE>(this,chObject.body,TYPE.NAME));
             D.log(" server: NameChange Happened: ");
 
+        }
+
+        if(chObject.TYPE== TYPE.DELETENAME) {
+            NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(this, chObject.body, TYPE.DELETENAME));
+            D.log(" server: NameChange DELETE Happened: ");
+
+        }
+
+        if(chObject.TYPE == TYPE.INITNAMELIST) {
+            NameListInitEvent.invoke(new EventArgs1<Body>(TYPE.INITNAMELIST,chObject.body));
+            D.log(" Server:got NameListInit Request ");
         }
 
         if(chObject.TYPE== TYPE.NET){
@@ -194,28 +214,20 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                 struct.objectInputStream.close();
                 struct.socket.close();
             }
-            NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
             D.log(" server: NameChange Happened: ");
 
         }
-    }
 
-    public void handleIncomingObject(SocketStruct struct,ChannelObject chObject) throws IOException {
-        D.log("server: got an object: "+chObject.TYPE);
-
-        struct.socket.getInetAddress();
-        if(chObject.TYPE== TYPE.MP){
-            MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,chObject.body));
-            D.log(" server: MusicPlayerActionEvent Happened: ");
-
+        if(chObject.TYPE== TYPE.DELETE_SONG) {
+            DeleteSongEvent.invoke(new EventArgs1<Body>(TYPE.DELETE_SONG,chObject.body));
+            D.log(" Song " + (Integer)chObject.body.getContent()+ "deleted");
         }
 
-        if(chObject.TYPE== TYPE.NAME){
-            NameChangeEvent.invoke(new EventArgs1<Body>(this,chObject.body));
-            D.log(" server: NameChange Happened: ");
-
+        if(chObject.TYPE== TYPE.DELETE_SONG_REQUEST) {
+            DeleteSongEvent.invoke(new EventArgs1<Body>(TYPE.DELETE_SONG,chObject.body));
         }
     }
+
 
     @Override
     public void shutdown(){
@@ -243,7 +255,13 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     }
     void closeClient(SocketStruct struct){
         try {
+            //TODO: DELETE NAME EVENT
             socketList.remove(struct);
+
+            NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(this, new PutNameChangeRequestBody(
+                    new NameItem("torles","server",struct.socket.getInetAddress().toString())),TYPE.DELETENAME));
+            D.log("lecsatlakozott egy ember");
+            //struct.socket.getInetAddress();
             struct.objectInputStream.close();
             struct.objectOutputStream.close();
             struct.socket.close();
@@ -254,4 +272,11 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
 
     }
 
+    public void setAddress(InetAddress address) {
+        this.address=address;
+    }
+
+    public InetAddress getAddress(){
+        return address;
+    }
 }
