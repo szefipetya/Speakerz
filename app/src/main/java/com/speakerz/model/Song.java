@@ -61,7 +61,7 @@ public class Song implements Serializable {
     public void setSongCoverArt(Bitmap songCoverArt1) {
         if(songCoverArt1!=null) {
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            songCoverArt1.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            songCoverArt1.compress(Bitmap.CompressFormat.JPEG, 30, stream);
             this.songCoverArt = stream.toByteArray();
         }
     }

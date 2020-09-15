@@ -117,9 +117,9 @@ public class SongAddLibraryFragment extends Fragment {
                     @Override
                     public void onItemClick(View view, int position) {
                         if(position>=0){
-
+                            model.addSong(model.getAudioList().get(position));
                         }
-                        model.addSong(model.getAudioList().get(position));
+
                     }
 
                     @Override

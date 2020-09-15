@@ -43,6 +43,9 @@ import com.speakerz.util.EventArgs3;
 import com.speakerz.util.EventListener;
 import com.speakerz.view.PlayerRecyclerActivity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ealvatag.audio.exceptions.CannotReadException;
 
 
@@ -73,9 +76,11 @@ public class MainActivity extends Activity {
 
 
             subscribePermissionEvents();
-            _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.READ_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED));
+          /*  _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.READ_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED));
             _service.PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.connectionPermission,Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED));
-            checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,_service.PERMISSIONS_REQUEST_CODE_WRITE_EXTERNAL_STORAGE);
+            checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,_service.PERMISSIONS_REQUEST_CODE_WRITE_EXTERNAL_STORAGE);*/
+
+          checkPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.WRITE_EXTERNAL_STORAGE},200);
 
 
         }
@@ -88,23 +93,6 @@ public class MainActivity extends Activity {
 Activity self=this;
     private void subscribePermissionEvents(){
 
-
-
-        _service.PermissionCheckEvent.addListener(new EventListener<PermissionCheckEventArgs>() {
-            @Override
-            public void action(PermissionCheckEventArgs args) {
-                if(args.getReason()== PERM.connectionPermission) {
-                    checkPermission(args.getRequiredPermission(), _service.ACCESS_FINE_LOCATION_CODE);
-                }
-
-                if(args.getReason()==PERM.ACCESS_COARSE_LOCATION){
-                    checkPermission(args.getRequiredPermission(),_service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
-                }
-                if(args.getReason()==PERM.READ_EXTERNAL_STORAGE){
-                    checkPermission(args.getRequiredPermission(),_service.PERMISSIONS_REQUEST_CODE_READ_EXTERNAL_STORAGE);
-                }
-            }
-        },PermissionCheckEvent_EVT_ID);
     }
 
     @Override
@@ -195,19 +183,33 @@ Activity self=this;
 
     //Permission&Policy
     // Function to check and request permission
-    public void checkPermission(String permission, int requestCode) {
+    List<String> permissionsToAsk=new ArrayList<String>();
+    public void checkPermissions(String permissions[], int requestCode) {
 
         // Checking if permission is not granted
+       permissionsToAsk.clear();
+for(int i=0;i<permissions.length;i++) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && ContextCompat.checkSelfPermission(MainActivity.this, permissions[i]) == PackageManager.PERMISSION_DENIED) {
+       permissionsToAsk.add(permissions[i]);
+    }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && ContextCompat.checkSelfPermission(MainActivity.this, permission) == PackageManager.PERMISSION_DENIED) {
-            ActivityCompat
-                    .requestPermissions(
-                            MainActivity.this,
-                            new String[]{permission},
-                            requestCode);
-        } else {
+    if(permissionsToAsk.size()>0) {
+        String[] arr = new String[permissionsToAsk.size()];
+        arr = permissionsToAsk.toArray(arr);
+
+        ActivityCompat
+                .requestPermissions(
+                        MainActivity.this,
+                        arr,
+                        requestCode);
+    }
+
+
+}
+
+
             //permission already granted
-            D.log(permission +" already granted.");
+            D.log(permissions +" already granted.");
             if(requestCode==_service.PERMISSIONS_REQUEST_CODE_READ_EXTERNAL_STORAGE){
                 D.log("storage permission granted.");
               //  if(_service.getModel()!=null)
@@ -220,15 +222,21 @@ Activity self=this;
                 //   _service.getModel().getMusicPlayerModel().loadAudioWithPermission();
             }
         }
-    }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == _service.PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION
-                && grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            D.log("ACCESS_COARSE_LOCATION Permission granted.");
+        synchronized (_service.PermissionAcceptLocker) {
+            _service.PermissionAcceptLocker.notify();
         }
+
+            if(grantResults.length!=permissionsToAsk.size()) {
+
+            }
+
+            D.log("ACCESS_COARSE_LOCATION Permission granted.");
+
         if(requestCode==_service.PERMISSIONS_REQUEST_CODE_READ_EXTERNAL_STORAGE){
             D.log("storage permission granted.");
         //    if(_service.getModel()!=null)
@@ -242,9 +250,6 @@ Activity self=this;
         }
 
     }
-
-
-
 
 
     private void checkDataSendingPolicy() {
