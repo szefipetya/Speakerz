@@ -51,6 +51,13 @@ public class Song implements Serializable {
         else return null;
     }
 
+    public byte[] getSongCoverArtByte(){
+        if(songCoverArt!=null) {
+            return songCoverArt;
+        }
+        else return null;
+    }
+
     public void setSongCoverArt(Bitmap songCoverArt1) {
         if(songCoverArt1!=null) {
             ByteArrayOutputStream stream = new ByteArrayOutputStream();

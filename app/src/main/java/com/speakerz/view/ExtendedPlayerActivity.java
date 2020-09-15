@@ -173,9 +173,9 @@ public class ExtendedPlayerActivity extends Activity {
                 titleSongTV.setText(song.getTitle());
                 detailsTV.setText(song.getArtist());
                 totalTime.setText(song.getDuration());
+                albumArt.setImageBitmap(song.getSongCoverArt());
             }
         });
-        albumArt.setImageBitmap(song.getSongCoverArt());
     }
 
     @Override
