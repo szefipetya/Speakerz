@@ -78,7 +78,7 @@ public class RecyclerView_FAB  {
             @Override
             public void onClick(View view) {
                 int position = itemList.size();
-                insertItem(position, "Library", R.drawable.ic_song);
+                insertItem(position, "Library", R.drawable.ic_twotone_music_note_24);
 
                 mLibraryFab.setVisibility(View.INVISIBLE);
                 mYoutubeFab.setVisibility(View.INVISIBLE);

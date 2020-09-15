@@ -68,9 +68,15 @@ public class BottomMusicPlayer {
             activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    titleSongTV.setText(song.getTitle().length()>28? song.getTitle().substring(0,28)+"...":song.getTitle());
-                    detailsTV.setText(song.getArtist().length()>28?song.getArtist().substring(0,28)+"...":song.getArtist());
-                    albumArt.setImageBitmap(song.getSongCoverArt());
+                    titleSongTV.setText(song.getTitle());
+                    detailsTV.setText(song.getArtist());
+                    //titleSongTV.setText(song.getTitle().length()>25? song.getTitle().substring(0,25)+"...":song.getTitle());
+                   // detailsTV.setText(song.getArtist().length()>28?song.getArtist().substring(0,28)+"...":song.getArtist());
+                            if(song.getSongCoverArt()!=null)
+                                   albumArt.setImageBitmap(song.getSongCoverArt());
+                            else{
+                                albumArt.setImageResource(R.drawable.ic_twotone_music_note_24);
+                            }
                 }
             });
         }

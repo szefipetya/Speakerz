@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardBackgroundColor="#485f85">
@@ -14,6 +15,18 @@
         android:layout_marginEnd="2dp"
         android:layout_marginBottom="6dp"
         android:background="#1f4068">
+
+        <TextView
+            android:id="@+id/songLengthTimeTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:text="0:00"
+            android:textColor="@android:color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.744" />
 
         <ImageView
             android:id="@+id/coverImageView"
@@ -50,28 +63,6 @@
             app:layout_constraintStart_toStartOf="@+id/songNameTextView"
             app:layout_constraintTop_toBottomOf="@+id/songNameTextView" />
 
-        <ImageView
-            android:id="@+id/image_add"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginTop="0dp"
-            android:layout_marginEnd="15dp"
-            android:background="@drawable/playbutton_background"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_bassline_add_24" />
-
-        <TextView
-            android:id="@+id/songLengthTimeTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="20dp"
-            android:text="0:00"
-            android:textColor="@android:color/white"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/image_add"
-            app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.cardview.widget.CardView>

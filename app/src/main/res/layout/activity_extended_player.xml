@@ -59,23 +59,24 @@
         android:id="@+id/textTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:gravity="center"
         android:text="Something Just Like This"
         android:textColor="@android:color/white"
         android:textSize="25sp"
         android:textStyle="bold"
-        android:layout_marginTop="20dp"
         app:layout_constraintTop_toBottomOf="@id/imageAlbum" />
 
     <TextView
         android:id="@+id/textArtist"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
         android:gravity="center"
         android:text="The Chainsmokers and Coldplay"
         android:textColor="@android:color/white"
         app:layout_constraintStart_toStartOf="@id/textTitle"
-        app:layout_constraintTop_toBottomOf="@id/textTitle" />
+        app:layout_constraintTop_toBottomOf="@+id/textTitle" />
 
     <ImageButton
         android:id="@+id/extended_back"

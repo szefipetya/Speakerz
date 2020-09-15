@@ -340,10 +340,17 @@ private void goBackToJoinPage(){
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+
                 titleSong.setText(song.getTitle());
+              //  titleSong.setText(song.getTitle().length()>27? song.getTitle().substring(0,27)+"\n"+song.getTitle().substring(28,song.getTitle().length()):song.getTitle());
+
                 //detailsTV.setText(song.getArtist());
                 //totalTime.setText(song.getDuration());
-                imageAlbum.setImageBitmap(song.getSongCoverArt());
+                if(song.getSongCoverArt()!=null)
+                    imageAlbum.setImageBitmap(song.getSongCoverArt());
+                else{
+                    imageAlbum.setImageResource(R.drawable.ic_twotone_music_note_24);
+                }
             }
         });
     }
