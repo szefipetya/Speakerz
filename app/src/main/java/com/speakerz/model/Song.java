@@ -16,12 +16,22 @@ public class Song implements Serializable {
     private String title;
     private String album;
     private String artist;
+
+    public void setAlbumId(Long albumId) {
+        this.albumId = albumId;
+    }
+    private int cursorIndex;
     private Long albumId;
     private String owner;
     private String duration;
     byte[] songCoverArt = null;
 
-    public Song(String data, String title, String album, String artist,String owner,Long albumId,Bitmap songCoverArt) {
+    public int getCursorIndex() {
+        return cursorIndex;
+    }
+
+    public Song(int cursorIndex, String data, String title, String album, String artist, String owner, Long albumId, Bitmap songCoverArt) {
+        this.cursorIndex=cursorIndex;
         this.data = data;
         this.title = title;
         this.album = album;
@@ -41,10 +51,17 @@ public class Song implements Serializable {
         else return null;
     }
 
+    public byte[] getSongCoverArtByte(){
+        if(songCoverArt!=null) {
+            return songCoverArt;
+        }
+        else return null;
+    }
+
     public void setSongCoverArt(Bitmap songCoverArt1) {
         if(songCoverArt1!=null) {
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            songCoverArt1.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            songCoverArt1.compress(Bitmap.CompressFormat.JPEG, 30, stream);
             this.songCoverArt = stream.toByteArray();
         }
     }

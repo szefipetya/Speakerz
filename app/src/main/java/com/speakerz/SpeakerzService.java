@@ -41,6 +41,8 @@ import com.speakerz.viewModel.TextValueStorage;
 
 import org.w3c.dom.Text;
 
+import java.io.File;
+
 import ealvatag.audio.exceptions.CannotReadException;
 
 public class SpeakerzService extends Service {
@@ -118,15 +120,13 @@ public class SpeakerzService extends Service {
         public void stopService(String msg){
             D.log("Stopping service: " + startId);
             if(model == null) return;
+            deleteCache(model.getContext());
             unregisterReceiver(model.getNetwork().getReciever());
           //  model.getNetwork().getReciever().abortBroadcast();
             model.stop();
             stopSelf(startId);
             startId = -1;
-
-
             model = null;
-            System.gc();
             Toast.makeText(service,"speakerZ service shutdown\nreason: "+msg,Toast.LENGTH_SHORT).show();
         }
 
@@ -149,7 +149,7 @@ public class SpeakerzService extends Service {
         }
     }
 
-
+    public Object PermissionAcceptLocker=new Object();
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
     private final IBinder binder = (IBinder) new LocalBinder();
@@ -271,6 +271,32 @@ public class SpeakerzService extends Service {
     public final int STORAGE_PERMISSION_CODE = 101;
     public final int PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION = 102;
     public final int PERMISSIONS_REQUEST_CODE_READ_EXTERNAL_STORAGE= 103;
+
+
+//Delete cache
+    public static void deleteCache(Context context) {
+        try {
+            D.log("delete cache");
+            File dir = context.getCacheDir();
+            deleteDir(dir);
+        } catch (Exception e) {}
+    }
+    public static boolean deleteDir(File dir) {
+        if (dir != null && dir.isDirectory()) {
+            String[] children = dir.list();
+            for (int i = 0; i < children.length; i++) {
+                boolean success = deleteDir(new File(dir, children[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+            return dir.delete();
+        } else if(dir!= null && dir.isFile()) {
+            return dir.delete();
+        } else {
+            return false;
+        }
+    }
 
 
 }

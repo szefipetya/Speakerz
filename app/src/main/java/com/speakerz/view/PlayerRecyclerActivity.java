@@ -29,6 +29,7 @@ import android.view.WindowId;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,6 +41,7 @@ import com.speakerz.debug.D;
 import com.speakerz.model.BaseModel;
 import com.speakerz.model.HostModel;
 import com.speakerz.model.MusicPlayerModel;
+import com.speakerz.model.Song;
 import com.speakerz.model.enums.EVT;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
@@ -62,6 +64,8 @@ import java.net.ConnectException;
 public class PlayerRecyclerActivity extends AppCompatActivity implements NameChangeDialog.NameChangeDialogListener{
     RecyclerView_FAB recyclerViewFab;
     TopMenu menu;
+    ImageView imageAlbum;
+    TextView titleSong;
 
 
     public MusicPlayerModel getModel() {
@@ -94,6 +98,9 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
 
         // Configure BottomPlayer
         bottomPlayer = new BottomMusicPlayer(self);
+
+        imageAlbum = (ImageView) findViewById(R.id.imageAlbum);
+        titleSong = (TextView) findViewById(R.id.titleSong);
     }
 
     boolean doubleBackToExitPressedOnce = false;
@@ -157,6 +164,8 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
             onServiceReady(localBinder.getService());
 
             menu.setModel(model.getModel());
+
+            model.songChangedEvent.addListener(songChangedListener);
 
         }
 
@@ -306,7 +315,7 @@ private void goBackToJoinPage(){
         return this.menu.onOptionsItemSelected(item);
     }
 
-    // THis communicates with the Dialog
+    // THis communicates with the NameChange Dialog
     @Override
     public void applyTexts(String username) {
         System.out.println(username+"outside");
@@ -317,5 +326,32 @@ private void goBackToJoinPage(){
         System.out.println(model.getModel().sharedpreferences.getString(model.getModel().myName,"nincs Név"));
         PutNameChangeRequestBody body1 = new PutNameChangeRequestBody(null,item);
         model.getModel().NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(null,body1,TYPE.NAME));
+    }
+
+    final EventListener<EventArgs1<Song>> songChangedListener = new EventListener<EventArgs1<Song>>() {
+        @Override
+        public void action(EventArgs1<Song> args) {
+            updateSongText(args.arg1());
+        }
+    };
+// TODO : not the played but the first song in the list shows up
+    private void updateSongText(final Song song){
+        if(song == null) return;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                titleSong.setText(song.getTitle());
+              //  titleSong.setText(song.getTitle().length()>27? song.getTitle().substring(0,27)+"\n"+song.getTitle().substring(28,song.getTitle().length()):song.getTitle());
+
+                //detailsTV.setText(song.getArtist());
+                //totalTime.setText(song.getDuration());
+                if(song.getSongCoverArt()!=null)
+                    imageAlbum.setImageBitmap(song.getSongCoverArt());
+                else{
+                    imageAlbum.setImageResource(R.drawable.ic_twotone_music_note_24);
+                }
+            }
+        });
     }
 }

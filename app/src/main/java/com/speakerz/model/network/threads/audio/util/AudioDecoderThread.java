@@ -184,7 +184,7 @@ public class AudioDecoderThread {
             actualPackageNumber.addAndGet(1);
 
 
-            Method cleanerMethod = null;
+
             buffer.clear();
             bitStream.closeFrame();
         }
@@ -201,11 +201,15 @@ public class AudioDecoderThread {
 
     public void stop() throws InterruptedException {
         eosReceived = true;
+        synchronized (isPaused) {
+            isPaused.notify();
+        }
         if(isPlaying.get()) {
+
 
             synchronized (playStoppedLocker) {
                 D.log("waiting for player to stop");
-                playStoppedLocker.wait(100);
+                playStoppedLocker.wait(200);
                 D.log(" player stopped");
 
             }

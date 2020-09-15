@@ -116,7 +116,10 @@ public class SongAddLibraryFragment extends Fragment {
                 new RecyclerItemClickListener(getContext(), recyclerViewLibrary, new RecyclerItemClickListener.OnItemClickListener() {
                     @Override
                     public void onItemClick(View view, int position) {
-                        model.addSong(model.getAudioList().get(position));
+                        if(position>=0){
+                            model.addSong(model.getAudioList().get(position));
+                        }
+
                     }
 
                     @Override

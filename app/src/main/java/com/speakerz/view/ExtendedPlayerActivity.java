@@ -27,15 +27,18 @@ import com.speakerz.util.EventListener;
 public class ExtendedPlayerActivity extends Activity {
 
     ImageView backBtn;
+    ImageView albumArt;
     MusicPlayerModel model;
 
     TextView titleSongTV;
     TextView detailsTV;
+    TextView totalTime;
     ImageButton playButton;
     ImageButton prevButton;
     ImageButton nextButton;
     ImageButton shuffleButton;
     ImageButton repeatButton;
+    ImageButton extendedBack;
     SeekBar seekBar;
 
 
@@ -125,11 +128,15 @@ public class ExtendedPlayerActivity extends Activity {
         repeatButton = findViewById(R.id.buttonRepeat);
         shuffleButton = findViewById(R.id.buttonShuffle);
         backBtn=(ImageView)findViewById(R.id.extended_back);
+        albumArt = findViewById(R.id.imageAlbum);
+        totalTime = findViewById(R.id.textTotalTime);
+        extendedBack = findViewById(R.id.extended_back);
 
         prevButton.setImageResource(R.drawable.ic_m_prev);
         nextButton.setImageResource(R.drawable.ic_m_next);
         repeatButton.setImageResource(R.drawable.ic_m_repeat);
         shuffleButton.setImageResource(R.drawable.ic_m_shuffle);
+        extendedBack.setImageResource(R.drawable.ic_m_up_white);
 
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -168,6 +175,12 @@ public class ExtendedPlayerActivity extends Activity {
             public void run() {
                 titleSongTV.setText(song.getTitle());
                 detailsTV.setText(song.getArtist());
+                totalTime.setText(song.getDuration());
+                if(song.getSongCoverArt()!=null)
+                    albumArt.setImageBitmap(song.getSongCoverArt());
+                else{
+                    albumArt.setImageResource(R.drawable.ic_twotone_music_note_24);
+                }
             }
         });
     }

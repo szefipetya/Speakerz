@@ -114,8 +114,8 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     @Override
      public void listen(SocketStruct struct) {
         // read the list of messages from the socket
-         while (dataSocket!=null&&!externalShutdown) {
-             if(struct.socket.isConnected()&&!struct.socket.isClosed()) {
+         while (dataSocket!=null&&!externalShutdown&&!struct.socket.isClosed()) {
+
                  recentStruct=struct;
                  D.log("listening...");
 
@@ -127,13 +127,15 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                  } catch (ClassNotFoundException e) {
                      e.printStackTrace();
                  }
-             }
-             if(struct.socket==null||struct.socket.isClosed()||!struct.socket.isConnected()){
-                 D.log("client "+struct.socket.getInetAddress().getHostAddress()+" disconnected");
+
+           /*  if(struct.socket==null||struct.socket.isClosed()||!struct.socket.isConnected()){
+                // D.log("client "+struct.socket.getInetAddress().getHostAddress()+" disconnected");
                  closeClient(struct);
                  break;
-             }
+             }*/
+
          }
+       //  closeClient(struct);
 
     }
 
@@ -257,7 +259,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
         try {
             //TODO: DELETE NAME EVENT
             socketList.remove(struct);
-
+if(struct.socket!=null){
             NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(this, new PutNameChangeRequestBody(
                     new NameItem("torles","server",struct.socket.getInetAddress().toString())),TYPE.DELETENAME));
             D.log("lecsatlakozott egy ember");
@@ -265,6 +267,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
             struct.objectInputStream.close();
             struct.objectOutputStream.close();
             struct.socket.close();
+}
 
         } catch (IOException e) {
             e.printStackTrace();

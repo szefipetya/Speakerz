@@ -1,8 +1,10 @@
 package com.speakerz.model;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -14,11 +16,13 @@ import android.widget.Toast;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
+import com.speakerz.model.enums.PERM;
 import com.speakerz.model.enums.VIEW_EVT;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
+import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
@@ -30,10 +34,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static java.lang.Integer.parseInt;
 
@@ -171,10 +175,14 @@ public class MusicPlayerModel{
         AdapterLibraryEvent.addListener(new EventListener<EventArgs2<VIEW_EVT, Integer>>() {
             @Override
             public void action(EventArgs2<VIEW_EVT, Integer> args) {
-                if(args.arg1()==VIEW_EVT.ADAPTER_SONG_SCROLL)
-                    loadNextAudio(audioReaderCursor,args.arg2());
+                if(args.arg1()==VIEW_EVT.ADAPTER_SONG_SCROLL){
+                    if(args.arg2()%30==0){
+                        taskQueue.offer(MP_TASK_LOAD_40_AUDIO);
+                    }
+                }
             }
         });
+        init();
     }
 
     // Getters
@@ -189,8 +197,10 @@ public class MusicPlayerModel{
         return songQueue.get(currentPlayingIndex);
     }
 
+
     // Song managing functions
     public void addSong(Song song){
+        setExtraDataForSong(song);
         if (isHost){
             song.setId(currentSongId++);
             songQueue.add(song);
@@ -220,8 +230,10 @@ public class MusicPlayerModel{
     // Stop playing
     public void stop(){
         // TODO stop music
+        externalShutdown=true;
     }
 
+    boolean externalShutdown=false;
     public void startNext(){
         if (currentPlayingIndex>= songQueue.size()-1)
             start(0);
@@ -283,46 +295,65 @@ public class MusicPlayerModel{
     }
 
     //Load All Audio from the device To AudioList ( you will be bale to choose from these to add to the SongQueue
-    private void loadNextAudio(Cursor cursor,int index){
-        cursor.moveToPosition(index);
-        loadNextAudio(cursor);
+    private void loadSomeAudio(final Cursor cursor){
+                   int i=0;
+                   while(!cursor.isLast()&&cursor.moveToNext() &&i<40) {
+                       i++;
+                       loadNextAudio(cursor);
+                   }
     }
 
+    final Integer MP_TASK_LOAD_40_AUDIO =1;
+    LinkedBlockingQueue<Integer> taskQueue=new  LinkedBlockingQueue<Integer>();
+    void init(){
+        Thread t=new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(!externalShutdown){
+                    if(taskQueue.size()>0)
+                        if(taskQueue.poll()== MP_TASK_LOAD_40_AUDIO){
+                            loadSomeAudio(audioReaderCursor);
+                        }
+                }
+            }
+        });
+        t.start();
+    }
     //TODO: nem rosszötlet depicit laggol mikor keres az ember Kéne egy szűrés a listára hogy lehessen keresni benne ahoz viszont az egésznek bekell töltve lennie
     private void loadNextAudio(Cursor cursor){
 
-        String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+
         String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
         String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
         String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+      //ez a rész most már a setExtraDataForSong-ban van.
         Bitmap songCoverArt = null;
-        int albumID = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
-        Long thisAlbumId = cursor.getLong(albumID);
+        int albumID = audioReaderCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+        Long thisAlbumId = audioReaderCursor.getLong(albumID);
         Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisAlbumId);
         ContentResolver res = context.getContentResolver();
 
 
-        if(!title.equals("I Hope You Rot") && !title.equals("Shadow Boxing") ){
-            InputStream in = null;
-            try {
-                in = res.openInputStream(uriSongCover);
-                songCoverArt = BitmapFactory.decodeStream(in);
-                in.close();
+        InputStream in = null;
+        try {
+            in = res.openInputStream(uriSongCover);
+            songCoverArt = BitmapFactory.decodeStream(in);
+            in.close();
 
-            } catch (FileNotFoundException e) {
-                //e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            //e.printStackTrace();
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
 
-        //Print the title of the song that it found.
 
-        // Save to audioList
+
         //TODO: replace alma to unique identifier
-        Song s=new Song(data, title, album, artist,"alma",thisAlbumId,songCoverArt);
+        Song s=new Song(audioReaderCursor.getPosition(),"", title, album, artist,"alma",thisAlbumId,songCoverArt);
+        //s.setSongCoverArt(songCoverArt);
+       // s.setAlbumId(thisAlbumId);
         int durMili= parseInt(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
         String duration;
         durMili= durMili/1000;
@@ -348,6 +379,20 @@ public class MusicPlayerModel{
     }
 
 
+    void setExtraDataForSong(Song s){
+        ContentResolver contentResolver = context.getContentResolver();
+
+        Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
+        String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
+        Cursor cursor = contentResolver.query(uri, null, selection, null, sortOrder);
+        if(cursor.moveToPosition(s.getCursorIndex() )){
+            String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+            s.setData(data);
+            //Print the title of the song that it found.
+            // Save to audioList
+        }
+    }
     Cursor audioReaderCursor;
     private void loadAudioWithPermission(){
         ContentResolver contentResolver = context.getContentResolver();
@@ -360,8 +405,8 @@ public class MusicPlayerModel{
 
         if (audioReaderCursor != null && audioReaderCursor.getCount() > 0) {
 
-            int i =0;
-            while (audioReaderCursor.moveToNext() && i <10) {
+           int i =0;
+            while (audioReaderCursor.moveToNext() && i <1) {
                 i++;
                 loadNextAudio(audioReaderCursor);
             }
