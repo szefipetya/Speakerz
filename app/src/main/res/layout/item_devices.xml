@@ -19,7 +19,6 @@
             android:layout_width="55dp"
             android:layout_height="55dp"
             android:scaleType="fitStart"
-            android:src="@drawable/speaker_logo_kor"
             app:riv_corner_radius="30dp"
             android:layout_marginStart="5dp"
             app:layout_constraintStart_toStartOf="parent"

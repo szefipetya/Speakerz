@@ -26,7 +26,7 @@
         android:layout_width="300dp"
         android:layout_height="300dp"
         android:scaleType="center"
-        android:src="@drawable/app_logo_kor800X800"
+        android:src="@drawable/app_logo_kor800_800"
         app:layout_constraintBottom_toBottomOf="@id/viewSupporterForAlbum"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
