@@ -149,7 +149,7 @@ public class SpeakerzService extends Service {
         }
     }
 
-
+    public Object PermissionAcceptLocker=new Object();
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
     private final IBinder binder = (IBinder) new LocalBinder();

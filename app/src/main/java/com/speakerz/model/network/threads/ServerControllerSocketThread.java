@@ -114,8 +114,8 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
     @Override
      public void listen(SocketStruct struct) {
         // read the list of messages from the socket
-         while (dataSocket!=null&&!externalShutdown) {
-             if(struct.socket.isConnected()&&!struct.socket.isClosed()) {
+         while (dataSocket!=null&&!externalShutdown&&!struct.socket.isClosed()) {
+
                  recentStruct=struct;
                  D.log("listening...");
 
@@ -127,9 +127,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
                  } catch (ClassNotFoundException e) {
                      e.printStackTrace();
                  }
-             }else{
-                 break;
-             }
+
            /*  if(struct.socket==null||struct.socket.isClosed()||!struct.socket.isConnected()){
                 // D.log("client "+struct.socket.getInetAddress().getHostAddress()+" disconnected");
                  closeClient(struct);
@@ -137,7 +135,7 @@ public class ServerControllerSocketThread extends Thread implements SocketThread
              }*/
 
          }
-         closeClient(struct);
+       //  closeClient(struct);
 
     }
 
