@@ -334,7 +334,7 @@ private void goBackToJoinPage(){
             updateSongText(args.arg1());
         }
     };
-// TODO : not the palyed but the first song in the list shows up
+// TODO : not the played but the first song in the list shows up
     private void updateSongText(final Song song){
         if(song == null) return;
         runOnUiThread(new Runnable() {
