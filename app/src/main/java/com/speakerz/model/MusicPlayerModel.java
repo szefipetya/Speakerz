@@ -1,8 +1,10 @@
 package com.speakerz.model;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -14,11 +16,13 @@ import android.widget.Toast;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
+import com.speakerz.model.enums.PERM;
 import com.speakerz.model.enums.VIEW_EVT;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
+import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
@@ -384,11 +388,8 @@ public class MusicPlayerModel{
         Cursor cursor = contentResolver.query(uri, null, selection, null, sortOrder);
         if(cursor.moveToPosition(s.getCursorIndex() )){
             String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
-
-
             s.setData(data);
             //Print the title of the song that it found.
-
             // Save to audioList
         }
     }

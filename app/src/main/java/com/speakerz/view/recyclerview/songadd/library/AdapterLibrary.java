@@ -66,7 +66,7 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
             holder.coverImageView.setImageBitmap(currentItem.getCoverImage());
         }
         else{
-            holder.coverImageView.setImageResource(R.mipmap.ic_launcher_round);
+         //   holder.coverImageView.setImageResource(R.mipmap.ic_launcher_round);
         }
         D.log("clicked:"+position);
         //ez azért kell, hogyha vissza görget, akkor azokat már ne adja hozzá.
