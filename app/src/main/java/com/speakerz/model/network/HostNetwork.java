@@ -112,6 +112,11 @@ public class HostNetwork extends BaseNetwork {
 
     @SuppressLint("MissingPermission")
     public void startRegistration() {
+        reciever.getWifiP2pManager().clearLocalServices(reciever.getChannel(), new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+
+
         Map<String, String> record = new HashMap<String, String>();
         record.put(TXTRECORD_PROP_AVAILABLE, "visible");
         record.put("host_name", nickName);
@@ -130,6 +135,13 @@ public class HostNetwork extends BaseNetwork {
                 TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Please, turn on the WIFI!"));
 
                 D.log("Failed to add a service");
+            }
+        });
+            }
+
+            @Override
+            public void onFailure(int i) {
+
             }
         });
     }
@@ -165,7 +177,7 @@ public class HostNetwork extends BaseNetwork {
                     public void onSuccess() {
                         D.log("advertising...");
                         //TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status,"Advertising... "));
-
+                        startRegistration();
                     }
 
                     @Override

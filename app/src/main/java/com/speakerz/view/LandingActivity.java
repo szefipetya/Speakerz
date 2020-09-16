@@ -24,6 +24,7 @@ import android.os.IBinder;
 import android.os.StrictMode;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 
 import com.speakerz.R;
 import com.speakerz.SpeakerzService;
@@ -49,7 +50,9 @@ public class LandingActivity extends AppCompatActivity {
 
         checkDataSendingPolicy();
 
-
+        ImageButton back = (ImageButton) findViewById(R.id.button_back);
+        if(back!=null)
+        back.setImageResource(R.drawable.ic_m_up_white);
         Button buttonJoin = (Button) findViewById(R.id.button_join);
         buttonJoin.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
@@ -63,7 +66,7 @@ public class LandingActivity extends AppCompatActivity {
         });
 
 
-        Button buttonCreate = (Button) findViewById(R.id.button_discover);
+        Button buttonCreate = (Button) findViewById(R.id.button_create);
         buttonCreate.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
                 initAndStart(true);

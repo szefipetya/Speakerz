@@ -54,7 +54,7 @@ public class AdapterJoin extends RecyclerView.Adapter<AdapterJoin.ViewHolderJoin
             return "Try again in 5seconds. \nCleaning up after previous session...";
         if(num==WifiP2pService.SERVICE_STATUS_DISCONNECTED)
             return "Disconnected";
-        return "-";
+        return "------";
     }
 
     @Override
@@ -67,13 +67,7 @@ public class AdapterJoin extends RecyclerView.Adapter<AdapterJoin.ViewHolderJoin
         holder.deviceTextView.setText(currentItem.toString());
         holder.connectingTextView.setText(connectingText);
 
-        holder.mLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                selectedRowIndex = position;
-                notifyDataSetChanged();
-            }
-        });
+
         if(currentItem.connectionStatus==WifiP2pService.SERVICE_STATUS_CONNECTING){
             holder.deviceTextView.setTextColor(Color.parseColor("#ffffff"));
             holder.connectingTextView.setTextColor(Color.parseColor("#ffffff"));

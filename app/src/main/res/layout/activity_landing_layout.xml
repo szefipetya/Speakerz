@@ -34,7 +34,7 @@
         app:riv_corner_radius="150dp" />
     
     <Button
-        android:id="@+id/button_discover"
+        android:id="@+id/button_create"
         android:layout_width="300dp"
         android:layout_height="80dp"
         android:clickable="true"
@@ -48,28 +48,20 @@
         app:layout_constraintBottom_toBottomOf="@id/container_buttons"
         android:layout_marginBottom="30dp">
     </Button>
+
     <Button
         android:id="@+id/button_join"
         android:layout_width="300dp"
         android:layout_height="80dp"
-        android:clickable="true"
+        android:layout_marginBottom="24dp"
         android:background="@drawable/extended_button_background"
         android:backgroundTint="@android:color/white"
+        android:clickable="true"
         android:text="Join Party"
+        android:textColor="#1f4068"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="#1f4068"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/button_create"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/button_discover"
-        android:layout_marginBottom="20dp">
-    </Button>
-    <FrameLayout
-        android:id="@+id/container_recycler_join"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginStart="25dp"
-        android:layout_marginEnd="25dp"
-        android:layout_marginTop="70dp"
-        android:layout_marginBottom="50dp"/>
+        app:layout_constraintStart_toStartOf="parent"></Button>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -189,7 +189,7 @@ public class SpeakerzService extends Service {
         // Get the HandlerThread's Looper and use it for our Handler
         serviceLooper = thread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper, this);
-        deleteCache(this);
+
 
     }
 

@@ -90,11 +90,9 @@ public class DeviceNetwork extends BaseNetwork {
             @Override
             public void action(BooleanEventArgs args) {
               //false
-                isConnecting=false;
                 if(!args.getValue()){
-
+                    isConnecting=false;
                     serviceDevices.clear();
-                    deleteCache(reciever.context);
                     ListChanged.invoke(new EventArgs(this));
                 }else{
                     //true
@@ -107,12 +105,12 @@ public class DeviceNetwork extends BaseNetwork {
                 }
             }
         });
-removeGroupIfExists();
+//removeGroupIfExists();
     }
 
     DeviceNetwork self = this;
 
-
+boolean isConnecting=false;
 
     public void discoverPeers() {
        // serviceDevices.clear();
@@ -133,15 +131,16 @@ removeGroupIfExists();
      // removeGroupIfExists(0);
 discoverService();
 
-    /*    peerListListener = new WifiP2pManager.PeerListListener() {
+        peerListListener = new WifiP2pManager.PeerListListener() {
             @Override
             public void onPeersAvailable(WifiP2pDeviceList peerList) {
 
 
                 //if the saved list is outdated, replace it with the fresh devices
-
+                if(!isConnecting)
+discoverService();
                 D.log("Found peers: " + peerList.getDeviceList().size());
-                peers.clear();
+              /*  peers.clear();
                 peers.addAll(peerList.getDeviceList());
 
                 deviceNames.clear();
@@ -188,10 +187,10 @@ discoverService();
                     TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "No devices found"));
                 } else {
                     TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_discovery_status, "Found some devices"));
-                }
+                }*/
             }
         };
-        reciever.setPeerListListener(peerListListener);*/
+        reciever.setPeerListListener(peerListListener);
     }
 
     public List<String> getDeviceNames() {
@@ -205,6 +204,37 @@ discoverService();
     private WifiP2pDevice hostDevice = null;
     private WifiP2pConfig hostConnectionConfig = null;
 
+    /**
+     * This function connects a client to a host by giving an index.
+     * We can use that index to find the device in the devices list
+     *
+     * @param i this param descibed the index of the selected device in the deviceList
+     */
+    @SuppressLint("MissingPermission")
+    private void removeGroupIfExists(final int i) {
+        reciever.getWifiP2pManager().requestGroupInfo(reciever.getChannel(), new WifiP2pManager.GroupInfoListener() {
+            @Override
+            public void onGroupInfoAvailable(WifiP2pGroup group) {
+                if (group != null) {
+                    reciever.getWifiP2pManager().removeGroup(reciever.getChannel(), new WifiP2pManager.ActionListener() {
+                        @Override
+                        public void onSuccess() {
+                            D.log("group removed");
+                          //  connectWithNoGroup(i);
+                        }
+
+                        @Override
+                        public void onFailure(int reason) {
+                            D.log("group removing failed. reason: " + reason);
+                        }
+                    });
+                } else {
+                    D.log("no group found");
+                   // connectWithNoGroup(i);
+                }
+            }
+        });
+    }
 
 
     public void connect(int i) {
@@ -246,7 +276,6 @@ discoverService();
 
         // After attaching listeners, create a service request and initiate
         // discovery.
-        if(isConnecting) return;
         if(serviceRequest==null) {
             createServiceRequest();
         }else{
@@ -266,8 +295,6 @@ discoverService();
             }
         });
     }
-
-    boolean isConnecting=false;
 
     @SuppressLint("MissingPermission")
     public void connectP2p(final WifiP2pService service) {
@@ -298,6 +325,7 @@ discoverService();
             }
             @Override
             public void onFailure(int errorCode) {
+                isConnecting=true;
                 if(errorCode==0) {
                     service.connectionStatus = WifiP2pService.SERVICE_STATUS_CONNECTION_FAILED_WAIT;
                     reciever.getWifiP2pManager().cancelConnect(reciever.getChannel(),null);
@@ -326,8 +354,6 @@ discoverService();
     String latestHostName="-";
     String latestModelName="-";
     private void initServiceListeners() {
-
-
         reciever.getWifiP2pManager().setDnsSdResponseListeners(reciever.getChannel(),
                 new WifiP2pManager.DnsSdServiceResponseListener() {
                     @Override
@@ -342,29 +368,21 @@ discoverService();
                             D.log("instanceName"+instanceName);
                             D.log("registrationType"+registrationType);
 
+
                             WifiP2pService service = new WifiP2pService(actualId++);
+                            service.hostName=latestHostName;
 
                             service.modelName=latestModelName;
-
-                            boolean van=false;
-                            for(WifiP2pService s:serviceDevices){
-                                if(s.modelName==service.modelName){
-                                    s.hostName=latestHostName;
-                                    s.modelName=latestModelName;
-                                    s.device=srcDevice;
-                                    s.serviceRegistrationType=registrationType;
-                                    s.instanceName=instanceName;
-                                    van=true;
+                            for(WifiP2pService s: serviceDevices){
+                                if(s.hostName.equals(latestHostName)&&s.modelName.equals(latestModelName)){
+                                    return;
                                 }
                             }
-                            if(!van) {
-                                service.hostName=latestHostName;
-                                service.device=srcDevice;
-                                service.serviceRegistrationType=registrationType;
-                                service.instanceName=instanceName;
+                            service.device = srcDevice;
+                            service.instanceName = instanceName;
+                            service.serviceRegistrationType = registrationType;
 
-                                serviceDevices.add(0,service);
-                            }
+                            serviceDevices.add(service);
                             ListChanged.invoke(new EventArgs(null));
                             //add to adapter... stb
                         }
@@ -388,30 +406,6 @@ discoverService();
                 });
 
         }
-    @SuppressLint("MissingPermission")
-    public void removeGroupIfExists() {
-        reciever.getWifiP2pManager().requestGroupInfo(reciever.getChannel(), new WifiP2pManager.GroupInfoListener() {
-            @Override
-            public void onGroupInfoAvailable(WifiP2pGroup group) {
-                if (group != null) {
-                    reciever.getWifiP2pManager().removeGroup(reciever.getChannel(), new WifiP2pManager.ActionListener() {
-                        @Override
-                        public void onSuccess() {
-                            D.log("group removed");
 
-                        }
-
-                        @Override
-                        public void onFailure(int reason) {
-                            D.log("group removing failed. reason: " + reason);
-                        }
-                    });
-                } else {
-
-                    D.log("no groups found");
-                }
-            }
-        });
-    }
 
 }
