@@ -114,7 +114,8 @@ public class HostNetwork extends BaseNetwork {
     public void startRegistration() {
         Map<String, String> record = new HashMap<String, String>();
         record.put(TXTRECORD_PROP_AVAILABLE, "visible");
-        record.put("host_name", nickName+" - "+ Build.MODEL);
+        record.put("host_name", nickName);
+        record.put("model_name",Build.MODEL);
         WifiP2pDnsSdServiceInfo service = WifiP2pDnsSdServiceInfo.newInstance(
                 SERVICE_INSTANCE, SERVICE_REG_TYPE, record);
         reciever.getWifiP2pManager().addLocalService(reciever.getChannel(), service, new WifiP2pManager.ActionListener() {

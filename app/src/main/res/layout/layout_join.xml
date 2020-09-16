@@ -3,10 +3,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="#1f4068">
+    android:background="#1f4068"
+    >
 
     <ImageButton
-        android:id="@+id/extended_back"
+        android:id="@+id/button_back"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_marginStart="10dp"
@@ -20,7 +21,7 @@
         app:layout_constraintTop_toTopOf="parent"/>
 
     <Button
-        android:id="@+id/button_create"
+        android:id="@+id/button_discover"
         android:layout_width="300dp"
         android:layout_height="80dp"
         android:clickable="true"

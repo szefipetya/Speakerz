@@ -52,12 +52,6 @@ public class Join extends Activity {
    // ArrayAdapter<String> peerListAdapter;
     ArrayAdapter<WifiP2pService> peerListAdapter;
     ArrayAdapter<Song> songListAdapter = null;
-    private final Integer PermissionCheckEvent_EVT_ID=10;
-    private final Integer SongListChangedEvent_EVT_ID=11;
-    private final Integer WirelessStatusChanged_EVT_ID=12;
-    private final Integer TextChanged_EVT_ID=13;
-    private final Integer ConnectionChangedEvent_EVT_ID=14;
-    private final Integer ConnectionUpdatedEvent_EVT_ID=15;
 
     boolean _isRegisterRecieverConnected;
 

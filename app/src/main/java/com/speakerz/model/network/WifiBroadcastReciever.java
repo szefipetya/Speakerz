@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
@@ -41,6 +42,7 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
     public void setHost(boolean host) {
         isHost = host;
     }
+  public  String deviceName="";
 
     private WifiP2pManager.ConnectionInfoListener connectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
         @Override
@@ -127,6 +129,9 @@ public class WifiBroadcastReciever extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         this.context=context;
         String action=intent.getAction();
+        WifiP2pDevice device = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE);
+        if(device!=null)
+            deviceName = device.deviceName;
         if(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)){
             int state=intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE,-1);
 

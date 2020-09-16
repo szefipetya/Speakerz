@@ -2,11 +2,11 @@ package com.speakerz.view.recyclerview.join;
 
 import android.graphics.Bitmap;
 
-public class itemJoin {
+public class ItemJoin {
     private String deviceName;
     private String connectingText;
 
-    public itemJoin(String deviceName) {
+    public ItemJoin(String deviceName) {
         this.deviceName = deviceName;
         this.connectingText = "Connecting...";
     }

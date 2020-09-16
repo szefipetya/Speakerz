@@ -1,9 +1,7 @@
 package com.speakerz.model.network;
 
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.pm.PackageManager;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
@@ -11,26 +9,19 @@ import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
+import android.os.Looper;
 import android.util.Log;
-import android.widget.ArrayAdapter;
 
-import com.speakerz.R;
 import com.speakerz.debug.D;
-import com.speakerz.model.DeviceModel;
 import com.speakerz.model.enums.EVT;
-import com.speakerz.model.enums.PERM;
-import com.speakerz.model.network.Serializable.body.Body;
-import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.HostAddressEventArgs;
-import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.model.network.threads.ClientControllerSocketThread;
 import com.speakerz.model.network.threads.ClientSocketWrapper;
 import com.speakerz.model.network.threads.audio.ClientAudioMultiCastReceiverSocketThread;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
-import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventArgs2;
 import com.speakerz.util.EventListener;
 
@@ -39,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.speakerz.SpeakerzService.deleteCache;
+
 public class DeviceNetwork extends BaseNetwork {
 
 
@@ -46,7 +39,9 @@ public class DeviceNetwork extends BaseNetwork {
     boolean firstStart = true;
     private WifiP2pDnsSdServiceRequest serviceRequest;
 
-    public DeviceNetwork(WifiBroadcastReciever reciever) {
+    public final Event<EventArgs2<Integer,Integer>> ConnectionStatusChangedEvent=new Event<>();
+
+    public DeviceNetwork(final WifiBroadcastReciever reciever) {
         super(reciever);
         reciever.setHost(false);
 
@@ -94,13 +89,25 @@ public class DeviceNetwork extends BaseNetwork {
         reciever.ConnectionChangedEvent.addListener(new EventListener<BooleanEventArgs>() {
             @Override
             public void action(BooleanEventArgs args) {
+              //false
+                isConnecting=false;
                 if(!args.getValue()){
+
                     serviceDevices.clear();
+                    deleteCache(reciever.context);
                     ListChanged.invoke(new EventArgs(this));
+                }else{
+                    //true
+                    for(WifiP2pService s:serviceDevices){
+                        if(s.connectionStatus==WifiP2pService.SERVICE_STATUS_CONNECTING){
+                            s.connectionStatus=WifiP2pService.SERVICE_STATUS_CONNECTED;
+                            ListChanged.invoke(null);
+                        }
+                    }
                 }
             }
         });
-
+removeGroupIfExists();
     }
 
     DeviceNetwork self = this;
@@ -111,7 +118,6 @@ public class DeviceNetwork extends BaseNetwork {
        // serviceDevices.clear();
       //  discoverService();
 
-       // PermissionCheckEvent.invoke(new PermissionCheckEventArgs(this, PERM.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,PackageManager.PERMISSION_GRANTED));
 
        reciever.discoverPeers(new WifiP2pManager.ActionListener() {
             @Override
@@ -126,12 +132,12 @@ public class DeviceNetwork extends BaseNetwork {
         });
      // removeGroupIfExists(0);
 discoverService();
-      /*  peers = new ArrayList<>();
-        peerListListener = new WifiP2pManager.PeerListListener() {
+
+    /*    peerListListener = new WifiP2pManager.PeerListListener() {
             @Override
             public void onPeersAvailable(WifiP2pDeviceList peerList) {
 
-                D.log("Peers available");
+
                 //if the saved list is outdated, replace it with the fresh devices
 
                 D.log("Found peers: " + peerList.getDeviceList().size());
@@ -144,10 +150,36 @@ discoverService();
                 int index = 0;
                 for (WifiP2pDevice device : peerList.getDeviceList()) {
 
-                    deviceNames.add(device.deviceName);
-                    devices[index] = device;
-                    index++;
-                    D.log("device found: " + device.deviceName);
+
+                    D.log(String.valueOf(device.status));
+                        ArrayList<WifiP2pService> uj=new ArrayList<>();
+                    for(WifiP2pService s:serviceDevices) {
+                        if (s.instanceName !=null
+                                ||s.connectionStatus==WifiP2pService.SERVICE_STATUS_CONNECTING
+                                ||s.connectionStatus==WifiP2pService.SERVICE_STATUS_CONNECTED) {
+                            uj.add(0,s);
+                        }
+                    }
+                   serviceDevices.clear();
+                    serviceDevices.addAll(uj);
+
+                        D.log("device found: " + device.deviceName);
+                        WifiP2pService peerSrv= new WifiP2pService(actualId++);
+                        peerSrv.hostName="Native";
+                        peerSrv.device=device;
+                        peerSrv.modelName=device.deviceName;
+                        boolean van=false;
+                        for(WifiP2pService s:serviceDevices){
+                            if(s.modelName==device.deviceName){
+                                van=true;
+                            }
+                        }
+                        if(!van){
+
+                            serviceDevices.add(peerSrv);
+                        }
+
+
                 }
 
                 ListChanged.invoke(new EventArgs(this));
@@ -173,82 +205,13 @@ discoverService();
     private WifiP2pDevice hostDevice = null;
     private WifiP2pConfig hostConnectionConfig = null;
 
-    /**
-     * This function connects a client to a host by giving an index.
-     * We can use that index to find the device in the devices list
-     *
-     * @param i this param descibed the index of the selected device in the deviceList
-     */
-    @SuppressLint("MissingPermission")
-    private void removeGroupIfExists(final int i) {
-        reciever.getWifiP2pManager().requestGroupInfo(reciever.getChannel(), new WifiP2pManager.GroupInfoListener() {
-            @Override
-            public void onGroupInfoAvailable(WifiP2pGroup group) {
-                if (group != null) {
-                    reciever.getWifiP2pManager().removeGroup(reciever.getChannel(), new WifiP2pManager.ActionListener() {
-                        @Override
-                        public void onSuccess() {
-                            D.log("group removed");
-                          //  connectWithNoGroup(i);
-                        }
 
-                        @Override
-                        public void onFailure(int reason) {
-                            D.log("group removing failed. reason: " + reason);
-                        }
-                    });
-                } else {
-                    D.log("no group found");
-                   // connectWithNoGroup(i);
-                }
-            }
-        });
-    }
-
-    public void connectWithNoGroup(final int i) {
-        hostDevice = devices[i];
-        hostConnectionConfig = new WifiP2pConfig();
-        hostConnectionConfig.deviceAddress = hostDevice.deviceAddress;
-        // make sure, this device does not become a groupowner
-        hostConnectionConfig.wps.setup = WpsInfo.PBC;
-
-        hostConnectionConfig.groupOwnerIntent = 0;
-        connectWithPermissionGranted();
-    }
 
     public void connect(int i) {
-       // removeGroupIfExists(i);
-
         connectP2p(serviceDevices.get(i));
         //send an invoke to the service, to check the FINE_LOCATION access permission
-
-
     }
 
-    @SuppressLint("MissingPermission")
-    public void connectWithPermissionGranted() {
-        hostConnectionConfig.groupOwnerIntent = 0;
-
-        connectWithClearedPending();
-
-    }
-
-    @SuppressLint("MissingPermission")
-    private void connectWithClearedPending() {
-        reciever.getWifiP2pManager().connect(reciever.getChannel(), hostConnectionConfig, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_host_name, hostDevice.deviceName));
-                //D.log("from deviceNetwork: success,  new host: "+hostDevice.deviceName);
-
-            }
-
-            @Override
-            public void onFailure(int i) {
-                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_host_name_failed, "errcode: " + i));
-            }
-        });
-    }
 
     public WifiP2pDevice getHostDevice() {
         return hostDevice;
@@ -283,6 +246,7 @@ discoverService();
 
         // After attaching listeners, create a service request and initiate
         // discovery.
+        if(isConnecting) return;
         if(serviceRequest==null) {
             createServiceRequest();
         }else{
@@ -303,30 +267,49 @@ discoverService();
         });
     }
 
+    boolean isConnecting=false;
+
     @SuppressLint("MissingPermission")
-    public void connectP2p(WifiP2pService service) {
+    public void connectP2p(final WifiP2pService service) {
         WifiP2pConfig config = new WifiP2pConfig();
         config.deviceAddress = service.device.deviceAddress;
         config.wps.setup = WpsInfo.PBC;
-        if (serviceRequest != null)
+        if (serviceRequest != null) {
             reciever.getWifiP2pManager().removeServiceRequest(reciever.getChannel(), serviceRequest,
                     new WifiP2pManager.ActionListener() {
                         @Override
                         public void onSuccess() {
                         }
+
                         @Override
                         public void onFailure(int arg0) {
                         }
                     });
+            serviceRequest=null;
+        }
         reciever.getWifiP2pManager().connect(reciever.getChannel(), config, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_host_name,latestHostName));
+                isConnecting=true;
+                service.connectionStatus=WifiP2pService.SERVICE_STATUS_CONNECTING;
+                ListChanged.invoke(null);
+                //TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_host_name,service.hostName));
                 D.log("Connecting to service");
             }
             @Override
             public void onFailure(int errorCode) {
-                TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_host_name_failed, "Connection Failed errcode: "+errorCode));
+                if(errorCode==0) {
+                    service.connectionStatus = WifiP2pService.SERVICE_STATUS_CONNECTION_FAILED_WAIT;
+                    reciever.getWifiP2pManager().cancelConnect(reciever.getChannel(),null);
+                    reciever.getWifiP2pManager().initialize(reciever.context, Looper.getMainLooper(),null);
+                }
+                else{
+                    service.connectionStatus=WifiP2pService.SERVICE_STATUS_CONNECTION_FAILED;
+                }
+                ListChanged.invoke(null);
+               // ConnectionStatusChangedEvent.invoke(new EventArgs2<Integer, Integer>(self,service.getId(),WifiP2pService.SERVICE_STATUS_CONNECTION_FAILED));
+
+              //  TextChanged.invoke(new TextChangedEventArgs(this, EVT.update_host_name_failed, "Connection Failed errcode: "+errorCode));
 
                 D.log("Failed connecting to service");
             }
@@ -339,8 +322,12 @@ discoverService();
 
 
 
-
+    int actualId=0;
+    String latestHostName="-";
+    String latestModelName="-";
     private void initServiceListeners() {
+
+
         reciever.getWifiP2pManager().setDnsSdResponseListeners(reciever.getChannel(),
                 new WifiP2pManager.DnsSdServiceResponseListener() {
                     @Override
@@ -355,13 +342,29 @@ discoverService();
                             D.log("instanceName"+instanceName);
                             D.log("registrationType"+registrationType);
 
-                            WifiP2pService service = new WifiP2pService();
-                            service.hostName=latestHostName;
-                            service.device = srcDevice;
-                            service.instanceName = instanceName;
-                            service.serviceRegistrationType = registrationType;
+                            WifiP2pService service = new WifiP2pService(actualId++);
 
-                            serviceDevices.add(service);
+                            service.modelName=latestModelName;
+
+                            boolean van=false;
+                            for(WifiP2pService s:serviceDevices){
+                                if(s.modelName==service.modelName){
+                                    s.hostName=latestHostName;
+                                    s.modelName=latestModelName;
+                                    s.device=srcDevice;
+                                    s.serviceRegistrationType=registrationType;
+                                    s.instanceName=instanceName;
+                                    van=true;
+                                }
+                            }
+                            if(!van) {
+                                service.hostName=latestHostName;
+                                service.device=srcDevice;
+                                service.serviceRegistrationType=registrationType;
+                                service.instanceName=instanceName;
+
+                                serviceDevices.add(0,service);
+                            }
                             ListChanged.invoke(new EventArgs(null));
                             //add to adapter... stb
                         }
@@ -377,6 +380,7 @@ discoverService();
                             String fullDomainName, Map<String, String> record,
                             WifiP2pDevice device) {
                         latestHostName=(String)record.get("host_name");
+                        latestModelName=(String)record.get("model_name");
                         Log.d("TAG",
                                 device.deviceName + " is "
                                         + record.get(TXTRECORD_PROP_AVAILABLE));
@@ -384,6 +388,30 @@ discoverService();
                 });
 
         }
-        String latestHostName="host";
+    @SuppressLint("MissingPermission")
+    public void removeGroupIfExists() {
+        reciever.getWifiP2pManager().requestGroupInfo(reciever.getChannel(), new WifiP2pManager.GroupInfoListener() {
+            @Override
+            public void onGroupInfoAvailable(WifiP2pGroup group) {
+                if (group != null) {
+                    reciever.getWifiP2pManager().removeGroup(reciever.getChannel(), new WifiP2pManager.ActionListener() {
+                        @Override
+                        public void onSuccess() {
+                            D.log("group removed");
+
+                        }
+
+                        @Override
+                        public void onFailure(int reason) {
+                            D.log("group removing failed. reason: " + reason);
+                        }
+                    });
+                } else {
+
+                    D.log("no groups found");
+                }
+            }
+        });
+    }
 
 }

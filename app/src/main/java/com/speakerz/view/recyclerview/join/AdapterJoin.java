@@ -1,6 +1,5 @@
 package com.speakerz.view.recyclerview.join;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
@@ -16,23 +15,20 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.speakerz.R;
 import com.speakerz.debug.D;
-
-import com.speakerz.view.recyclerview.join.itemJoin;
+import com.speakerz.model.network.WifiP2pService;
 
 import java.util.ArrayList;
 
 public class AdapterJoin extends RecyclerView.Adapter<AdapterJoin.ViewHolderJoin> {
     private Context contextJoin;
-    private ArrayList<itemJoin> listItems;
-    private OnItemClickListener mListener;
-    private int row_index = -1;
+    private ArrayList<WifiP2pService> listItems;
+
+    public int selectedRowIndex = -1;
 
     public interface OnItemClickListener{
         void onItemClick(int position);
     }
-    public void setOnItemClickListener(OnItemClickListener listener){
-        mListener = listener;
-    }
+
 
     @NonNull
     @Override
@@ -41,33 +37,44 @@ public class AdapterJoin extends RecyclerView.Adapter<AdapterJoin.ViewHolderJoin
         return new ViewHolderJoin(v);
     }
 
-    public AdapterJoin(ArrayList<itemJoin> list, Context context) {
+    public AdapterJoin(ArrayList<WifiP2pService> list, Context context) {
         listItems = list;
         contextJoin = context;
     }
 
+    private static String textFromConnectionStatus(int num){
+
+        if(num==WifiP2pService.SERVICE_STATUS_CONNECTED)
+            return "Connected";
+        if(num==WifiP2pService.SERVICE_STATUS_CONNECTING)
+            return "Connecting...";
+        if(num==WifiP2pService.SERVICE_STATUS_CONNECTION_FAILED)
+            return "Connection failed";
+        if(num==WifiP2pService.SERVICE_STATUS_CONNECTION_FAILED_WAIT)
+            return "Try again in 5seconds. \nCleaning up after previous session...";
+        if(num==WifiP2pService.SERVICE_STATUS_DISCONNECTED)
+            return "Disconnected";
+        return "-";
+    }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolderJoin holder, final int position) {
-        itemJoin currentItem = listItems.get(position);
-        ContentResolver res = contextJoin.getContentResolver();
+        WifiP2pService currentItem = listItems.get(position);
+
+        String connectingText = textFromConnectionStatus(currentItem.connectionStatus);
 
 
-        String deviceName = currentItem.getDeviceName();
-        String connectingText = currentItem.getConnectingText();
-
-
-        holder.deviceTextView.setText(deviceName);
+        holder.deviceTextView.setText(currentItem.toString());
         holder.connectingTextView.setText(connectingText);
 
         holder.mLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                row_index= position;
+                selectedRowIndex = position;
                 notifyDataSetChanged();
             }
         });
-        if(row_index == position){
+        if(currentItem.connectionStatus==WifiP2pService.SERVICE_STATUS_CONNECTING){
             holder.deviceTextView.setTextColor(Color.parseColor("#ffffff"));
             holder.connectingTextView.setTextColor(Color.parseColor("#ffffff"));
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -86,12 +93,7 @@ public class AdapterJoin extends RecyclerView.Adapter<AdapterJoin.ViewHolderJoin
         }
 
         D.log("clicked:"+position);
-        //ez azért kell, hogyha vissza görget, akkor azokat már ne adja hozzá.
-        /*if(!tabooPositions.contains(position)){
-        AdapterLibraryEvent.invoke(new EventArgs2<VIEW_EVT, Integer>(this,VIEW_EVT.ADAPTER_SONG_SCROLL,position));
-        tabooPositions.add(position);
-        }*/
-        //Nem tudom hogy ez mennyire kell ide, de inkább itt hagyom
+
 
     }
 
@@ -112,8 +114,8 @@ public class AdapterJoin extends RecyclerView.Adapter<AdapterJoin.ViewHolderJoin
 
         public ViewHolderJoin(@NonNull View itemView) {
             super(itemView);
-            deviceTextView = itemView.findViewById(R.id.songArtistTextView);
-            connectingTextView = itemView.findViewById(R.id.songLengthTimeTextView);
+            deviceTextView = itemView.findViewById(R.id.text_deviceName);
+            connectingTextView = itemView.findViewById(R.id.text_status);
             mobileImageView = itemView.findViewById(R.id.imageDevice);
             mLayout = itemView.findViewById(R.id.layout_item);
 

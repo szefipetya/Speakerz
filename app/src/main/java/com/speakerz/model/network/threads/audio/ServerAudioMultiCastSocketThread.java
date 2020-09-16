@@ -48,6 +48,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import ealvatag.audio.exceptions.CannotReadException;
@@ -121,7 +122,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
 
    // File currentMediaFile;
-    private final List<ClientSocketStructWrapper> clients = Collections.synchronizedList(new LinkedList<ClientSocketStructWrapper>());
+    private final CopyOnWriteArrayList<ClientSocketStructWrapper> clients = new CopyOnWriteArrayList<ClientSocketStructWrapper>();
     AudioMetaDto recentAudioMetaDto=null;
     AudioDecoderThread decoder;
     AudioBuffererDecoder decoderBufferer;
