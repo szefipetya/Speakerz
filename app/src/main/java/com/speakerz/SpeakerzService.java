@@ -214,7 +214,7 @@ public class SpeakerzService extends Service {
         service.createNotificationChannel(chan);
         return channelId;
     }
-    private void showForegroundNotification(String contentText) {
+    private Notification showForegroundNotification(String contentText) {
         // Create intent that will bring our app to the front, as if it was tapped in the app
         // launcher
         Intent showTaskIntent = new Intent(getApplicationContext(), MainActivity.class);
@@ -240,6 +240,7 @@ public class SpeakerzService extends Service {
                 .setContentIntent(contentIntent)
                 .build();
         startForeground(NOTIFICATION_ID, notification);
+        return  notification;
     }
 
     /**
@@ -284,12 +285,14 @@ public class SpeakerzService extends Service {
 
     @Override
     public void onDestroy() {
+        this.stopForeground(true);
         serviceHandler.stopService("terminated by system");
         D.log("onDestroy");
         super.onDestroy();
     }
 
     public void onUserDestroy() {
+        this.stopForeground(true);
         serviceHandler.stopService("terminated by user");
         D.log("onUserDestroy");
         super.onDestroy();
@@ -299,6 +302,7 @@ public class SpeakerzService extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         D.log("ontaskRemoved");
+        this.stopForeground(true);
         serviceHandler.stopService("terminated by user");
 
         //STOP SERVICE OR WHATEVER YOU WANT
