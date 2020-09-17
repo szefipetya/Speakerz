@@ -90,6 +90,7 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
         // Create a jlayer BitStream instance of a given mp3 source.
 
         AudioMetaInfo metaInfo=new AudioMetaInfo(file) ;
+        metaDto = new AudioMetaDto();
         metaDto.sampleRate=metaInfo.getAudioHeader().getSampleRate();
         metaDto.channels=(short)metaInfo.getAudioHeader().getChannelCount();
         metaDto.bitsPerSample=(short)metaInfo.getAudioHeader().getBitsPerSample();

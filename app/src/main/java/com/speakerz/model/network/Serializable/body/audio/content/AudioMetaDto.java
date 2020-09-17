@@ -4,8 +4,8 @@ import java.io.Serializable;
 
 
 public class AudioMetaDto implements Serializable {
-    public Integer songId;
- public int port;
+    public int songId;
+    public int port;
 
    public short channels;
     public int sampleRate;

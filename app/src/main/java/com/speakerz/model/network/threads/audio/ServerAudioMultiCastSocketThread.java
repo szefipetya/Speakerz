@@ -317,7 +317,7 @@ ServerAudioMultiCastSocketThread self=this;
         dto.port = currentClientPort;
         try {
         if(client.senderInfoSocket.objectInputStream!=null) {
-            client.senderInfoSocket.objectOutputStream.writeObject(new ChannelObject(new AudioMetaBody(dto), TYPE.AUDIO_META));
+            client.senderInfoSocket.objectOutputStream.writeUnshared(new ChannelObject(new AudioMetaBody(dto), TYPE.AUDIO_META));
             client.senderInfoSocket.objectOutputStream.flush();
         }
         } catch (IOException e) {

@@ -150,6 +150,14 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             SpeakerzService.LocalBinder localBinder = (SpeakerzService.LocalBinder) binder;
             // Bind model
+            // Wait for model to load
+            while(localBinder.getService().getModel() == null) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ignored) {
+                   return;
+                }
+            }
             model = localBinder.getService().getModel().getMusicPlayerModel();
             _service=(SpeakerzService)(localBinder.getService());
 
