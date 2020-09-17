@@ -112,7 +112,7 @@ public class MusicPlayerModel{
                 case MP_ACTION_EVT:
                     switch (((MusicPlayerActionBody)body).getEvt()){
                         case SONG_CHANGED:
-                            Integer songId=(Integer)body.getContent();
+                            int songId=((Integer)body.getContent()).intValue();
                             D.log("songId : "+songId);
                             Song _song = null;
                             int cp = 0;
