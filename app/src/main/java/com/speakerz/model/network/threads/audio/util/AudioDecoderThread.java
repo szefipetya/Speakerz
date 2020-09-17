@@ -158,7 +158,6 @@ public class AudioDecoderThread {
             }
                      try {
                 if (!(framesReaded++ <= READ_THRESHOLD && (frame = bitStream.readFrame()) != null)){
-                    //TODO: Ez nem érkezik meg a musicplayermodelbe
                     MusicPlayerActionEvent.invoke(new EventArgs1<Body>(self,new MusicPlayerActionBody(MP_EVT.SONG_NEXT,null)));
                     D.log("played tha whole music");
                 }
