@@ -56,7 +56,7 @@ import ealvatag.audio.exceptions.CannotReadException;
 
 public class ServerAudioMultiCastSocketThread extends Thread {
 
-    public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
+    public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent = null;
     public Event<EventArgs1<Exception>> ExceptionEvent;
     private Integer currentSongId;
 
@@ -72,7 +72,6 @@ public class ServerAudioMultiCastSocketThread extends Thread {
 
 
     public ServerAudioMultiCastSocketThread() {
-        init();
         mainLoop();
     }
 
@@ -130,7 +129,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     public Event<EventArgs1<AudioPacket>> AudioTrackBufferUpdateEvent;
     public Event<EventArgs1<AudioMetaDto>> MetaDtoReadyEvent;
 
-    private void init(){
+    public void init(){
         decoder=new AudioDecoderThread();
         decoder.MusicPlayerActionEvent=MusicPlayerActionEvent;
         decoderBufferer =new AudioBuffererDecoder();

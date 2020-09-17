@@ -75,6 +75,7 @@ public class DeviceModel extends BaseModel {
         network.getClientSocketWrapper().controllerSocket.DeleteSongEvent = DeleteSongEvent;
         network.getClientSocketWrapper().controllerSocket.DeleteSongRequestEvent = DeleteSongRequestEvent;
 
+
     }
 
 DeviceModel self=this;

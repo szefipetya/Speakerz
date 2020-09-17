@@ -277,5 +277,7 @@ public class HostModel extends BaseModel {
         network.getServerSocketWrapper().controllerSocket.DeleteSongEvent = DeleteSongEvent;
         network.getServerSocketWrapper().controllerSocket.DeleteSongRequestEvent = DeleteSongRequestEvent;
 
+        network.getServerSocketWrapper().audioSocket.init();
+
     }
 }
