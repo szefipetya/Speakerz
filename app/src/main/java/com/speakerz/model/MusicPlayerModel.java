@@ -321,6 +321,8 @@ public class MusicPlayerModel{
     }
     //TODO: nem rosszötlet depicit laggol mikor keres az ember Kéne egy szűrés a listára hogy lehessen keresni benne ahoz viszont az egésznek bekell töltve lennie
     private void loadNextAudio(Cursor cursor){
+        if (cursor.isAfterLast()) return;
+        if (cursor.isBeforeFirst()) return;
 
 
         String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
