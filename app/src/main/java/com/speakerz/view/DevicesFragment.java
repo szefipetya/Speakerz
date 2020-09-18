@@ -22,7 +22,6 @@ import java.util.ArrayList;
 public class DevicesFragment extends Fragment {
 
     private RecyclerView recyclerViewDevices;
-
     private ArrayList<deviceItem> listDevices;
     private AdapterDevice adapterDevices;
 
