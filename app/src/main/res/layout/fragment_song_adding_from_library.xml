@@ -9,7 +9,8 @@
         android:id="@+id/name_filter"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="#11112a"/>
 
 
     <androidx.recyclerview.widget.RecyclerView

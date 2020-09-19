@@ -64,6 +64,7 @@ public class MusicPlayerModel{
     private List<Song> songQueue = new LinkedList<>(); // the Songs we want to play as Song files.
     private ArrayList<Song> audioList = new ArrayList<>();// all music in the phone
     private String songFilter;
+    Cursor audioReaderCursor;
 
     // Events
     public final Event<EventArgs1<Boolean>> playbackStateChanged = new Event<>();
@@ -187,10 +188,16 @@ public class MusicPlayerModel{
                     if(args.arg2().equals("")){
                        D.log("ures mezo");
                        songFilter="";
+                       audioList = new ArrayList<>();
+                       audioReaderCursor.moveToFirst();
+                        loadSomeAudio( audioReaderCursor);
                     }
                     else{
                        songFilter=args.arg2();
-                        D.log(songFilter);
+                       D.log(songFilter);
+                       audioList = new ArrayList<>();
+                       audioReaderCursor.moveToFirst();
+                        loadSomeAudio( audioReaderCursor);
                     }
                 }
             }
@@ -458,7 +465,7 @@ public class MusicPlayerModel{
             // Save to audioList
         }
     }
-    Cursor audioReaderCursor;
+
     private void loadAudioWithPermission(){
         ContentResolver contentResolver = context.getContentResolver();
 
