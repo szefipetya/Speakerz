@@ -339,6 +339,7 @@ public class MusicPlayerModel{
         });
         t.start();
     }
+
     //TODO: nem rosszötlet depicit laggol mikor keres az ember Kéne egy szűrés a listára hogy lehessen keresni benne ahoz viszont az egésznek bekell töltve lennie
     private void loadNextAudio(Cursor cursor,String filter){
         if (cursor.isAfterLast()) return;
