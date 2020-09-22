@@ -60,11 +60,12 @@ public class MusicPlayerModel{
     private Boolean isHost;
     boolean isPlaying=false;
 
-    // Song lists
+    // Song lists + filter
     private List<Song> songQueue = new LinkedList<>(); // the Songs we want to play as Song files.
     private ArrayList<Song> audioList = new ArrayList<>();// all music in the phone
     private String songFilter;
     Cursor audioReaderCursor;
+    public List<Integer> tabooPositions=new ArrayList<>();
 
     // Events
     public final Event<EventArgs1<Boolean>> playbackStateChanged = new Event<>();
@@ -188,15 +189,19 @@ public class MusicPlayerModel{
                     if(args.arg2().equals("")){
                        D.log("ures mezo");
                        songFilter="";
-                       audioList = new ArrayList<>();
+                       audioList.clear();
+                        tabooPositions.clear();
                        audioReaderCursor.moveToFirst();
+                        loadFirst();
                         loadSomeAudio( audioReaderCursor);
                     }
                     else{
                        songFilter=args.arg2();
                        D.log(songFilter);
-                       audioList = new ArrayList<>();
+                       audioList.clear();
+                       tabooPositions.clear();
                        audioReaderCursor.moveToFirst();
+                        loadFirst();
                         loadSomeAudio( audioReaderCursor);
                     }
                 }
@@ -488,6 +493,20 @@ public class MusicPlayerModel{
 
 
     }
+    private void loadFirst(){
+
+        if (audioReaderCursor != null && audioReaderCursor.getCount() > 0) {
+
+            int i =0;
+
+                i++;
+                loadNextAudio(audioReaderCursor,songFilter);
+
+        }
+
+
+    }
+
 
 
 

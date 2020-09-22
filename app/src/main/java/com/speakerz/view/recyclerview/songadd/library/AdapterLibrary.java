@@ -64,7 +64,7 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
     public void onBindViewHolder(@NonNull ViewHolderLibrary holder, int position) {
 
         //ez azért kell, hogyha vissza görget, akkor azokat már ne adja hozzá.
-
+if(!(position<model.getAudioList().size())) return;
             Song s=model.getAudioList().get(position);
 
 
@@ -85,14 +85,13 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
             }
             D.log("clicked:"+position);
             Integer pos = position;
-        if(!tabooPositions.contains(position)){
+        if(!model.tabooPositions.contains(position)){
         AdapterLibraryEvent.invoke(new EventArgs2<VIEW_EVT, String>(this,VIEW_EVT.ADAPTER_SONG_SCROLL,pos.toString()));
-        tabooPositions.add(position);
+        model.tabooPositions.add(position);
         }
 
     }
 
-    List<Integer> tabooPositions=new ArrayList<>();
     Event<EventArgs2<VIEW_EVT,String>> AdapterLibraryEvent;
 
     @Override
