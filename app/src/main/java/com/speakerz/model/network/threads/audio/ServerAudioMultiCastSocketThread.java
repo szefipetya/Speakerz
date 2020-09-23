@@ -11,7 +11,6 @@ import com.speakerz.model.network.Serializable.body.NetworkEventBody;
 import com.speakerz.model.network.Serializable.body.audio.AudioControlBody;
 import com.speakerz.model.network.Serializable.body.audio.AudioMetaBody;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
-import com.speakerz.model.network.Serializable.body.audio.content.AUDIO;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO_CONTROL;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioControlDto;
 import com.speakerz.model.network.Serializable.enums.NET_EVT;
@@ -20,7 +19,6 @@ import com.speakerz.model.network.threads.SocketStruct;
 import com.speakerz.model.network.threads.audio.util.AudioBuffererDecoder;
 import com.speakerz.model.network.threads.audio.util.AudioDecoderThread;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioMetaDto;
-import com.speakerz.model.network.threads.audio.util.DECODER_MODE;
 import com.speakerz.model.network.threads.audio.util.YouTubeStreamAPI;
 import com.speakerz.model.network.threads.audio.util.serializable.AudioPacket;
 import com.speakerz.model.network.threads.util.ClientSocketStructWrapper;
@@ -38,16 +36,11 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
-import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -84,7 +77,7 @@ public class ServerAudioMultiCastSocketThread extends Thread {
             currentFile=info.file;
             currentSongId=info.songId;
             locker.notify();
-            resumeAudioStream();
+
 
 
         }
@@ -149,11 +142,9 @@ private void mainLoop(){
                 while (/*!receiverServerSocket.isClosed()*/!externalShutdown) {
                     synchronized(locker) {
                         D.log("waiting for audio pick.");
-                        while (!swapSong.get()) {
                             locker.wait();
                             D.log("waiting ui notify clicked");
-                        }
-                        swapSong.set(false);
+
                     }
 
 
@@ -163,12 +154,19 @@ private void mainLoop(){
                         decoderBufferer.stop();
                         decoder.stop();
                         for (ClientSocketStructWrapper cli : clients) {
-                            cli.eofSongReached = true;
-                            if (cli.isBuffering) {
-                                synchronized (cli.eofSongReachedLocker) {
-                                    cli.eofSongReachedLocker.notify();
+
+                         /*   if (cli.isBuffering) {
+                                cli.eofSongReached = true;
+
+                                try {
+                                    sendObjectOrDelete(cli, cli.dataSocket, new AudioPacket(-1, new byte[0]));
+                                } catch (IOException e) {
+                                    e.printStackTrace();
                                 }
-                            } else {
+
+
+                            }*/
+                                cli.eofSongReached = true;
                                 try {
                                     sendObjectOrDelete(cli, cli.dataSocket, new AudioPacket(-1, new byte[0]));
                                 } catch (IOException ex) {
@@ -176,16 +174,37 @@ private void mainLoop(){
                                     ex.printStackTrace();
                                     continue;
                                 }
-                            }
+
                         }
-                        for (ClientSocketStructWrapper cli : clients) {
-                            synchronized (cli.eofReceivedFromClientLocker) {
-                                cli.eofReceivedFromClientLocker.wait(3000);
-                            }
+
+                        Thread[] threads=new Thread[clients.size()];
+                        int i=0;
+                        for (final ClientSocketStructWrapper cli : clients) {
+                            threads[i]=new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if(!cli.eofSongReachedFromClient)
+                                        synchronized (cli.eofReceivedFromClientLocker) {
+                                            try {
+                                                cli.eofReceivedFromClientLocker.wait(2000);
+                                                ExceptionEvent.invoke(new EventArgs1<Exception>(self, new Exception("Don't swap that fast!")));
+                                            } catch (InterruptedException e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
+                                    cli.eofSongReachedFromClient=false;
+                                }
+                            });
+                            threads[i].start();
+                            i++;
+                        }
+                        for(int j=0;j<threads.length;j++){
+                            threads[j].join();
                         }
 
 
                     }
+                    resumeAudioStream();
                     D.log("starting threads");
                     Thread t=new Thread(new Runnable() {
                         @Override
@@ -357,6 +376,7 @@ ServerAudioMultiCastSocketThread self=this;
                         D.log("eof package received.");
                         struct.eofSongReached=false;
                         synchronized (struct.eofReceivedFromClientLocker) {
+                            struct.eofSongReachedFromClient=true;
                             struct.eofReceivedFromClientLocker.notify();
                         }
                         struct.isClientInStream=false;
@@ -386,6 +406,7 @@ ServerAudioMultiCastSocketThread self=this;
                }
             } catch (IOException e) {
                 e.printStackTrace();
+                closeClient(struct);
                 break;
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
@@ -473,11 +494,13 @@ ServerAudioMultiCastSocketThread self=this;
             send(wrapper.senderInfoSocket,obj);
         }
     }
-    void sendObjectOrDelete(ClientSocketStructWrapper wrapper,SocketStruct struct,Object obj) throws IOException {
+    void sendObjectOrDelete(ClientSocketStructWrapper wrapper,final SocketStruct struct,Object obj) throws IOException {
+
         if(struct.socket!=null&&!struct.socket.isClosed()){
+            synchronized (struct.socket) {
                 struct.objectOutputStream.writeObject(obj);
                 struct.objectOutputStream.flush();
-
+            }
         }else{
             clients.remove(wrapper);
         }
@@ -497,15 +520,19 @@ ServerAudioMultiCastSocketThread self=this;
             while ((struct.bufferHeadPosition <= decoderBufferer.maxPackageNumber.get() || decoderBufferer.maxPackageNumber.get() == 0)) {
                 if(struct.eofSongReached){
                     try {
-                        struct.dataSocket.objectOutputStream.writeObject(new AudioPacket(-1,new byte[0]));
-                        struct.dataSocket.objectOutputStream.flush();
+                        sendObjectOrDelete(struct,struct.dataSocket,new AudioPacket(-1,new byte[0]));
+
                     } catch (IOException e) {
 
                         e.printStackTrace();
                         closeClient(struct);
                         break;
                     }
+                    synchronized (struct.eofSongReachedLocker) {
+                        struct.eofSongReachedLocker.notify();
+                        struct.eofSongReached = false;
 
+                    }
                     D.log("break");
                     break;
                 }

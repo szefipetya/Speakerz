@@ -80,7 +80,7 @@ public class LandingActivity extends AppCompatActivity {
 
         });
 
-
+        gpsStatusCheck();
 
     }
 

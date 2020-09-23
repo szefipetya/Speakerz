@@ -19,14 +19,15 @@ public class ClientSocketStructWrapper {
     public ConcurrentLinkedQueue<AudioPacket> bufferQueue=new ConcurrentLinkedQueue<>();
 
   public int bufferHeadPosition=0;
+    public boolean eofSongReachedFromClient=false;
 
 
-  public ClientSocketStructWrapper(){
+    public ClientSocketStructWrapper(){
       receiverInfoSocket =new SocketStruct();
       senderInfoSocket =new SocketStruct();
       dataSocket=new SocketStruct();
    }
    public SocketStruct receiverInfoSocket;
    public SocketStruct senderInfoSocket;
-   public SocketStruct dataSocket;
+   public final SocketStruct dataSocket;
 }

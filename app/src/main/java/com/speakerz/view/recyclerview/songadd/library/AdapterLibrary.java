@@ -77,10 +77,10 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
             holder.songArtistTextView.setText(artist);
             holder.songLengthTimeTextView.setText(songLengthTime);
 
-            if(s.getSongCoverArt() != null){
+           /* if(s.getSongCoverArt() != null){
                 holder.coverImageView.setImageBitmap(s.getSongCoverArt());
             }
-            else{
+            else*/{
                   holder.coverImageView.setImageResource(R.drawable.ic_twotone_music_note_24);
             }
             D.log("clicked:"+position);

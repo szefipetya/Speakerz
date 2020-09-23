@@ -4,19 +4,16 @@ import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.os.Build;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
-import com.speakerz.model.network.Serializable.body.NetworkEventBody;
 import com.speakerz.model.network.Serializable.body.audio.AudioControlBody;
 import com.speakerz.model.network.Serializable.body.audio.AudioMetaBody;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.audio.content.AUDIO_CONTROL;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioControlDto;
-import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.Serializable.body.audio.content.AudioMetaDto;
 import com.speakerz.model.network.threads.SocketStruct;
@@ -37,12 +34,18 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Queue;
-import java.util.Timer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
+    private class SyncTask{
+        public long timeOnServerSinceConnected=0;
+
+        public SyncTask(long timeOnServerSinceConnected) {
+            this.timeOnServerSinceConnected = timeOnServerSinceConnected;
+        }
+    }
 
     public ThreadSafeEvent<EventArgs1<Body>> MusicPlayerActionEvent;
     public Event<EventArgs1<Exception>> ExceptionEvent;
@@ -73,28 +76,36 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
 
     private InetAddress address;
 
-
-
+    ConcurrentLinkedQueue<SyncTask> syncTasks=new ConcurrentLinkedQueue<>();
     public ClientAudioMultiCastReceiverSocketThread() {
 
     }
     int syncLagOffsetInPackages=0;
     int packagesToSkipByDelta=0;
     private int lastPackageOffsetByDelta=0;
-AtomicBoolean playbackStarted=new AtomicBoolean(false);
+
+final AtomicBoolean playbackStarted=new AtomicBoolean(false);
     Runnable playAudioRunnable=new Runnable() {
 
         @Override
         public void run() {
             D.log("starting playback at"+actualAudioPackage);
             at.play();
-            Iterator itr= bufferQueue.iterator();
-            Boolean firstTimeFound=true;
+            final Iterator<AudioPacket> itr=bufferQueue.iterator();
+            boolean firstTimeFound=true;
             playbackStarted.set(true);
             while (itr.hasNext()&&!swapSong.get()) {
+
                 AudioPacket packet=(AudioPacket)itr.next();
+
                 if(packet.packageNumber>=actualAudioPackage) {
 
+                    if(!syncTasks.isEmpty()){
+                        SyncTask task=syncTasks.poll();
+                        skipPackages(itr,task.timeOnServerSinceConnected);
+                    }else {
+                        at.write(packet.data, 0, packet.data.length);
+                    }
 
                     if(isPaused.get()){
                         synchronized (isPausedLocker){
@@ -106,50 +117,55 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
                             }
                         }
                     }
-                    if(firstTimeFound){
-                        D.log("timeonServer: "+actualSyncTimeOnServer);
-                        long timeSinceConnected=new Date().getTime()-timeWhenConnected;
-                        long deltaTime=timeSinceConnected-actualSyncTimeOnServer;
-                        D.log("deltaTime in milliSec: "+deltaTime);
-                        long bytesPer1000ms=metaDto.sampleRate* metaDto.bitsPerSample/8;//1000 ms alatt ennyi byte megy le
-                        D.log("bytesPer1000ms: "+bytesPer1000ms);
 
-                        long offsetInBytes= (long)((float)(deltaTime/1000* bytesPer1000ms));
-
-                        D.log("offset in bytes:"+offsetInBytes);
-                        packagesToSkipByDelta=(int)offsetInBytes/metaDto.packageSize;
-                        lastPackageOffsetByDelta=(int)offsetInBytes%metaDto.packageSize;
-
-
-                        D.log("packagesToSkipByDelta: "+packagesToSkipByDelta);
-                        D.log("lastPackageOffsetByDelta: "+lastPackageOffsetByDelta);
-
-                        //   byte[] filteredByteArray = Arrays.copyOfRange(packet.data, (int)offsetInBytes, (int)packet.data.length - (int)offsetInBytes);
-
-                        int i=0;
-                        while(itr.hasNext()&&i<=packagesToSkipByDelta){
-                           itr.next();
-                            i++;
-                            D.log("skip");
-                        }
-                        if(itr.hasNext()){
-                            packet=(AudioPacket)itr.next();
-                            byte slicedBytes[]= Arrays.copyOfRange(packet.data, lastPackageOffsetByDelta, packet.data.length);
-                            D.log("sliced length:"+ slicedBytes.length);
-                            at.write(slicedBytes,0,slicedBytes.length);
-                        }
-                        firstTimeFound = false;
-                    }else {
-                        at.write(packet.data, 0, packet.data.length);
-                    }
                 }
             }
+            synchronized (playbackStarted) {
+                playbackStarted.set(false);
+                playbackStarted.notify();
+            }
             swapSong.set(false);
-
+            synchronized (swapSong) {
+                swapSong.notify();
+            }
 
         }
     };
 
+    private void skipPackages(final Iterator<AudioPacket> itr,long timeOnServerSinceConn){
+
+            D.log("timeonServer: " + timeOnServerSinceConn);
+            long timeSinceConnected = new Date().getTime() - timeWhenConnected;
+            long deltaTime = timeSinceConnected - timeOnServerSinceConn;
+            D.log("deltaTime in milliSec: " + deltaTime);
+            long bytesPer1000ms = metaDto.sampleRate * metaDto.bitsPerSample / 8;//1000 ms alatt ennyi byte megy le
+            D.log("bytesPer1000ms: " + bytesPer1000ms);
+
+            long offsetInBytes = (long) ((float) (deltaTime / 1000 * bytesPer1000ms));
+
+            D.log("offset in bytes:" + offsetInBytes);
+            packagesToSkipByDelta = (int) offsetInBytes / metaDto.packageSize;
+            lastPackageOffsetByDelta = (int) offsetInBytes % metaDto.packageSize;
+
+
+            D.log("packagesToSkipByDelta: " + packagesToSkipByDelta);
+            D.log("lastPackageOffsetByDelta: " + lastPackageOffsetByDelta);
+
+            int i = 0;
+            while (itr.hasNext() && i < packagesToSkipByDelta) {
+                itr.next();
+                i++;
+                D.log("skip");
+            }
+            if (itr.hasNext()) {
+                AudioPacket packet = (AudioPacket) itr.next();
+                byte slicedBytes[] = Arrays.copyOfRange(packet.data, lastPackageOffsetByDelta, packet.data.length);
+                D.log("sliced length:" + slicedBytes.length);
+                at.write(slicedBytes, 0, slicedBytes.length);
+            }
+
+
+    }
     AtomicBoolean swapSong=new AtomicBoolean(false);
     int actualAudioPackage=0;
     AtomicBoolean isPaused=new AtomicBoolean(false);
@@ -157,10 +173,11 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
     final Object eofLocker=new Object();
 
 
+
     private void listen(SocketStruct struct) {
         while (!struct.socket.isClosed()) {
             try {
-                ChannelObject inObject = (ChannelObject) struct.objectInputStream.readObject();
+                ChannelObject inObject = (ChannelObject) wrapper.receiverInfoSocket.objectInputStream.readObject();
                 D.log("got something");
                 if (inObject.TYPE == TYPE.AUDIO_META) {
                     final AudioMetaBody body = (AudioMetaBody) inObject.body;
@@ -169,6 +186,7 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
                     at = createAudioTrack(body.getContent());
                     playStarted=false;
                     i=0;
+                    bufferQueue.clear();
                     if(!handlerRunning){
                         Thread t=new Thread(new Runnable() {
                             @Override
@@ -189,8 +207,17 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
                             //make sure, that she song will start.
                             actualAudioPackage=body.getContent().number;
                             actualSyncTimeOnServer=body.getContent().timeInMilliSeconds;
+                            syncTasks.offer(new SyncTask(actualSyncTimeOnServer));
                             D.log("actual audio pack set to"+actualAudioPackage);
                             swapSong.set(false);
+                            if(playbackStarted.get())
+                                synchronized (playbackStarted){
+                                    try {
+                                        playbackStarted.wait();
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
                             Thread t=new Thread(playAudioRunnable);
                             t.start();
                             D.log("thread started");
@@ -318,7 +345,6 @@ AtomicBoolean playbackStarted=new AtomicBoolean(false);
         try {
             struct.objectOutputStream.writeObject(obj);
             struct.objectOutputStream.flush();
-            D.log("sync req sent");
         } catch (IOException e) {
             e.printStackTrace();
         }
