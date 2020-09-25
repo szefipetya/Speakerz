@@ -52,6 +52,7 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
     }
 
 
+    // TODO: Ez itt bugos a listItems méretét kell refaktorálni filterezéskor hogy ne lehessen tovább pörgetni
     @Override
     public void onBindViewHolder(@NonNull ViewHolderLibrary holder, int position) {
 
