@@ -43,9 +43,9 @@ public class SongAddLibraryFragment extends Fragment {
     public void setModel(MusicPlayerModel model) {
         this.model = model;
 
-        fillAudioList(model.getAudioList(), listLibrary);
-        AudioListUpdate=model.AudioListUpdate;
-        AudioListUpdate.addListener(new EventListener<EventArgs1<Song>>() {
+        fillAudioList(model.getAudioListFiltered(), listLibrary);
+        //adapterLibrary.notifyDataSetChanged();
+        /*AudioListUpdate.addListener(new EventListener<EventArgs1<Song>>() {
             @Override
             public void action(EventArgs1<Song> args) {
                 Song s=args.arg1();
@@ -67,10 +67,7 @@ public class SongAddLibraryFragment extends Fragment {
                          });
                 }
             }
-        });
-        //  listLibrary = new ArrayList<>();
-        // listLibrary.add(new libraryItem("Egy két há", "Belga", "mindegy", "2:45"));
-        // listLibrary.add(new libraryItem("Daylight", "JOJI", "mindegy", "2:43"));
+        });*/
 
 
     }
@@ -84,8 +81,6 @@ public class SongAddLibraryFragment extends Fragment {
                 output.add(e);
             }
     }
-
-    public Event<EventArgs1<Song>>AudioListUpdate;
 
     SongAddLibraryFragment self = this;
     private MusicPlayerModel model;
@@ -142,7 +137,7 @@ public class SongAddLibraryFragment extends Fragment {
                     @Override
                     public void onItemClick(View view, int position) {
                         if(position>=0){
-                            model.addSong(model.getAudioList().get(position));
+                            model.addSong(model.getAudioListFiltered().get(position));
                         }
 
                     }
@@ -153,7 +148,7 @@ public class SongAddLibraryFragment extends Fragment {
                 })
         );
 
-
+        adapterLibrary.notifyDataSetChanged();
 
         return mView;
     }

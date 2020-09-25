@@ -55,7 +55,6 @@ public class AdapterDevice extends RecyclerView.Adapter<AdapterDevice.ViewHolder
 
         public ViewHolderDevice(@NonNull View itemView) {
             super(itemView);
-            deviceNameTextView = itemView.findViewById(R.id.coverImageView);
             deviceNickNameTextView = itemView.findViewById(R.id.songNameTextView);
         }
     }

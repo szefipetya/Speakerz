@@ -66,7 +66,9 @@ public class RecyclerView_FAB  {
             });
 
         }
-    };    final EventListener<EventArgs2<Song, Integer>> songRemovedListener = new EventListener<EventArgs2<Song, Integer>>() {
+    };
+
+    final EventListener<EventArgs2<Song, Integer>> songRemovedListener = new EventListener<EventArgs2<Song, Integer>>() {
         @Override
         public void action(final EventArgs2<Song, Integer> args) {
             activity.runOnUiThread(new Runnable() {

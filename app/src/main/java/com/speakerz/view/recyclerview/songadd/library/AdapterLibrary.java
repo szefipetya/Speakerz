@@ -41,14 +41,6 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
         listItems = mList;
         this.model=model;
         this.AdapterLibraryEvent=model.AdapterLibraryEvent;
-        model.AudioListUpdate.addListener(new EventListener<EventArgs1<Song>>() {
-            @Override
-            public void action(EventArgs1<Song> args) {
-                args.arg1().getCursorIndex();
-
-
-            }
-        });
     }
 
 
@@ -64,11 +56,10 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
     public void onBindViewHolder(@NonNull ViewHolderLibrary holder, int position) {
 
         //ez azért kell, hogyha vissza görget, akkor azokat már ne adja hozzá.
-if(!(position<model.getAudioList().size())) return;
-            Song s=model.getAudioList().get(position);
-
-
-
+        if(!(position<model.getAudioListFiltered().size())) {
+            D.log("wat " +model.getAudioListFiltered().size() +" "+position);}
+        else{
+            Song s=model.getAudioListFiltered().get(position);
             String songName = s.getTitle();
             String artist = s.getArtist();
             String songLengthTime = s.getDuration();
@@ -77,20 +68,11 @@ if(!(position<model.getAudioList().size())) return;
             holder.songArtistTextView.setText(artist);
             holder.songLengthTimeTextView.setText(songLengthTime);
 
-            if(s.getSongCoverArt() != null){
-                holder.coverImageView.setImageBitmap(s.getSongCoverArt());
-            }
-            else{
-                  holder.coverImageView.setImageResource(R.drawable.ic_twotone_music_note_24);
-            }
             D.log("clicked:"+position);
-            Integer pos = position;
-        if(!model.tabooPositions.contains(position)){
-        AdapterLibraryEvent.invoke(new EventArgs2<VIEW_EVT, String>(this,VIEW_EVT.ADAPTER_SONG_SCROLL,pos.toString()));
-        model.tabooPositions.add(position);
-        }
 
+        }
     }
+
 
     Event<EventArgs2<VIEW_EVT,String>> AdapterLibraryEvent;
 
@@ -101,14 +83,12 @@ if(!(position<model.getAudioList().size())) return;
 
 
     public class ViewHolderLibrary extends RecyclerView.ViewHolder{
-        public ImageView coverImageView;
         public TextView songNameTextView;
         public TextView songArtistTextView;
         public TextView songLengthTimeTextView;
 
         public ViewHolderLibrary(@NonNull View itemView) {
             super(itemView);
-            coverImageView = itemView.findViewById(R.id.coverImageView);
             songNameTextView = itemView.findViewById(R.id.songNameTextView);
             songArtistTextView = itemView.findViewById(R.id.songArtistTextView);
             songLengthTimeTextView = itemView.findViewById(R.id.songLengthTimeTextView);
