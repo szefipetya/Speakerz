@@ -47,6 +47,7 @@ public class MusicPlayerModel{
     private final MusicPlayerModel self = this;
     private final Context context;
 
+
     public BaseModel getModel() {
         return model;
     }
@@ -61,7 +62,9 @@ public class MusicPlayerModel{
 
     // Song lists
     private List<Song> songQueue = new LinkedList<>(); // the Songs we want to play as Song files.
-    private ArrayList<Song> audioList = new ArrayList<>(); // all music in the phone
+    private ArrayList<Song> audioList = new ArrayList<>();// all music in the phone
+    private String songFilter;
+    Cursor audioReaderCursor;
 
     // Events
     public final Event<EventArgs1<Boolean>> playbackStateChanged = new Event<>();
@@ -70,7 +73,7 @@ public class MusicPlayerModel{
     public final Event<EventArgs2<Song, Integer>> songRemovedEvent = new Event<>();
     public final Event<EventArgs1<Song>> songChangedEvent = new Event<>();
     public final Event<EventArgs1<Song>> AudioListUpdate=new Event<>();
-    public final Event<EventArgs2<VIEW_EVT,Integer>> AdapterLibraryEvent=new Event<>();
+    public final Event<EventArgs2<VIEW_EVT,String>> AdapterLibraryEvent=new Event<>();
 
 
 
@@ -169,15 +172,32 @@ public class MusicPlayerModel{
         this.model = model;
         this.isHost = isHost;
         this.context = model.getContext();
+        this.songFilter="";
 
         // Subscribe to model events
         model.MusicPlayerActionEvent.addListener(musicPlayerActionListener);
-        AdapterLibraryEvent.addListener(new EventListener<EventArgs2<VIEW_EVT, Integer>>() {
+        AdapterLibraryEvent.addListener(new EventListener<EventArgs2<VIEW_EVT, String>>() {
             @Override
-            public void action(EventArgs2<VIEW_EVT, Integer> args) {
+            public void action(EventArgs2<VIEW_EVT, String> args) {
                 if(args.arg1()==VIEW_EVT.ADAPTER_SONG_SCROLL){
-                    if(args.arg2()%30==0){
+                    if(Integer.parseInt(args.arg2())%30==0){
                         taskQueue.offer(MP_TASK_LOAD_40_AUDIO);
+                    }
+                }
+                if(args.arg1()==VIEW_EVT.ADAPTER_SONG_FILTER){
+                    if(args.arg2().equals("")){
+                       D.log("ures mezo");
+                       songFilter="";
+                       audioList = new ArrayList<>();
+                       audioReaderCursor.moveToFirst();
+                        loadSomeAudio( audioReaderCursor);
+                    }
+                    else{
+                       songFilter=args.arg2();
+                       D.log(songFilter);
+                       audioList = new ArrayList<>();
+                       audioReaderCursor.moveToFirst();
+                        loadSomeAudio( audioReaderCursor);
                     }
                 }
             }
@@ -299,7 +319,7 @@ public class MusicPlayerModel{
                    int i=0;
                    while(!cursor.isLast()&&cursor.moveToNext() &&i<40) {
                        i++;
-                       loadNextAudio(cursor);
+                       loadNextAudio(cursor,this.songFilter);
                    }
     }
 
@@ -319,65 +339,116 @@ public class MusicPlayerModel{
         });
         t.start();
     }
+
     //TODO: nem rosszötlet depicit laggol mikor keres az ember Kéne egy szűrés a listára hogy lehessen keresni benne ahoz viszont az egésznek bekell töltve lennie
-    private void loadNextAudio(Cursor cursor){
+    private void loadNextAudio(Cursor cursor,String filter){
         if (cursor.isAfterLast()) return;
         if (cursor.isBeforeFirst()) return;
+        if(filter.equals("")) {
+            String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
+            String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
+            String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+            //ez a rész most már a setExtraDataForSong-ban van.
+            Bitmap songCoverArt = null;
+            int albumID = audioReaderCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+            Long thisAlbumId = audioReaderCursor.getLong(albumID);
+            Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisAlbumId);
+            ContentResolver res = context.getContentResolver();
 
 
-        String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
-        String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
-        String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-      //ez a rész most már a setExtraDataForSong-ban van.
-        Bitmap songCoverArt = null;
-        int albumID = audioReaderCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
-        Long thisAlbumId = audioReaderCursor.getLong(albumID);
-        Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisAlbumId);
-        ContentResolver res = context.getContentResolver();
+            InputStream in = null;
+            try {
+                in = res.openInputStream(uriSongCover);
+                songCoverArt = BitmapFactory.decodeStream(in);
+                in.close();
 
+            } catch (FileNotFoundException e) {
+                //e.printStackTrace();
 
-        InputStream in = null;
-        try {
-            in = res.openInputStream(uriSongCover);
-            songCoverArt = BitmapFactory.decodeStream(in);
-            in.close();
-
-        } catch (FileNotFoundException e) {
-            //e.printStackTrace();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-
-
-        //TODO: replace alma to unique identifier
-        Song s=new Song(audioReaderCursor.getPosition(),"", title, album, artist,"alma",thisAlbumId,songCoverArt);
-        //s.setSongCoverArt(songCoverArt);
-       // s.setAlbumId(thisAlbumId);
-        int durMili= parseInt(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
-        String duration;
-        durMili= durMili/1000;
-        Integer durH = durMili/3600;
-        durMili= durMili%3600;
-        Integer durM= durMili/60;
-        durMili= durMili%60;
-        Integer durS= durMili;
-        if(durH>0){
-            s.setDuration(durH.toString()+ ":" + durM.toString() + ":" +durS.toString());
-        }
-        else {
-            if(durS<10){
-                s.setDuration(durM.toString() + ":0" + durS.toString());
-            }
-            else{
-                s.setDuration(durM.toString() + ":" + durS.toString());
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
+
+            //TODO: replace alma to unique identifier
+            Song s = new Song(audioReaderCursor.getPosition(), "", title, album, artist, "alma", thisAlbumId, songCoverArt);
+            //s.setSongCoverArt(songCoverArt);
+            // s.setAlbumId(thisAlbumId);
+            int durMili = parseInt(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
+            String duration;
+            durMili = durMili / 1000;
+            Integer durH = durMili / 3600;
+            durMili = durMili % 3600;
+            Integer durM = durMili / 60;
+            durMili = durMili % 60;
+            Integer durS = durMili;
+            if (durH > 0) {
+                s.setDuration(durH.toString() + ":" + durM.toString() + ":" + durS.toString());
+            } else {
+                if (durS < 10) {
+                    s.setDuration(durM.toString() + ":0" + durS.toString());
+                } else {
+                    s.setDuration(durM.toString() + ":" + durS.toString());
+                }
+
+            }
+            audioList.add(s);
+            AudioListUpdate.invoke(new EventArgs1<Song>(self, s));
         }
-        audioList.add(s);
-        AudioListUpdate.invoke(new EventArgs1<Song>(self,s));
+        else{
+            String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
+            if(title.startsWith(filter)){
+                String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
+                String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+                //ez a rész most már a setExtraDataForSong-ban van.
+                Bitmap songCoverArt = null;
+                int albumID = audioReaderCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+                Long thisAlbumId = audioReaderCursor.getLong(albumID);
+                Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisAlbumId);
+                ContentResolver res = context.getContentResolver();
+
+
+                InputStream in = null;
+                try {
+                    in = res.openInputStream(uriSongCover);
+                    songCoverArt = BitmapFactory.decodeStream(in);
+                    in.close();
+
+                } catch (FileNotFoundException e) {
+                    //e.printStackTrace();
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+                //TODO: replace alma to unique identifier
+                Song s = new Song(audioReaderCursor.getPosition(), "", title, album, artist, "alma", thisAlbumId, songCoverArt);
+                //s.setSongCoverArt(songCoverArt);
+                // s.setAlbumId(thisAlbumId);
+                int durMili = parseInt(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
+                String duration;
+                durMili = durMili / 1000;
+                Integer durH = durMili / 3600;
+                durMili = durMili % 3600;
+                Integer durM = durMili / 60;
+                durMili = durMili % 60;
+                Integer durS = durMili;
+                if (durH > 0) {
+                    s.setDuration(durH.toString() + ":" + durM.toString() + ":" + durS.toString());
+                } else {
+                    if (durS < 10) {
+                        s.setDuration(durM.toString() + ":0" + durS.toString());
+                    } else {
+                        s.setDuration(durM.toString() + ":" + durS.toString());
+                    }
+
+                }
+                audioList.add(s);
+                AudioListUpdate.invoke(new EventArgs1<Song>(self, s));
+            }
+
+        }
     }
 
 
@@ -395,7 +466,7 @@ public class MusicPlayerModel{
             // Save to audioList
         }
     }
-    Cursor audioReaderCursor;
+
     private void loadAudioWithPermission(){
         ContentResolver contentResolver = context.getContentResolver();
 
@@ -410,7 +481,7 @@ public class MusicPlayerModel{
            int i =0;
             while (audioReaderCursor.moveToNext() && i <1) {
                 i++;
-                loadNextAudio(audioReaderCursor);
+                loadNextAudio(audioReaderCursor,songFilter);
             }
         }
        // audioReaderCursor.close();
@@ -424,12 +495,5 @@ public class MusicPlayerModel{
         loadAudioWithPermission();
     }
 
-    private Bitmap getAlbumImage(String path) {
-        android.media.MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-        mmr.setDataSource(path);
-        byte[] data = mmr.getEmbeddedPicture();
-        if (data != null) return BitmapFactory.decodeByteArray(data, 0, data.length);
-        return null;
-    }
 
 }
