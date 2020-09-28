@@ -33,10 +33,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHolderLibrary> {
     private final MusicPlayerModel model;
     Context contextLibrary;
-    ArrayList<libraryItem> listItems;
+    List<Song> listItems;
 
 
-    public AdapterLibrary(Context mContext, ArrayList<libraryItem> mList, MusicPlayerModel model){
+    public AdapterLibrary(Context mContext, List<Song> mList, MusicPlayerModel model){
         contextLibrary = mContext;
         listItems = mList;
         this.model=model;

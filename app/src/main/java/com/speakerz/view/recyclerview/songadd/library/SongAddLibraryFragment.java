@@ -37,13 +37,13 @@ public class SongAddLibraryFragment extends Fragment {
 
     private RecyclerView recyclerViewLibrary;
 
-    private ArrayList<libraryItem> listLibrary = new ArrayList<>();
+    private List<Song> listLibrary = new ArrayList<>();
     private AdapterLibrary adapterLibrary;
     public final Event<EventArgs> CloseEvent=new Event<>();
     public void setModel(MusicPlayerModel model) {
         this.model = model;
 
-        fillAudioList(model.getAudioListFiltered(), listLibrary);
+        listLibrary = model.getAudioListFiltered();
         //adapterLibrary.notifyDataSetChanged();
         /*AudioListUpdate.addListener(new EventListener<EventArgs1<Song>>() {
             @Override
@@ -70,16 +70,6 @@ public class SongAddLibraryFragment extends Fragment {
         });*/
 
 
-    }
-
-    private void fillAudioList(List<Song> input, ArrayList<libraryItem> output) {
-        List<Song> copy = new ArrayList<Song>(input);
-
-        if (output.isEmpty())
-            for (Song s : copy) {
-                libraryItem e = new libraryItem(s.getTitle(), s.getArtist(), s.getSongCoverArt(), s.getDuration());
-                output.add(e);
-            }
     }
 
     SongAddLibraryFragment self = this;
