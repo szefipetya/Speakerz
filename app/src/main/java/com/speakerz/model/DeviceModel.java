@@ -9,6 +9,7 @@ import com.speakerz.model.enums.MP_EVT;
 import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
+import com.speakerz.model.network.Serializable.body.controller.ChangeCurrentSongRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.DeleteSongRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
@@ -222,6 +223,15 @@ isAppRunning=false;
                         getNetwork().getClientSocketWrapper().controllerSocket.send(
                                         new ChannelObject(new PutSongRequestBody(self.deviceAddress,(Song)args.arg2()), TYPE.MP)
                                 );
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                if(args.arg1() == MP_EVT.SONG_CHANGED){
+                    try {
+                        getNetwork().getClientSocketWrapper().controllerSocket.send(
+                                new ChannelObject(new ChangeCurrentSongRequestBody(self.deviceAddress,((SongChangedInfo)args.arg2()).songId), TYPE.MP)
+                        );
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
