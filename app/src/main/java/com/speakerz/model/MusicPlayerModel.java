@@ -306,11 +306,11 @@ public class MusicPlayerModel{
     }
 
     //Load All Audio from the device To AudioList ( you will be bale to choose from these to add to the SongQueue
-    private void loadSomeAudio(final Cursor cursor){
+    /*private void loadSomeAudio(final Cursor cursor){
                    while(!cursor.isLast()&&cursor.moveToNext()) {
                        loadNextAudio(cursor);
                    }
-    }
+    }*/
 
 
     //TODO: nem rosszötlet depicit laggol mikor keres az ember Kéne egy szűrés a listára hogy lehessen keresni benne ahoz viszont az egésznek bekell töltve lennie

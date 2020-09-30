@@ -114,6 +114,7 @@ public class SongAddLibraryFragment extends Fragment {
             @Override
             public void afterTextChanged(Editable editable) {
                 model.AdapterLibraryEvent.invoke(new EventArgs2<VIEW_EVT, String>(this,VIEW_EVT.ADAPTER_SONG_FILTER, editable.toString()));
+                adapterLibrary.notifyDataSetChanged();
             }
         });
 
