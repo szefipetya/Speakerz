@@ -21,6 +21,7 @@ import com.speakerz.model.enums.VIEW_EVT;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
+import com.speakerz.model.network.Serializable.body.controller.PlaybackControlRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
@@ -114,24 +115,33 @@ public class MusicPlayerModel{
                         invokeModelCommunication(MP_EVT.SEND_LIST, null, null);
                     }
                     break;
-                case MP_CHANGE_SONG:
-                    songId=((Integer)body.getContent()).intValue();
-                    D.log("songId : "+songId);
-                    _song = null;
-                    cp = 0;
-                    for (Song s: songQueue) {
-                        if(s.getId() == songId){
-                            _song = s;
-                            break;
+                case MP_CONTROL_REQUEST:
+                    PlaybackControlRequestBody pbr = (PlaybackControlRequestBody) body;
+                    if(pbr.message == PlaybackControlRequestBody.PlaybackControlType.Pause)
+                        pause();
+                    if(pbr.message == PlaybackControlRequestBody.PlaybackControlType.Resume)
+                        start();
+                    if(pbr.message == PlaybackControlRequestBody.PlaybackControlType.SelectSong){
+                        songId=((Integer)body.getContent()).intValue();
+                        D.log("songId : "+songId);
+                        _song = null;
+                        cp = 0;
+                        for (Song s: songQueue) {
+                            if(s.getId() == songId){
+                                _song = s;
+                                break;
+                            }
+                            cp++;
                         }
-                        cp++;
-                    }
-                    if(_song != null){
-                        startONE(
-                                getContext(),
-                                Uri.parse(getSongQueue().get(cp).getData()),
-                                getSongQueue().get(cp).getId()
-                        );
+                        isPlaying = true;
+                        playbackStateChanged.invoke(new EventArgs1<>(this, true));
+                        if(_song != null) {
+                            startONE(
+                                    getContext(),
+                                    Uri.parse(getSongQueue().get(cp).getData()),
+                                    getSongQueue().get(cp).getId()
+                            );
+                        }
                     }
                     break;
                 case MP_ACTION_EVT:
