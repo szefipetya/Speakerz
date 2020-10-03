@@ -10,6 +10,7 @@ import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.DeleteSongRequestBody;
+import com.speakerz.model.network.Serializable.body.controller.PlaybackControlRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
@@ -226,6 +227,33 @@ isAppRunning=false;
                         e.printStackTrace();
                     }
                 }
+                try {
+                    if(args.arg1() == MP_EVT.SONG_CHANGED){
+                        getNetwork().getClientSocketWrapper().controllerSocket.send(
+                                new ChannelObject(new PlaybackControlRequestBody(
+                                        self.deviceAddress,
+                                        PlaybackControlRequestBody.PlaybackControlType.SelectSong,
+                                        ((SongChangedInfo)args.arg2()).songId
+                                ), TYPE.MP)
+                        );
+                    }
+                    if(args.arg1()==MP_EVT.SONG_PAUSE){
+                        getNetwork().getClientSocketWrapper().controllerSocket.send(
+                                new ChannelObject(new PlaybackControlRequestBody(
+                                        self.deviceAddress,
+                                        PlaybackControlRequestBody.PlaybackControlType.Pause
+                                ), TYPE.MP)
+                        );
+                    }
+                    if(args.arg1()==MP_EVT.SONG_RESUME){
+                        getNetwork().getClientSocketWrapper().controllerSocket.send(
+                                new ChannelObject(new PlaybackControlRequestBody(
+                                        self.deviceAddress,
+                                        PlaybackControlRequestBody.PlaybackControlType.Resume
+                                ), TYPE.MP)
+                        );
+                    }
+                } catch (Exception e) { e.printStackTrace(); }
             }
         });
     }

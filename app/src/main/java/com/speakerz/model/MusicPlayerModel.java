@@ -21,6 +21,7 @@ import com.speakerz.model.enums.VIEW_EVT;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
+import com.speakerz.model.network.Serializable.body.controller.PlaybackControlRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutSongRequestBody;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.util.Event;
@@ -82,6 +83,8 @@ public class MusicPlayerModel{
         @Override
         public void action(EventArgs1<Body> args) {
             D.log("mp evt happened");
+            Song _song = null;
+            int songId = 0; int cp = 0;
             Body body = args.arg1();
             switch (args.arg1().SUBTYPE()){
                 case MP_PUT_SONG:
@@ -112,13 +115,42 @@ public class MusicPlayerModel{
                         invokeModelCommunication(MP_EVT.SEND_LIST, null, null);
                     }
                     break;
+                case MP_CONTROL_REQUEST:
+                    PlaybackControlRequestBody pbr = (PlaybackControlRequestBody) body;
+                    if(pbr.message == PlaybackControlRequestBody.PlaybackControlType.Pause)
+                        pause();
+                    if(pbr.message == PlaybackControlRequestBody.PlaybackControlType.Resume)
+                        start();
+                    if(pbr.message == PlaybackControlRequestBody.PlaybackControlType.SelectSong){
+                        songId=((Integer)body.getContent()).intValue();
+                        D.log("songId : "+songId);
+                        _song = null;
+                        cp = 0;
+                        for (Song s: songQueue) {
+                            if(s.getId() == songId){
+                                _song = s;
+                                break;
+                            }
+                            cp++;
+                        }
+                        isPlaying = true;
+                        playbackStateChanged.invoke(new EventArgs1<>(this, true));
+                        if(_song != null) {
+                            startONE(
+                                    getContext(),
+                                    Uri.parse(getSongQueue().get(cp).getData()),
+                                    getSongQueue().get(cp).getId()
+                            );
+                        }
+                    }
+                    break;
                 case MP_ACTION_EVT:
                     switch (((MusicPlayerActionBody)body).getEvt()){
                         case SONG_CHANGED:
-                            int songId=((Integer)body.getContent()).intValue();
+                            songId=((Integer)body.getContent()).intValue();
                             D.log("songId : "+songId);
-                            Song _song = null;
-                            int cp = 0;
+                            _song = null;
+                            cp = 0;
                             for (Song s: songQueue) {
                                 if(s.getId() == songId){
                                     _song = s;
@@ -271,11 +303,7 @@ public class MusicPlayerModel{
     // starting song by Uri
     public void startONE(Context context, Uri uri,Integer songId){
         D.log("---START FROM UI");
-        if(uri.getPath()!=null) {
-            invokeModelCommunication(MP_EVT.SONG_CHANGED, new SongChangedInfo(new File(uri.getPath()), songId), null);
-        }else{
-            Toast.makeText(context,"Not yet implemented",Toast.LENGTH_SHORT).show();
-        }
+        invokeModelCommunication(MP_EVT.SONG_CHANGED, new SongChangedInfo(new File(uri.getPath()), songId), null);
     }
 
     public void start(int songIndex){
