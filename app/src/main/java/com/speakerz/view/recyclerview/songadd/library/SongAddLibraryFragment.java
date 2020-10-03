@@ -44,31 +44,6 @@ public class SongAddLibraryFragment extends Fragment {
         this.model = model;
 
         listLibrary = model.getAudioListFiltered();
-        //adapterLibrary.notifyDataSetChanged();
-        /*AudioListUpdate.addListener(new EventListener<EventArgs1<Song>>() {
-            @Override
-            public void action(EventArgs1<Song> args) {
-                Song s=args.arg1();
-                libraryItem e = new libraryItem(s.getTitle(), s.getArtist(), s.getSongCoverArt(), s.getDuration());
-                listLibrary.add(e);
-                if(adapterLibrary!=null){
-                    if(getActivity()!=null)
-                         getActivity().runOnUiThread(new Runnable() {
-                             @Override
-                             public void run() {
-                                 recyclerViewLibrary.post(new Runnable()
-                                 {
-                                     @Override
-                                     public void run() {
-                                         adapterLibrary.notifyDataSetChanged();
-                                     }
-                                 });
-                             }
-                         });
-                }
-            }
-        });*/
-
 
     }
 
