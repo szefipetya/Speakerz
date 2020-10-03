@@ -17,9 +17,6 @@ public class Song implements Serializable {
     private String album;
     private String artist;
 
-    public void setAlbumId(Long albumId) {
-        this.albumId = albumId;
-    }
     private int cursorIndex;
     private Long albumId;
     private String owner;
@@ -30,7 +27,7 @@ public class Song implements Serializable {
         return cursorIndex;
     }
 
-    public Song(int cursorIndex, String data, String title, String album, String artist, String owner, Long albumId, Bitmap songCoverArt) {
+    public Song(int cursorIndex, String data, String title, String album, String artist, String owner, Long albumId) {
         this.cursorIndex=cursorIndex;
         this.data = data;
         this.title = title;
@@ -38,8 +35,11 @@ public class Song implements Serializable {
         this.artist = artist;
         this.owner = owner;
         this.albumId = albumId;
-       this.setSongCoverArt(songCoverArt);
        duration= "0";
+    }
+
+    public void setAlbumId(Long albumId) {
+        this.albumId = albumId;
     }
 
 

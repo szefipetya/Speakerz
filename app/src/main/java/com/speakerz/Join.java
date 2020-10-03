@@ -335,7 +335,7 @@ public class Join extends Activity {
                     if (((DeviceNetwork) (_service.getModel().getNetwork())).getClientSocketWrapper().controllerSocket != null) {
                         if (((DeviceNetwork) (_service.getModel().getNetwork())).getClientSocketWrapper().controllerSocket.send(
                                 // TODO replace "alma" to UUID
-                            new ChannelObject(new PutSongRequestBody(new Song(2,"","Title","album","artist", "alma",null,null)), TYPE.MP)
+                            new ChannelObject(new PutSongRequestBody(new Song(2,"","Title","album","artist", "alma",null)), TYPE.MP)
                            )) {
                             Toast.makeText(selfActivity, "Song request sent.", Toast.LENGTH_SHORT).show();
                         } else {

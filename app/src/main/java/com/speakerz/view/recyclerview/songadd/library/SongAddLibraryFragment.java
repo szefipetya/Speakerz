@@ -37,15 +37,15 @@ public class SongAddLibraryFragment extends Fragment {
 
     private RecyclerView recyclerViewLibrary;
 
-    private ArrayList<libraryItem> listLibrary = new ArrayList<>();
+    private List<Song> listLibrary = new ArrayList<>();
     private AdapterLibrary adapterLibrary;
     public final Event<EventArgs> CloseEvent=new Event<>();
     public void setModel(MusicPlayerModel model) {
         this.model = model;
 
-        fillAudioList(model.getAudioList(), listLibrary);
-        AudioListUpdate=model.AudioListUpdate;
-        AudioListUpdate.addListener(new EventListener<EventArgs1<Song>>() {
+        listLibrary = model.getAudioListFiltered();
+        //adapterLibrary.notifyDataSetChanged();
+        /*AudioListUpdate.addListener(new EventListener<EventArgs1<Song>>() {
             @Override
             public void action(EventArgs1<Song> args) {
                 Song s=args.arg1();
@@ -67,25 +67,10 @@ public class SongAddLibraryFragment extends Fragment {
                          });
                 }
             }
-        });
-        //  listLibrary = new ArrayList<>();
-        // listLibrary.add(new libraryItem("Egy két há", "Belga", "mindegy", "2:45"));
-        // listLibrary.add(new libraryItem("Daylight", "JOJI", "mindegy", "2:43"));
+        });*/
 
 
     }
-
-    private void fillAudioList(List<Song> input, ArrayList<libraryItem> output) {
-        List<Song> copy = new ArrayList<Song>(input);
-
-        if (output.isEmpty())
-            for (Song s : copy) {
-                libraryItem e = new libraryItem(s.getTitle(), s.getArtist(), s.getSongCoverArt(), s.getDuration());
-                output.add(e);
-            }
-    }
-
-    public Event<EventArgs1<Song>>AudioListUpdate;
 
     SongAddLibraryFragment self = this;
     private MusicPlayerModel model;
@@ -129,6 +114,7 @@ public class SongAddLibraryFragment extends Fragment {
             @Override
             public void afterTextChanged(Editable editable) {
                 model.AdapterLibraryEvent.invoke(new EventArgs2<VIEW_EVT, String>(this,VIEW_EVT.ADAPTER_SONG_FILTER, editable.toString()));
+                adapterLibrary.notifyDataSetChanged();
             }
         });
 
@@ -142,7 +128,7 @@ public class SongAddLibraryFragment extends Fragment {
                     @Override
                     public void onItemClick(View view, int position) {
                         if(position>=0){
-                            model.addSong(model.getAudioList().get(position));
+                            model.addSong(model.getAudioListFiltered().get(position));
                         }
 
                     }
@@ -153,7 +139,7 @@ public class SongAddLibraryFragment extends Fragment {
                 })
         );
 
-
+        adapterLibrary.notifyDataSetChanged();
 
         return mView;
     }

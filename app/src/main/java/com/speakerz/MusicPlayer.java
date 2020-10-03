@@ -142,7 +142,7 @@ public class MusicPlayer extends Activity {
 
 
         // All audio file list
-        songLA = new ArrayAdapter<Song>(this, R.layout.list_item, model.getAudioList());
+        songLA = new ArrayAdapter<Song>(this, R.layout.list_item, model.getAudioListFiltered());
         audioListView.setAdapter(songLA);
         songLA.setNotifyOnChange(true);
 
@@ -162,7 +162,7 @@ public class MusicPlayer extends Activity {
         audioListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Song song=model.getAudioList().get(i);
+                Song song=model.getAudioListFiltered().get(i);
                 model.addSong(song);
             }
         });

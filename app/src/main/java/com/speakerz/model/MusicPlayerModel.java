@@ -61,9 +61,10 @@ public class MusicPlayerModel{
     private Boolean isHost;
     boolean isPlaying=false;
 
-    // Song lists
+    // Song lists + filter
     private List<Song> songQueue = new LinkedList<>(); // the Songs we want to play as Song files.
     private ArrayList<Song> audioList = new ArrayList<>();// all music in the phone
+    private ArrayList<Song> audioListFiltered = new ArrayList<>();
     private String songFilter;
     Cursor audioReaderCursor;
 
@@ -73,7 +74,6 @@ public class MusicPlayerModel{
     public final Event<EventArgs2<Song, Integer>> songAddedEvent = new Event<>();
     public final Event<EventArgs2<Song, Integer>> songRemovedEvent = new Event<>();
     public final Event<EventArgs1<Song>> songChangedEvent = new Event<>();
-    public final Event<EventArgs1<Song>> AudioListUpdate=new Event<>();
     public final Event<EventArgs2<VIEW_EVT,String>> AdapterLibraryEvent=new Event<>();
 
 
@@ -211,35 +211,26 @@ public class MusicPlayerModel{
         AdapterLibraryEvent.addListener(new EventListener<EventArgs2<VIEW_EVT, String>>() {
             @Override
             public void action(EventArgs2<VIEW_EVT, String> args) {
-                if(args.arg1()==VIEW_EVT.ADAPTER_SONG_SCROLL){
-                    if(Integer.parseInt(args.arg2())%30==0){
-                        taskQueue.offer(MP_TASK_LOAD_40_AUDIO);
-                    }
-                }
                 if(args.arg1()==VIEW_EVT.ADAPTER_SONG_FILTER){
                     if(args.arg2().equals("")){
                        D.log("ures mezo");
                        songFilter="";
-                       audioList = new ArrayList<>();
-                       audioReaderCursor.moveToFirst();
-                        loadSomeAudio( audioReaderCursor);
+                       ListFiltering(songFilter);
                     }
                     else{
                        songFilter=args.arg2();
                        D.log(songFilter);
-                       audioList = new ArrayList<>();
-                       audioReaderCursor.moveToFirst();
-                        loadSomeAudio( audioReaderCursor);
+                       ListFiltering(songFilter);
                     }
                 }
             }
         });
-        init();
     }
 
     // Getters
     public List<Song> getSongQueue(){ return Collections.unmodifiableList(songQueue); }
     public List<Song> getAudioList() { return Collections.unmodifiableList(audioList); }
+    public List<Song> getAudioListFiltered() { return Collections.unmodifiableList(audioListFiltered); }
     public Context getContext() {return context; }
     public Boolean isHost() { return isHost; }
     public boolean isPlaying() {return isPlaying; }
@@ -343,63 +334,28 @@ public class MusicPlayerModel{
     }
 
     //Load All Audio from the device To AudioList ( you will be bale to choose from these to add to the SongQueue
-    private void loadSomeAudio(final Cursor cursor){
-                   int i=0;
-                   while(!cursor.isLast()&&cursor.moveToNext() &&i<40) {
-                       i++;
-                       loadNextAudio(cursor,this.songFilter);
+    /*private void loadSomeAudio(final Cursor cursor){
+                   while(!cursor.isLast()&&cursor.moveToNext()) {
+                       loadNextAudio(cursor);
                    }
-    }
+    }*/
 
-    final Integer MP_TASK_LOAD_40_AUDIO =1;
-    LinkedBlockingQueue<Integer> taskQueue=new  LinkedBlockingQueue<Integer>();
-    void init(){
-        Thread t=new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while(!externalShutdown){
-                    if(taskQueue.size()>0)
-                        if(taskQueue.poll()== MP_TASK_LOAD_40_AUDIO){
-                            loadSomeAudio(audioReaderCursor);
-                        }
-                }
-            }
-        });
-        t.start();
-    }
 
     //TODO: nem rosszötlet depicit laggol mikor keres az ember Kéne egy szűrés a listára hogy lehessen keresni benne ahoz viszont az egésznek bekell töltve lennie
-    private void loadNextAudio(Cursor cursor,String filter){
+    private void loadNextAudio(Cursor cursor){
         if (cursor.isAfterLast()) return;
         if (cursor.isBeforeFirst()) return;
-        if(filter.equals("")) {
             String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
             String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
             String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+
             //ez a rész most már a setExtraDataForSong-ban van.
-            Bitmap songCoverArt = null;
-            int albumID = audioReaderCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
-            Long thisAlbumId = audioReaderCursor.getLong(albumID);
-            Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisAlbumId);
-            ContentResolver res = context.getContentResolver();
-
-
-            InputStream in = null;
-            try {
-                in = res.openInputStream(uriSongCover);
-                songCoverArt = BitmapFactory.decodeStream(in);
-                in.close();
-
-            } catch (FileNotFoundException e) {
-                //e.printStackTrace();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            int albumID = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+            Long thisAlbumId = cursor.getLong(albumID);
 
 
             //TODO: replace alma to unique identifier
-            Song s = new Song(audioReaderCursor.getPosition(), "", title, album, artist, "alma", thisAlbumId, songCoverArt);
+            Song s = new Song(audioReaderCursor.getPosition(), "", title, album, artist, "alma", thisAlbumId);
             //s.setSongCoverArt(songCoverArt);
             // s.setAlbumId(thisAlbumId);
             int durMili = parseInt(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
@@ -421,62 +377,7 @@ public class MusicPlayerModel{
 
             }
             audioList.add(s);
-            AudioListUpdate.invoke(new EventArgs1<Song>(self, s));
-        }
-        else{
-            String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
-            if(title.startsWith(filter)){
-                String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
-                String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-                //ez a rész most már a setExtraDataForSong-ban van.
-                Bitmap songCoverArt = null;
-                int albumID = audioReaderCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
-                Long thisAlbumId = audioReaderCursor.getLong(albumID);
-                Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisAlbumId);
-                ContentResolver res = context.getContentResolver();
 
-
-                InputStream in = null;
-                try {
-                    in = res.openInputStream(uriSongCover);
-                    songCoverArt = BitmapFactory.decodeStream(in);
-                    in.close();
-
-                } catch (FileNotFoundException e) {
-                    //e.printStackTrace();
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-
-                //TODO: replace alma to unique identifier
-                Song s = new Song(audioReaderCursor.getPosition(), "", title, album, artist, "alma", thisAlbumId, songCoverArt);
-                //s.setSongCoverArt(songCoverArt);
-                // s.setAlbumId(thisAlbumId);
-                int durMili = parseInt(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
-                String duration;
-                durMili = durMili / 1000;
-                Integer durH = durMili / 3600;
-                durMili = durMili % 3600;
-                Integer durM = durMili / 60;
-                durMili = durMili % 60;
-                Integer durS = durMili;
-                if (durH > 0) {
-                    s.setDuration(durH.toString() + ":" + durM.toString() + ":" + durS.toString());
-                } else {
-                    if (durS < 10) {
-                        s.setDuration(durM.toString() + ":0" + durS.toString());
-                    } else {
-                        s.setDuration(durM.toString() + ":" + durS.toString());
-                    }
-
-                }
-                audioList.add(s);
-                AudioListUpdate.invoke(new EventArgs1<Song>(self, s));
-            }
-
-        }
     }
 
 
@@ -487,9 +388,29 @@ public class MusicPlayerModel{
         String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
         String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
         Cursor cursor = contentResolver.query(uri, null, selection, null, sortOrder);
-        if(cursor.moveToPosition(s.getCursorIndex() )){
+        if(cursor.moveToPosition(s.getCursorIndex())){
             String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+            int albumID = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+            Long thisAlbumId = cursor.getLong(albumID);
+            Bitmap songCoverArt = null;
+            Uri uriSongCover = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), thisAlbumId);
+            ContentResolver res = context.getContentResolver();
+
+
+            InputStream in = null;
+            try {
+                in = res.openInputStream(uriSongCover);
+                songCoverArt = BitmapFactory.decodeStream(in);
+                in.close();
+
+            } catch (FileNotFoundException e) {
+                //e.printStackTrace();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             s.setData(data);
+            s.setSongCoverArt(songCoverArt);
             //Print the title of the song that it found.
             // Save to audioList
         }
@@ -505,22 +426,37 @@ public class MusicPlayerModel{
         audioList = new ArrayList<>();
 
         if (audioReaderCursor != null && audioReaderCursor.getCount() > 0) {
-
-           int i =0;
-            while (audioReaderCursor.moveToNext() && i <1) {
-                i++;
-                loadNextAudio(audioReaderCursor,songFilter);
+            while (audioReaderCursor.moveToNext()) {
+                loadNextAudio(audioReaderCursor);
             }
         }
-       // audioReaderCursor.close();
-
 
     }
 
 
-
     public void loadAudio() {
         loadAudioWithPermission();
+        for(Song s : audioList){
+            audioListFiltered.add(s);
+        }
+    }
+
+
+    private void ListFiltering(String songFilter){
+        audioListFiltered.clear();
+        if(songFilter.equals("")){
+            for(Song s : audioList){
+                audioListFiltered.add(s);
+            }
+        }
+        else{
+            for(Song s : audioList){
+                if(s.getTitle().startsWith(songFilter)){
+                    audioListFiltered.add(s);
+                }
+            }
+
+        }
     }
 
 

@@ -33,22 +33,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHolderLibrary> {
     private final MusicPlayerModel model;
     Context contextLibrary;
-    ArrayList<libraryItem> listItems;
+    List<Song> listItems;
 
 
-    public AdapterLibrary(Context mContext, ArrayList<libraryItem> mList, MusicPlayerModel model){
+    public AdapterLibrary(Context mContext, List<Song> mList, MusicPlayerModel model){
         contextLibrary = mContext;
         listItems = mList;
         this.model=model;
         this.AdapterLibraryEvent=model.AdapterLibraryEvent;
-        model.AudioListUpdate.addListener(new EventListener<EventArgs1<Song>>() {
-            @Override
-            public void action(EventArgs1<Song> args) {
-                args.arg1().getCursorIndex();
-
-
-            }
-        });
     }
 
 
@@ -60,15 +52,15 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
     }
 
 
+    // TODO: Ez itt bugos a listItems méretét kell refaktorálni filterezéskor hogy ne lehessen tovább pörgetni
     @Override
     public void onBindViewHolder(@NonNull ViewHolderLibrary holder, int position) {
 
         //ez azért kell, hogyha vissza görget, akkor azokat már ne adja hozzá.
-
-            Song s=model.getAudioList().get(position);
-
-
-
+        if(!(position<model.getAudioListFiltered().size())) {
+            D.log("wat " +model.getAudioListFiltered().size() +" "+position);}
+        else{
+            Song s=model.getAudioListFiltered().get(position);
             String songName = s.getTitle();
             String artist = s.getArtist();
             String songLengthTime = s.getDuration();
@@ -77,22 +69,12 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
             holder.songArtistTextView.setText(artist);
             holder.songLengthTimeTextView.setText(songLengthTime);
 
-           /* if(s.getSongCoverArt() != null){
-                holder.coverImageView.setImageBitmap(s.getSongCoverArt());
-            }
-            else*/{
-                  holder.coverImageView.setImageResource(R.drawable.ic_twotone_music_note_24);
-            }
             D.log("clicked:"+position);
-            Integer pos = position;
-        if(!tabooPositions.contains(position)){
-        AdapterLibraryEvent.invoke(new EventArgs2<VIEW_EVT, String>(this,VIEW_EVT.ADAPTER_SONG_SCROLL,pos.toString()));
-        tabooPositions.add(position);
-        }
 
+        }
     }
 
-    List<Integer> tabooPositions=new ArrayList<>();
+
     Event<EventArgs2<VIEW_EVT,String>> AdapterLibraryEvent;
 
     @Override
@@ -102,14 +84,12 @@ public class AdapterLibrary extends RecyclerView.Adapter<AdapterLibrary.ViewHold
 
 
     public class ViewHolderLibrary extends RecyclerView.ViewHolder{
-        public ImageView coverImageView;
         public TextView songNameTextView;
         public TextView songArtistTextView;
         public TextView songLengthTimeTextView;
 
         public ViewHolderLibrary(@NonNull View itemView) {
             super(itemView);
-            coverImageView = itemView.findViewById(R.id.coverImageView);
             songNameTextView = itemView.findViewById(R.id.songNameTextView);
             songArtistTextView = itemView.findViewById(R.id.songArtistTextView);
             songLengthTimeTextView = itemView.findViewById(R.id.songLengthTimeTextView);
