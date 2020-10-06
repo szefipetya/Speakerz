@@ -15,7 +15,6 @@ import android.view.ViewGroup;
 import com.speakerz.R;
 import com.speakerz.view.recyclerview.songadd.library.AdapterDevice;
 import com.speakerz.view.recyclerview.songadd.library.deviceItem;
-import com.speakerz.view.recyclerview.songadd.library.libraryItem;
 
 import java.util.ArrayList;
 
