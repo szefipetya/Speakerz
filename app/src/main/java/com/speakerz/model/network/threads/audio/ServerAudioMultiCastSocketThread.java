@@ -191,6 +191,7 @@ private void mainLoop(){
 
 
                             }*/
+
                                 cli.eofSongReached = true;
                                 try {
                                     sendObjectOrDelete(cli, cli.dataSocket, new AudioPacket(-1, new byte[0]));
@@ -212,11 +213,12 @@ private void mainLoop(){
                                         synchronized (cli.eofReceivedFromClientLocker) {
                                             try {
                                                 cli.eofReceivedFromClientLocker.wait(2000);
-                                                ExceptionEvent.invoke(new EventArgs1<Exception>(self, new Exception("Don't swap that fast!")));
+                                              //  ExceptionEvent.invoke(new EventArgs1<Exception>(self, new Exception("Don't swap that fast!")));
                                             } catch (InterruptedException e) {
                                                 e.printStackTrace();
                                             }
                                         }
+                                    cli.bufferQueue.clear();
                                     cli.eofSongReachedFromClient=false;
                                 }
                             });

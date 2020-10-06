@@ -85,10 +85,15 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     private int lastPackageOffsetByDelta=0;
 
 final AtomicBoolean playbackStarted=new AtomicBoolean(false);
+
+Integer latestModulo=0;
+long byteCount=0;
     Runnable playAudioRunnable=new Runnable() {
 
         @Override
         public void run() {
+            long bytesPer1000ms =  metaDto.sampleRate * metaDto.bitsPerSample / 4;
+
             D.log("starting playback at"+actualAudioPackage);
             at.play();
             final Iterator<AudioPacket> itr=bufferQueue.iterator();
@@ -96,8 +101,12 @@ final AtomicBoolean playbackStarted=new AtomicBoolean(false);
             playbackStarted.set(true);
             while (itr.hasNext()&&!swapSong.get()) {
 
+                if(byteCount/bytesPer1000ms>latestModulo){
+                    latestModulo=(int)(byteCount/bytesPer1000ms);
+                    MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,new MusicPlayerActionBody(MP_EVT.SONG_ACT_TIME_SECONDS,latestModulo)));
+                }
                 AudioPacket packet=(AudioPacket)itr.next();
-
+                byteCount+=packet.data.length;
                 if(packet.packageNumber>=actualAudioPackage) {
 
                     if(!syncTasks.isEmpty()){

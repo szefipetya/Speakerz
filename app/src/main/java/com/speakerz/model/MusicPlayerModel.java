@@ -171,6 +171,10 @@ public class MusicPlayerModel{
                             break;
                         case SONG_ACT_TIME_SECONDS:
                             //TODO, not implemented
+                            Integer actTimeInSeconds = (Integer)body.getContent();
+                            D.log("act time: "+actTimeInSeconds);
+                            ;
+
                             break;
                         case SONG_RESUME:
                             D.log("resume");

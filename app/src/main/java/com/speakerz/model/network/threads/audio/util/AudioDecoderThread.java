@@ -146,8 +146,21 @@ public class AudioDecoderThread {
         final int READ_THRESHOLD = 2147483647;
         Header frame = null;
         int framesReaded = 0;
+        int byteCount=0;
+        int bytePerSec=metaInfo.getAudioHeader().getSampleRate()*4;
+      //  D.log("per sec"+bytePerSec);
+        Integer latestModulo=0;
         while (!eosReceived) {
+//D.log("mod"+byteCount/bytePerSec);
+//D.log("count"+byteCount);
+            if(byteCount/bytePerSec>latestModulo){
+                latestModulo=byteCount/bytePerSec ;
+                D.log("sec");
+                MusicPlayerActionEvent.invoke(new EventArgs1<Body>(null,new MusicPlayerActionBody(MP_EVT.SONG_ACT_TIME_SECONDS,latestModulo)));
+            }
+
             if(isPaused.get()){
+
                 synchronized (isPaused) {
                     try {
                         isPaused.wait();
@@ -176,14 +189,12 @@ public class AudioDecoderThread {
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.asShortBuffer().put(pcmChunk);
             bytes = buffer.array();
+            byteCount+=bytes.length;
             audioTrack.write(bytes, 0, bytes.length);
                 synchronized (actualPackageNumber){
                   actualPackageNumber.notify();
                 }
             actualPackageNumber.addAndGet(1);
-
-
-
             buffer.clear();
             bitStream.closeFrame();
         }
@@ -193,7 +204,7 @@ public class AudioDecoderThread {
         synchronized (playStoppedLocker) {
             playStoppedLocker.notify();
         }
-        //TODO: Ez nem érkezik meg a musicplayermodelbe
+
         MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_EOF,null)));
 
     }
