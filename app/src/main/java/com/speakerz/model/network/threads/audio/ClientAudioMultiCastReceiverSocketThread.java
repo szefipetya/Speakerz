@@ -222,12 +222,17 @@ final AtomicBoolean playbackStarted=new AtomicBoolean(false);
                             t.start();
                             D.log("thread started");
                     }else if(body.getContent().flag==AUDIO_CONTROL.RESUME_SONG){
+
+                        actualAudioPackage=body.getContent().number;
+                        actualSyncTimeOnServer=body.getContent().timeInMilliSeconds;
+                        syncTasks.offer(new SyncTask(actualSyncTimeOnServer));
                         isPaused.set(false);
                         synchronized (isPausedLocker) {
                             isPausedLocker.notify();
                         }
                         MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_RESUME,null)));
                     }else if(body.getContent().flag==AUDIO_CONTROL.PAUSE_SONG){
+
                         isPaused.set(true);
                         MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_PAUSE,null)));
                     }

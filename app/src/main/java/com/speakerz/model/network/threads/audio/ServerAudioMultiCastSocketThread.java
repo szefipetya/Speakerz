@@ -93,12 +93,37 @@ public class ServerAudioMultiCastSocketThread extends Thread {
     }
     public void resumeAudioStream(){
         D.log("resume");
-        sendAll(new ChannelObject(new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.RESUME_SONG)),TYPE.AUDIO_CONTROL_CLIENT));
-        MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_RESUME,null)));
+
+        if(isSongInPlay.get()) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    for (ClientSocketStructWrapper cli : clients) {
+                        AudioControlBody body1 = new AudioControlBody(new AudioControlDto(AUDIO_CONTROL.RESUME_SONG));
+                        synchronized (decoder.actualPackageNumber) {
+                            try {
+                                decoder.actualPackageNumber.wait();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            body1.getContent().number = decoder.actualPackageNumber.get();
+                        }
+
+                        body1.getContent().timeInMilliSeconds = new Date().getTime() - cli.timeWhenConnected;
+                        send(cli.senderInfoSocket, new ChannelObject(body1, TYPE.AUDIO_CONTROL_CLIENT));
+                        D.log("sync info  sent back");
+                    }
+                }
+            }).start();
+        }
         synchronized (decoder.isPaused){
             decoder.isPaused.set(false);
             decoder.isPaused.notify();
         }
+
+
+        MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_RESUME,null)));
+
     }
 
     public void pauseAudioStream() {
@@ -381,25 +406,6 @@ ServerAudioMultiCastSocketThread self=this;
                         }
                         struct.isClientInStream=false;
                     }
-
-                }else if(inObject.TYPE==TYPE.NET) {
-                   NetworkEventBody body = (NetworkEventBody) inObject.body;
-                   if(body.getContent()== NET_EVT.DISCONNECT){
-                       clients.remove(struct);
-                       struct.dataSocket.objectOutputStream.close();
-                       struct.dataSocket.objectInputStream.close();
-                       struct.dataSocket.socket.close();
-
-                       struct.senderInfoSocket.objectOutputStream.close();
-                       struct.senderInfoSocket.objectInputStream.close();
-                       struct.senderInfoSocket.socket.close();
-
-                       struct.receiverInfoSocket.objectOutputStream.close();
-                       struct.receiverInfoSocket.objectInputStream.close();
-                       struct.receiverInfoSocket.socket.close();
-                       D.log("client "+body.senderAddress+" disconnected.");
-                       break;
-                   }
                }else
                 {
                    D.log("ClientAudioThread: received wrong package");
