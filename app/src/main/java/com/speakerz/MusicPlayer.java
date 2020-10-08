@@ -63,11 +63,11 @@ public class MusicPlayer extends Activity {
     final EventListener<EventArgs2<Integer, Integer>> playbackDurationChanged = new EventListener<EventArgs2<Integer, Integer>>() {
         @Override
         public void action(EventArgs2<Integer, Integer> args) {
-            int current = args.arg1();
-            int total = args.arg2();
+            Integer current = args.arg1();
+            Integer total = args.arg2();
 
-            seekBar.setMax(total);
-            seekBar.setProgress(current);
+            if(total != null)seekBar.setMax(total);
+            if(current != null)seekBar.setProgress(current);
         }
     };
 
