@@ -80,7 +80,6 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     public ClientAudioMultiCastReceiverSocketThread() {
 
     }
-    int syncLagOffsetInPackages=0;
     int packagesToSkipByDelta=0;
     private int lastPackageOffsetByDelta=0;
 
@@ -101,9 +100,10 @@ long byteCount=0;
             final Iterator<AudioPacket> itr=bufferQueue.iterator();
             boolean firstTimeFound=true;
             playbackStarted.set(true);
+
             while (itr.hasNext()&&!swapSong.get()) {
 
-                if(byteCount/bytesPer1000ms>latestModulo){
+                if(byteCount/bytesPer1000ms>latestModulo||latestModulo==0){
                     latestModulo=(int)(byteCount/bytesPer1000ms);
                     MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,new MusicPlayerActionBody(MP_EVT.SONG_ACT_TIME_SECONDS,latestModulo)));
                 }
@@ -139,6 +139,8 @@ long byteCount=0;
             synchronized (swapSong) {
                 swapSong.notify();
             }
+            latestModulo=0;
+            byteCount=0;
 
         }
     };
@@ -162,6 +164,9 @@ long byteCount=0;
             D.log("packagesToSkipByDelta: " + packagesToSkipByDelta);
             D.log("lastPackageOffsetByDelta: " + lastPackageOffsetByDelta);
 
+
+            byteCount=(actualAudioPackage+packagesToSkipByDelta)*metaDto.packageSize+lastPackageOffsetByDelta;
+            latestModulo=0;
             int i = 0;
             while (itr.hasNext() && i < packagesToSkipByDelta) {
                 itr.next();
@@ -221,6 +226,8 @@ long byteCount=0;
                             //make sure, that she song will start.
                             actualAudioPackage=body.getContent().number;
                             actualSyncTimeOnServer=body.getContent().timeInMilliSeconds;
+
+
                             syncTasks.offer(new SyncTask(actualSyncTimeOnServer));
                             D.log("actual audio pack set to"+actualAudioPackage);
                             swapSong.set(false);

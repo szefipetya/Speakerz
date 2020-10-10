@@ -66,10 +66,23 @@ public class MusicPlayerModel{
     private ArrayList<Song> audioList = new ArrayList<>();// all music in the phone
     private ArrayList<Song> audioListFiltered = new ArrayList<>();
     private String songFilter;
+    private int currentPlayingTotalTime = 0;
+    private int currentPlayingCurrentTime = 0;
     Cursor audioReaderCursor;
 
     // Events
+    /**
+     * This event is invoked when the music is paused or started
+     * arg1: boolean - is music playing
+     */
     public final Event<EventArgs1<Boolean>> playbackStateChanged = new Event<>();
+
+    /**
+     * This event is invoked when the current playback duration, or the total duration of the song is changed
+     * (in seconds)
+     * arg1: Integer - current time in seconds
+     * arg2: Integer - total time in seconds
+     */
     public final Event<EventArgs2<Integer, Integer>> playbackDurationChanged = new Event<>();
     public final Event<EventArgs2<Song, Integer>> songAddedEvent = new Event<>();
     public final Event<EventArgs2<Song, Integer>> songRemovedEvent = new Event<>();
@@ -167,14 +180,14 @@ public class MusicPlayerModel{
                             break;
                         case SONG_MAX_TIME_SECONDS:
                             Long timeInSeconds = (Long)body.getContent();
-                            D.log("max time: "+timeInSeconds);
+                            currentPlayingTotalTime = timeInSeconds.intValue();
+                            playbackDurationChanged.invoke(new EventArgs2<Integer, Integer>(this, currentPlayingCurrentTime, currentPlayingTotalTime));
+
                             break;
                         case SONG_ACT_TIME_SECONDS:
-                            //TODO, not implemented
                             Integer actTimeInSeconds = (Integer)body.getContent();
-                            D.log("act time: "+actTimeInSeconds);
-                            ;
-
+                            currentPlayingCurrentTime = actTimeInSeconds;
+                            playbackDurationChanged.invoke(new EventArgs2<Integer, Integer>(this, currentPlayingCurrentTime, currentPlayingTotalTime));
                             break;
                         case SONG_RESUME:
                             D.log("resume");
@@ -437,6 +450,13 @@ public class MusicPlayerModel{
 
     }
 
+    public int getCurrentPlayingTotalTime() {
+        return currentPlayingTotalTime;
+    }
+
+    public int getCurrentPlayingCurrentTime() {
+        return currentPlayingCurrentTime;
+    }
 
     public void loadAudio() {
         loadAudioWithPermission();
