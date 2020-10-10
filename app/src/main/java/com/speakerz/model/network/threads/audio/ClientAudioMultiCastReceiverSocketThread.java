@@ -92,10 +92,12 @@ long byteCount=0;
 
         @Override
         public void run() {
-            long bytesPer1000ms =  metaDto.sampleRate * metaDto.bitsPerSample / 4;
+            long bytesPer1000ms =  metaDto.sampleRate * metaDto.bitsPerSample / 8*metaDto.channels;
 
             D.log("starting playback at"+actualAudioPackage);
-            at.play();
+            synchronized (audioTrackLocker) {
+                at.play();
+            }
             final Iterator<AudioPacket> itr=bufferQueue.iterator();
             boolean firstTimeFound=true;
             playbackStarted.set(true);
@@ -147,7 +149,7 @@ long byteCount=0;
             long timeSinceConnected = new Date().getTime() - timeWhenConnected;
             long deltaTime = timeSinceConnected - timeOnServerSinceConn;
             D.log("deltaTime in milliSec: " + deltaTime);
-            long bytesPer1000ms = metaDto.sampleRate * metaDto.bitsPerSample / 8;//1000 ms alatt ennyi byte megy le
+            long bytesPer1000ms = metaDto.sampleRate * metaDto.bitsPerSample / 8*metaDto.channels;//1000 ms alatt ennyi byte megy le
             D.log("bytesPer1000ms: " + bytesPer1000ms);
 
             long offsetInBytes = (long) ((float) (deltaTime / 1000 * bytesPer1000ms));
@@ -186,7 +188,10 @@ long byteCount=0;
     private void listen(SocketStruct struct) {
         while (!struct.socket.isClosed()) {
             try {
-                ChannelObject inObject = (ChannelObject) wrapper.receiverInfoSocket.objectInputStream.readObject();
+                ChannelObject inObject;
+                synchronized (wrapper.receiverInfoSocket) {
+                    inObject = (ChannelObject) wrapper.receiverInfoSocket.objectInputStream.readObject();
+                }
                 D.log("got something");
                 if (inObject.TYPE == TYPE.AUDIO_META) {
                     final AudioMetaBody body = (AudioMetaBody) inObject.body;
@@ -356,14 +361,16 @@ long byteCount=0;
         return at;
     }
     void send(SocketStruct struct,ChannelObject obj){
-        try {
-            struct.objectOutputStream.writeObject(obj);
-            struct.objectOutputStream.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
+        synchronized (struct) {
+            try {
+                struct.objectOutputStream.writeObject(obj);
+                struct.objectOutputStream.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
-
+    final Object  audioTrackLocker=new Object();
     Queue<AudioPacket> bufferQueue = new ConcurrentLinkedQueue<>();
     int minBufferSizeToPlay=200;
     boolean handlerRunning=false;
@@ -386,7 +393,14 @@ handlerRunning=true;
                     swapSong.set(true);
                     playbackStarted.set(false);
                     D.log("playback ended");
-                    at.stop();
+                    try{
+                        synchronized (audioTrackLocker) {
+                            at.stop();
+                        }
+                    }catch(IllegalStateException e){
+                        e.printStackTrace();
+                        ExceptionEvent.invoke(new EventArgs1<Exception>(this,new IllegalAccessException("Dont' swap that fast!"+e.getMessage())));
+                    }
 
                     i=0;
 
