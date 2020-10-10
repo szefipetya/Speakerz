@@ -153,9 +153,9 @@ public class AudioDecoderThread {
         while (!eosReceived) {
 //D.log("mod"+byteCount/bytePerSec);
 //D.log("count"+byteCount);
-            if(byteCount/bytePerSec>latestModulo){
+            if(byteCount/bytePerSec>latestModulo||latestModulo==0){
                 latestModulo=byteCount/bytePerSec ;
-                D.log("sec");
+
                 MusicPlayerActionEvent.invoke(new EventArgs1<Body>(null,new MusicPlayerActionBody(MP_EVT.SONG_ACT_TIME_SECONDS,latestModulo)));
             }
 
