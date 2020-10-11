@@ -465,5 +465,7 @@ public class MusicPlayerModel{
         }
     }
 
-
+    public String getSongFilter() {
+        return songFilter;
+    }
 }

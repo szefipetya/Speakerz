@@ -73,6 +73,7 @@ public class SongAddLibraryFragment extends Fragment {
         });
 
         EditText songNameFilter = (EditText) mView.findViewById(R.id.name_filter);
+        songNameFilter.setText(this.model.getSongFilter());
         songNameFilter.addTextChangedListener(new TextWatcher(){
 
 
