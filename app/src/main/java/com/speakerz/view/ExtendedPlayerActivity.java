@@ -33,6 +33,7 @@ public class ExtendedPlayerActivity extends Activity {
     TextView titleSongTV;
     TextView detailsTV;
     TextView totalTime;
+    TextView currentTime;
     ImageButton playButton;
     ImageButton prevButton;
     ImageButton nextButton;
@@ -130,6 +131,7 @@ public class ExtendedPlayerActivity extends Activity {
         backBtn=(ImageView)findViewById(R.id.extended_back);
         albumArt = findViewById(R.id.imageAlbum);
         totalTime = findViewById(R.id.textTotalTime);
+        currentTime = findViewById(R.id.textCurrentTime);
         extendedBack = findViewById(R.id.extended_back);
 
         prevButton.setImageResource(R.drawable.ic_m_prev);

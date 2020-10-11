@@ -341,13 +341,15 @@ public class MusicPlayerModel{
     }*/
 
 
-    //TODO: nem rosszötlet depicit laggol mikor keres az ember Kéne egy szűrés a listára hogy lehessen keresni benne ahoz viszont az egésznek bekell töltve lennie
+    //Tettem bele + filtert ami kiszűri a nagyon rövid <5mp és nemjo formátumu zenéket
+
     private void loadNextAudio(Cursor cursor){
         if (cursor.isAfterLast()) return;
         if (cursor.isBeforeFirst()) return;
             String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
             String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
             String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+            String extension = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.MIME_TYPE));
 
             //ez a rész most már a setExtraDataForSong-ban van.
             int albumID = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
@@ -359,8 +361,10 @@ public class MusicPlayerModel{
             //s.setSongCoverArt(songCoverArt);
             // s.setAlbumId(thisAlbumId);
             int durMili = parseInt(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
+            int durSec;
             String duration;
             durMili = durMili / 1000;
+            durSec = durMili;
             Integer durH = durMili / 3600;
             durMili = durMili % 3600;
             Integer durM = durMili / 60;
@@ -376,7 +380,9 @@ public class MusicPlayerModel{
                 }
 
             }
-            audioList.add(s);
+            if(durSec >=5 && extension.equals("audio/mpeg") ){
+                audioList.add(s);
+            }
 
     }
 
