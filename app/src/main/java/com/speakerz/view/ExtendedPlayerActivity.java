@@ -46,12 +46,18 @@ public class ExtendedPlayerActivity extends Activity {
     final EventListener<EventArgs2<Integer, Integer>> playbackDurationChanged = new EventListener<EventArgs2<Integer, Integer>>() {
         @Override
         public void action(EventArgs2<Integer, Integer> args) {
-            int current = args.arg1();
-            int total = args.arg2();
+            final Integer current = args.arg1();
+            final Integer total = args.arg2();
 
-            //seekBar.setMax(total);
-            //seekBar.setProgress(current);
-            D.log("dur " + current + " " + total );
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    seekBar.setMax(total);
+                    seekBar.setProgress(current);
+                    currentTime.setText(formatTime(current));
+                    totalTime.setText(formatTime(total));
+                }
+            });
         }
     };
 
@@ -96,6 +102,12 @@ public class ExtendedPlayerActivity extends Activity {
             setPlayIcon(model.isPlaying());
             updateSongText(model.getCurrentSong());
 
+            seekBar.setMax(model.getCurrentPlayingTotalTime());
+            seekBar.setProgress(model.getCurrentPlayingCurrentTime());
+            currentTime.setText(formatTime(model.getCurrentPlayingCurrentTime()));
+            totalTime.setText(formatTime(model.getCurrentPlayingTotalTime()));
+
+
             // Register model event handlers
         }
 
@@ -133,6 +145,8 @@ public class ExtendedPlayerActivity extends Activity {
         totalTime = findViewById(R.id.textTotalTime);
         currentTime = findViewById(R.id.textCurrentTime);
         extendedBack = findViewById(R.id.extended_back);
+        seekBar = findViewById(R.id.playerSeekBar);
+        currentTime = findViewById(R.id.textCurrentTime);
 
         prevButton.setImageResource(R.drawable.ic_m_prev);
         nextButton.setImageResource(R.drawable.ic_m_next);
@@ -185,6 +199,15 @@ public class ExtendedPlayerActivity extends Activity {
                 }
             }
         });
+    }
+
+    private String formatTime(int total){
+        int hours = total / 3600;
+        total -= hours*3600;
+        int mins = total/60;
+        total -= mins*60;
+        if(hours > 0) return String.format("%d:%02d:%02d", hours, mins, total);
+        return String.format("%d:%02d", mins, total);
     }
 
     @Override

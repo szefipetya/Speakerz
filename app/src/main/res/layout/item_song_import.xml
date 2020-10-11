@@ -26,19 +26,20 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.744" />
+            app:layout_constraintVertical_bias="0.767" />
 
         <TextView
             android:id="@+id/songNameTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
             android:layout_marginTop="8dp"
-            android:text="Line 1"
+            android:text="Line 1Line 1Line 1Line 1Line 1Line 1Line 1Line 1Line 1Line 1Line 1Line 1Line 1"
             android:textColor="@android:color/white"
             android:textSize="18sp"
             android:textStyle="bold"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            tools:layout_editor_absoluteX="8dp"
+            tools:maxLines="1" />
 
         <TextView
             android:id="@+id/songArtistTextView"

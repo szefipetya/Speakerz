@@ -80,24 +80,35 @@ public class ClientAudioMultiCastReceiverSocketThread extends Thread {
     public ClientAudioMultiCastReceiverSocketThread() {
 
     }
-    int syncLagOffsetInPackages=0;
     int packagesToSkipByDelta=0;
     private int lastPackageOffsetByDelta=0;
 
 final AtomicBoolean playbackStarted=new AtomicBoolean(false);
+
+Integer latestModulo=0;
+long byteCount=0;
     Runnable playAudioRunnable=new Runnable() {
 
         @Override
         public void run() {
+            long bytesPer1000ms =  metaDto.sampleRate * metaDto.bitsPerSample / 8*metaDto.channels;
+
             D.log("starting playback at"+actualAudioPackage);
-            at.play();
+            synchronized (audioTrackLocker) {
+                at.play();
+            }
             final Iterator<AudioPacket> itr=bufferQueue.iterator();
             boolean firstTimeFound=true;
             playbackStarted.set(true);
+
             while (itr.hasNext()&&!swapSong.get()) {
 
+                if(byteCount/bytesPer1000ms>latestModulo||latestModulo==0){
+                    latestModulo=(int)(byteCount/bytesPer1000ms);
+                    MusicPlayerActionEvent.invoke(new EventArgs1<Body>(this,new MusicPlayerActionBody(MP_EVT.SONG_ACT_TIME_SECONDS,latestModulo)));
+                }
                 AudioPacket packet=(AudioPacket)itr.next();
-
+                byteCount+=packet.data.length;
                 if(packet.packageNumber>=actualAudioPackage) {
 
                     if(!syncTasks.isEmpty()){
@@ -128,6 +139,8 @@ final AtomicBoolean playbackStarted=new AtomicBoolean(false);
             synchronized (swapSong) {
                 swapSong.notify();
             }
+            latestModulo=0;
+            byteCount=0;
 
         }
     };
@@ -138,7 +151,7 @@ final AtomicBoolean playbackStarted=new AtomicBoolean(false);
             long timeSinceConnected = new Date().getTime() - timeWhenConnected;
             long deltaTime = timeSinceConnected - timeOnServerSinceConn;
             D.log("deltaTime in milliSec: " + deltaTime);
-            long bytesPer1000ms = metaDto.sampleRate * metaDto.bitsPerSample / 8;//1000 ms alatt ennyi byte megy le
+            long bytesPer1000ms = metaDto.sampleRate * metaDto.bitsPerSample / 8*metaDto.channels;//1000 ms alatt ennyi byte megy le
             D.log("bytesPer1000ms: " + bytesPer1000ms);
 
             long offsetInBytes = (long) ((float) (deltaTime / 1000 * bytesPer1000ms));
@@ -151,6 +164,9 @@ final AtomicBoolean playbackStarted=new AtomicBoolean(false);
             D.log("packagesToSkipByDelta: " + packagesToSkipByDelta);
             D.log("lastPackageOffsetByDelta: " + lastPackageOffsetByDelta);
 
+
+            byteCount=(actualAudioPackage+packagesToSkipByDelta)*metaDto.packageSize+lastPackageOffsetByDelta;
+            latestModulo=0;
             int i = 0;
             while (itr.hasNext() && i < packagesToSkipByDelta) {
                 itr.next();
@@ -177,7 +193,10 @@ final AtomicBoolean playbackStarted=new AtomicBoolean(false);
     private void listen(SocketStruct struct) {
         while (!struct.socket.isClosed()) {
             try {
-                ChannelObject inObject = (ChannelObject) wrapper.receiverInfoSocket.objectInputStream.readObject();
+                ChannelObject inObject;
+                synchronized (wrapper.receiverInfoSocket) {
+                    inObject = (ChannelObject) wrapper.receiverInfoSocket.objectInputStream.readObject();
+                }
                 D.log("got something");
                 if (inObject.TYPE == TYPE.AUDIO_META) {
                     final AudioMetaBody body = (AudioMetaBody) inObject.body;
@@ -207,6 +226,8 @@ final AtomicBoolean playbackStarted=new AtomicBoolean(false);
                             //make sure, that she song will start.
                             actualAudioPackage=body.getContent().number;
                             actualSyncTimeOnServer=body.getContent().timeInMilliSeconds;
+
+
                             syncTasks.offer(new SyncTask(actualSyncTimeOnServer));
                             D.log("actual audio pack set to"+actualAudioPackage);
                             swapSong.set(false);
@@ -222,12 +243,17 @@ final AtomicBoolean playbackStarted=new AtomicBoolean(false);
                             t.start();
                             D.log("thread started");
                     }else if(body.getContent().flag==AUDIO_CONTROL.RESUME_SONG){
+
+                        actualAudioPackage=body.getContent().number;
+                        actualSyncTimeOnServer=body.getContent().timeInMilliSeconds;
+                        syncTasks.offer(new SyncTask(actualSyncTimeOnServer));
                         isPaused.set(false);
                         synchronized (isPausedLocker) {
                             isPausedLocker.notify();
                         }
                         MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_RESUME,null)));
                     }else if(body.getContent().flag==AUDIO_CONTROL.PAUSE_SONG){
+
                         isPaused.set(true);
                         MusicPlayerActionEvent.invoke(new EventArgs1<Body>("",new MusicPlayerActionBody(MP_EVT.SONG_PAUSE,null)));
                     }
@@ -342,14 +368,16 @@ final AtomicBoolean playbackStarted=new AtomicBoolean(false);
         return at;
     }
     void send(SocketStruct struct,ChannelObject obj){
-        try {
-            struct.objectOutputStream.writeObject(obj);
-            struct.objectOutputStream.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
+        synchronized (struct) {
+            try {
+                struct.objectOutputStream.writeObject(obj);
+                struct.objectOutputStream.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
-
+    final Object  audioTrackLocker=new Object();
     Queue<AudioPacket> bufferQueue = new ConcurrentLinkedQueue<>();
     int minBufferSizeToPlay=200;
     boolean handlerRunning=false;
@@ -372,7 +400,14 @@ handlerRunning=true;
                     swapSong.set(true);
                     playbackStarted.set(false);
                     D.log("playback ended");
-                    at.stop();
+                    try{
+                        synchronized (audioTrackLocker) {
+                            at.stop();
+                        }
+                    }catch(IllegalStateException e){
+                        e.printStackTrace();
+                        ExceptionEvent.invoke(new EventArgs1<Exception>(this,new IllegalAccessException("Dont' swap that fast!"+e.getMessage())));
+                    }
 
                     i=0;
 
