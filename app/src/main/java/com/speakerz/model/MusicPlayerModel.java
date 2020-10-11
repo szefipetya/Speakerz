@@ -451,7 +451,7 @@ public class MusicPlayerModel{
         }
         else{
             for(Song s : audioList){
-                if(s.getTitle().startsWith(songFilter)){
+                if(s.getTitle().startsWith(songFilter) || s.getArtist().startsWith(songFilter)){
                     audioListFiltered.add(s);
                 }
             }
