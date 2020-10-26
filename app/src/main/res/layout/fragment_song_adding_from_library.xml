@@ -10,7 +10,10 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         app:layout_constraintTop_toTopOf="parent"
-        android:background="#141199"/>
+        android:background="#1c355b"
+        android:drawableLeft="@drawable/ic_search"
+        android:hint="Search"
+        android:drawablePadding="10dp"/>
 
 
     <androidx.recyclerview.widget.RecyclerView
@@ -21,13 +24,14 @@
         android:layout_marginBottom="60dp"
         android:layout_marginTop="60dp"
         app:layout_constraintTop_toTopOf="@+id/name_filter"
-        app:layout_constraintBottom_toTopOf="@+id/button_holder"/>
+        app:layout_constraintBottom_toTopOf="@+id/button_holder"
+        />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/button_holder"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:background="#1b1b2f"
+        android:background="@android:color/transparent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
