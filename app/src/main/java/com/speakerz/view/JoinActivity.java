@@ -111,10 +111,6 @@ DeviceModel model;
         //setSensitiveTexts();
     }
 
-    private void setSensitiveTexts() {
-        if (((DeviceNetwork) (_service.getModel().getNetwork())).getHostDevice() != null)
-            ((TextView) (findViewById(R.id.host_name))).setText("Connected!\nHost:" + ((DeviceNetwork) (_service.getModel().getNetwork())).getHostDevice().deviceName);
-    }
 
 
     private void subscribeServiceEvents() {

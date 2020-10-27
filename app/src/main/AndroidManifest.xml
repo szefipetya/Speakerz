@@ -52,9 +52,7 @@
             android:name=".SpeakerzService"
             android:stopWithTask="false" />
 
-        <activity android:name="com.speakerz.Create" />
         <activity android:name="com.speakerz.view.JoinActivity" />
-        <activity android:name="com.speakerz.MusicPlayer"/>
         <activity android:name="com.speakerz.view.PlayerRecyclerActivity"/>
         <activity android:name="com.speakerz.view.ExtendedPlayerActivity"/>
         <activity android:name="com.speakerz.view.LandingActivity">

@@ -22,31 +22,22 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.provider.ContactsContract;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowId;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.speakerz.Create;
 import com.speakerz.R;
 import com.speakerz.SpeakerzService;
 import com.speakerz.debug.D;
-import com.speakerz.model.BaseModel;
 import com.speakerz.model.HostModel;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
 import com.speakerz.model.enums.EVT;
-import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
-import com.speakerz.model.network.Serializable.body.controller.PutNameListInitRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.model.network.event.BooleanEventArgs;
@@ -58,8 +49,6 @@ import com.speakerz.view.components.BottomMusicPlayer;
 import com.speakerz.view.components.NameChangeDialog;
 import com.speakerz.view.components.TopMenu;
 import com.speakerz.view.recyclerview.main.player.RecyclerView_FAB;
-
-import java.net.ConnectException;
 
 public class PlayerRecyclerActivity extends AppCompatActivity implements NameChangeDialog.NameChangeDialogListener{
     RecyclerView_FAB recyclerViewFab;
@@ -254,11 +243,9 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
             @Override
             public void action(TextChangedEventArgs args) {
                 if(args.event()== EVT.update_discovery_status){
-                    _service.getTextValueStorage().setTextValue(R.id.discover_status, args.text());
                     _service.getTextValueStorage().autoConfigureTexts(self);
                 }
                 if(args.event()==EVT.h_service_created){
-                    _service.getTextValueStorage().setTextValue(R.id.h_service_status, args.text());
                     _service.getTextValueStorage().autoConfigureTexts(self);
                 }
             }

@@ -46,6 +46,7 @@ import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
 import com.speakerz.util.EventListener;
+import com.speakerz.view.LandingActivity;
 import com.speakerz.viewModel.TextValueStorage;
 
 import org.w3c.dom.Text;
@@ -217,7 +218,7 @@ public class SpeakerzService extends Service {
     private Notification showForegroundNotification(String contentText) {
         // Create intent that will bring our app to the front, as if it was tapped in the app
         // launcher
-        Intent showTaskIntent = new Intent(getApplicationContext(), MainActivity.class);
+        Intent showTaskIntent = new Intent(getApplicationContext(), LandingActivity.class);
         showTaskIntent.setAction(Intent.ACTION_MAIN);
         showTaskIntent.addCategory(Intent.CATEGORY_LAUNCHER);
         showTaskIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
