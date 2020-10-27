@@ -1,13 +1,9 @@
 package com.speakerz.view.recyclerview.main.player;
 
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.view.View;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;;
 
@@ -15,7 +11,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.speakerz.R;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
-import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;

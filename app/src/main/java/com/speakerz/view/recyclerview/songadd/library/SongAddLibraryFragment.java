@@ -1,6 +1,5 @@
 package com.speakerz.view.recyclerview.songadd.library;
 
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -31,7 +30,6 @@ import com.speakerz.view.recyclerview.RecyclerItemClickListener;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class SongAddLibraryFragment extends Fragment {
 

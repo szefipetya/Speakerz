@@ -15,7 +15,7 @@
         android:background="@color/transparent"
         android:clickable="true"
         android:rotation="-180"
-        android:src="@drawable/ic_eye"
+        app:srcCompat="@drawable/ic_eye"
         android:tint="@android:color/darker_gray"
         app:layout_constraintBottom_toBottomOf="@id/discover_status"
         app:layout_constraintEnd_toEndOf="parent"

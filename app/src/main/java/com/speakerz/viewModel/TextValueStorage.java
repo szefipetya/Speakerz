@@ -1,13 +1,8 @@
 package com.speakerz.viewModel;
 
-import android.util.Pair;
-import android.widget.ListView;
 import android.widget.TextView;
 
-import androidx.annotation.RequiresApi;
 import android.app.Activity;
-
-import com.speakerz.debug.D;
 
 import java.io.Serializable;
 import java.util.HashMap;

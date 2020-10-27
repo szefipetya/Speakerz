@@ -1,6 +1,5 @@
 package com.speakerz;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -10,7 +9,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
@@ -23,37 +21,24 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
-import android.view.Display;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
-import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
-import androidx.core.content.ContextCompat;
 
 import com.speakerz.debug.D;
 import com.speakerz.model.BaseModel;
 import com.speakerz.model.DeviceModel;
 import com.speakerz.model.HostModel;
-import com.speakerz.model.enums.EVT;
-import com.speakerz.model.network.DeviceNetwork;
 import com.speakerz.model.network.WifiBroadcastReciever;
 import com.speakerz.model.network.event.BooleanEventArgs;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
-import com.speakerz.model.network.event.TextChangedEventArgs;
 import com.speakerz.util.Event;
-import com.speakerz.util.EventArgs;
-import com.speakerz.util.EventArgs1;
-import com.speakerz.util.EventListener;
 import com.speakerz.view.LandingActivity;
 import com.speakerz.viewModel.TextValueStorage;
 
-import org.w3c.dom.Text;
-
 import java.io.File;
-
-import ealvatag.audio.exceptions.CannotReadException;
 
 public class SpeakerzService extends Service {
 
