@@ -39,7 +39,6 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
         Song currentItem = mItemList.get(position);
         if(currentItem.getSongCoverArt() == null){
             holder.mImageView.setImageResource(R.drawable.ic_twotone_music_note_24);
-            System.out.println("nincs Art");
         }
         else{
             holder.mImageView.setImageBitmap(currentItem.getSongCoverArt());

@@ -268,12 +268,23 @@ public class MusicPlayerModel{
     }
 
     public void removeSong(Song song) {
+        // TODO: Ez ittt hibás emiatt törlődik rossz indexOf(song) nem jó értéket ad vissza hanem az első egyezőt  a listában
         int i = songQueue.indexOf(song);
         if(i >= 0) {
+            D.log("index of song"+i);
             songQueue.remove(i);
             songRemovedEvent.invoke(new EventArgs2<>(this, song, i));
         }
     }
+
+    /*public void removeSongByIndex(int i) {
+        //TODO : eza jomegoldás elvileg
+        if(i >= 0) {
+            D.log("index of song"+i);
+            songQueue.remove(i);
+            songRemovedEvent.invoke(new EventArgs2<>(this, song, i));
+        }
+    }*/
 
 
     // Close music player services
