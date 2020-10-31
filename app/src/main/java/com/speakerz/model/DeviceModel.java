@@ -147,7 +147,7 @@ DeviceModel self=this;
             @Override
             public void action(EventArgs1<Body> args) {
                 D.log("deleteSong Client");
-                musicPlayerModel.removeSong(musicPlayerModel.getSongQueue().get((Integer) args.arg1().getContent()));
+                musicPlayerModel.removeSongByIndex(musicPlayerModel.getSongQueue().get((Integer) args.arg1().getContent()),(Integer) args.arg1().getContent());
             }
         });
 

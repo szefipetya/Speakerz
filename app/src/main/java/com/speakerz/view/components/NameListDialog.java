@@ -65,3 +65,5 @@ public class NameListDialog extends AppCompatDialogFragment {
 NameListDialog self=this;
 
 }
+
+

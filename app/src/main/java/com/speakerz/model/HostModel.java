@@ -130,7 +130,7 @@ public class HostModel extends BaseModel {
         DeleteSongEvent.addListener(new EventListener<EventArgs1<Body>>(){
             @Override
             public void action(EventArgs1<Body> args) {
-                musicPlayerModel.removeSong(musicPlayerModel.getSongQueue().get((Integer) args.arg1().getContent()));
+                musicPlayerModel.removeSongByIndex(musicPlayerModel.getSongQueue().get((Integer) args.arg1().getContent()),(Integer) args.arg1().getContent());
                 try {
                     network.getServerSocketWrapper().controllerSocket.sendAll(new ChannelObject(new DeleteSongRequestBody((Integer) args.arg1().getContent()), TYPE.DELETE_SONG));
                 } catch (IOException e) {

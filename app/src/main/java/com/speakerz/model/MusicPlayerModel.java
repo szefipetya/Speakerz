@@ -277,14 +277,14 @@ public class MusicPlayerModel{
         }
     }
 
-    /*public void removeSongByIndex(int i) {
+    public void removeSongByIndex(Song song, int i) {
         //TODO : eza jomegoldás elvileg
         if(i >= 0) {
             D.log("index of song"+i);
             songQueue.remove(i);
             songRemovedEvent.invoke(new EventArgs2<>(this, song, i));
         }
-    }*/
+    }
 
 
     // Close music player services
