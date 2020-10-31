@@ -35,6 +35,7 @@ import ealvatag.audio.exceptions.CannotReadException;
 
 
 public abstract class BaseModel {
+
     public abstract void start();
     public abstract void stop();
 
@@ -42,7 +43,6 @@ public abstract class BaseModel {
     public SharedPreferences.Editor editor;
     public static final String mypreference = "mypref";
     public static final String myName= "Name";
-
     public Boolean isAppRunning=true;
 
     public String NickName;

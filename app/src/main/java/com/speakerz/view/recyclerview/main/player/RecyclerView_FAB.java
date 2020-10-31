@@ -1,14 +1,20 @@
 package com.speakerz.view.recyclerview.main.player;
 
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.speakerz.R;
+import com.speakerz.model.BaseModel;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
 import com.speakerz.model.network.Serializable.enums.TYPE;
@@ -39,14 +45,14 @@ public class RecyclerView_FAB  {
     private boolean isFabOpen;
     private MusicPlayerModel model;
    private Boolean isSongPickerOpen=false;
-
+    private BaseModel controllModel;
     // private Animation mFabOpenAnim, mFabCloseAnim; //Jelenleg nem működik
 
     public RecyclerView_FAB(PlayerRecyclerActivity activity){
         this.activity = activity;
         itemList = new ArrayList<>();
         buildRecyclerView();
-        initButtons();
+        //initButtons();
     }
 
     final EventListener<EventArgs2<Song, Integer>> songAddedListener = new EventListener<EventArgs2<Song, Integer>>() {
@@ -118,37 +124,48 @@ public class RecyclerView_FAB  {
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private void initButtons() {
         isFabOpen = false;
         // mFabOpenAnim = AnimationUtils.loadAnimation(activity, R.anim.fab_open);
         // mFabCloseAnim = AnimationUtils.loadAnimation(activity, R.anim.fab_close);
-
+        //TODO: cliend music adding CLIENT BLOCK
+        mMainFab = activity.findViewById(R.id.fab_basic);
+        //TODO elavult picit ez a modszer de csak ideiglenes ugyis
+        if(!model.isHost()){
+            mMainFab.setImageDrawable(activity.getDrawable(R.drawable.ic_baseline_lock_24));
+        }
         mMainFab = activity.findViewById(R.id.fab_basic);
         mMainFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(isFabOpen){
-                    mLibraryFab.setVisibility(View.INVISIBLE);
-                    mYoutubeFab.setVisibility(View.INVISIBLE);
-                    mLibraryText.setVisibility(View.INVISIBLE);
-                    mYoutubeText.setVisibility(View.INVISIBLE);
-                    //mLibraryFab.setAnimation(mFabCloseAnim);
-                    //mYoutubeFab.setAnimation(mFabCloseAnim);
+                //CLIENT BLOCK MUSICADDING
+                if(model.isHost()) {
+                    if (isFabOpen) {
+                        mLibraryFab.setVisibility(View.INVISIBLE);
+                        mYoutubeFab.setVisibility(View.INVISIBLE);
+                        mLibraryText.setVisibility(View.INVISIBLE);
+                        mYoutubeText.setVisibility(View.INVISIBLE);
+                        //mLibraryFab.setAnimation(mFabCloseAnim);
+                        //mYoutubeFab.setAnimation(mFabCloseAnim);
 
-                    isFabOpen = false;
-                    activity.lightOverlay();
-                }else {
-                    mLibraryFab.setVisibility(View.VISIBLE);
-                    mYoutubeFab.setVisibility(View.VISIBLE);
-                    mLibraryText.setVisibility(View.VISIBLE);
-                    mYoutubeText.setVisibility(View.VISIBLE);
-                    //mLibraryFab.setAnimation(mFabOpenAnim);
-                    //mYoutubeFab.setAnimation(mFabOpenAnim);
+                        isFabOpen = false;
+                        activity.lightOverlay();
+                    } else {
+                        mLibraryFab.setVisibility(View.VISIBLE);
+                        mYoutubeFab.setVisibility(View.VISIBLE);
+                        mLibraryText.setVisibility(View.VISIBLE);
+                        mYoutubeText.setVisibility(View.VISIBLE);
+                        //mLibraryFab.setAnimation(mFabOpenAnim);
+                        //mYoutubeFab.setAnimation(mFabOpenAnim);
 
-                    isFabOpen = true;
-                    activity.darkOverlay();
+                        isFabOpen = true;
+                        activity.darkOverlay();
+                    }
                 }
-
+                else{
+                    Toast.makeText(activity, "This function is not available yet", Toast.LENGTH_SHORT).show();
+                }
                 //Darker background + Toolbar -> Ezt kell visszaállítani az eredeti színekkel a listában lévő plusz gomb lenyomása után
                 //Sötétítés
 
@@ -237,6 +254,8 @@ public class RecyclerView_FAB  {
         model.songAddedEvent.addListener(songAddedListener);
         model.songRemovedEvent.addListener(songRemovedListener);
         this.model = model;
+        // api level öreg picit de ezvan
+        initButtons();
     }
 
     public void releaseModel() {
