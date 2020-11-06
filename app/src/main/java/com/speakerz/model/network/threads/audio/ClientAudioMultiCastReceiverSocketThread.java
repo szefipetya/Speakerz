@@ -175,7 +175,7 @@ long byteCount=0;
             }
             if (itr.hasNext()) {
                 AudioPacket packet = (AudioPacket) itr.next();
-                byte slicedBytes[] = Arrays.copyOfRange(packet.data, lastPackageOffsetByDelta, packet.data.length);
+                byte[] slicedBytes = Arrays.copyOfRange(packet.data, lastPackageOffsetByDelta, packet.data.length);
                 D.log("sliced length:" + slicedBytes.length);
                 at.write(slicedBytes, 0, slicedBytes.length);
             }

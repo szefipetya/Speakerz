@@ -175,7 +175,7 @@ public class LandingActivity extends AppCompatActivity {
         //Permission&Policy
     // Function to check and request permission
     List<String> permissionsToAsk=new ArrayList<String>();
-    public void checkPermissions(String permissions[], int requestCode) {
+    public void checkPermissions(String[] permissions, int requestCode) {
 
         // Checking if permission is not granted
         permissionsToAsk.clear();

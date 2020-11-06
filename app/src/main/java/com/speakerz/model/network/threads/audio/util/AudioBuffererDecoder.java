@@ -144,8 +144,8 @@ public AtomicInteger maxPackageNumber=new AtomicInteger(0);
                     metaDto.packageSize=bytes.length;
 
                     MetaDtoReadyEvent.invoke(new EventArgs1<>(self,metaDto));
-                    D.log("converted size: "+String.valueOf(metaDto.packageSize));
-                    D.log("original package size: "+ String.valueOf(bytes.length));
+                    D.log("converted size: "+ metaDto.packageSize);
+                    D.log("original package size: "+ bytes.length);
                 }
 
                 AudioPacket pack=new AudioPacket(bytes.length,bytes);

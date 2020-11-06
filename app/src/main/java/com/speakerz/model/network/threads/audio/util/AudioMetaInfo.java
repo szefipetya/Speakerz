@@ -52,8 +52,8 @@ public class AudioMetaInfo {
         D.log("data length"+audioHeader.getAudioDataLength());
         final int bitRate = audioHeader.getBitsPerSample();
         D.log("bitRate: " + bitRate);
-        D.log("bits per sample: " + String.valueOf(audioHeader.getBitsPerSample()));
-        D.log("sample rate: " + String.valueOf(audioHeader.getSampleRate()));
+        D.log("bits per sample: " + audioHeader.getBitsPerSample());
+        D.log("sample rate: " + audioHeader.getSampleRate());
         final String encodingType = audioHeader.getEncodingType();
         D.log("encodingType: " + encodingType);
         D.log("isvariablebitrate: " + audioHeader.isVariableBitRate());

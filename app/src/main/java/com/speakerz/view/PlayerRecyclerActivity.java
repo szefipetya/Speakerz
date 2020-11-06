@@ -32,6 +32,7 @@ import android.widget.Toast;
 import com.speakerz.R;
 import com.speakerz.SpeakerzService;
 import com.speakerz.debug.D;
+import com.speakerz.model.BaseModel;
 import com.speakerz.model.HostModel;
 import com.speakerz.model.MusicPlayerModel;
 import com.speakerz.model.Song;
@@ -316,9 +317,9 @@ private void goBackToJoinPage(){
         System.out.println(username+"outside");
         NameItem item = new NameItem(username,"en",model.getModel().deviceID);
         model.getModel().NickName=username;
-        model.getModel().editor.putString(model.getModel().myName,username);
+        model.getModel().editor.putString(BaseModel.myName,username);
         model.getModel().editor.commit();
-        System.out.println(model.getModel().sharedpreferences.getString(model.getModel().myName,"nincs Név"));
+        System.out.println(model.getModel().sharedpreferences.getString(BaseModel.myName,"nincs Név"));
         PutNameChangeRequestBody body1 = new PutNameChangeRequestBody(null,item);
         model.getModel().NameChangeEvent.invoke(new EventArgs2<Body, TYPE>(null,body1,TYPE.NAME));
     }

@@ -379,7 +379,7 @@ final public Object playStoppedLocker=new Object();
         format.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate);
         format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, channelConfig);
 
-        int samplingFreq[] = {
+        int[] samplingFreq = {
                 96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050,
                 16000, 12000, 11025, 8000
         };
