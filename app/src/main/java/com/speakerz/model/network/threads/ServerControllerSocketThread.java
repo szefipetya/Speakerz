@@ -1,14 +1,11 @@
 package com.speakerz.model.network.threads;
 
-import android.widget.Toast;
-
 import com.speakerz.debug.D;
+import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.NetworkEventBody;
-import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
 import com.speakerz.model.network.Serializable.body.controller.GetServerInfoBody;
 import com.speakerz.model.network.Serializable.body.controller.GetSongListBody;
-import com.speakerz.model.network.Serializable.ChannelObject;
 import com.speakerz.model.network.Serializable.body.controller.INITDeviceAddressBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
@@ -21,14 +18,12 @@ import com.speakerz.util.EventArgs2;
 import com.speakerz.util.ThreadSafeEvent;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.channels.ServerSocketChannel;
 import java.util.LinkedList;
 
 public class ServerControllerSocketThread extends Thread implements SocketThread{

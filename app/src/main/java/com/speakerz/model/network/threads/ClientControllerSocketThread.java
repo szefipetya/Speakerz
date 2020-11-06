@@ -1,18 +1,10 @@
 package com.speakerz.model.network.threads;
 
-import android.os.Build;
-import android.widget.Toast;
-
 import com.speakerz.debug.D;
-import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.ChannelObject;
-import com.speakerz.model.network.Serializable.body.NetworkEventBody;
-import com.speakerz.model.network.Serializable.body.audio.MusicPlayerActionBody;
+import com.speakerz.model.network.Serializable.body.Body;
 import com.speakerz.model.network.Serializable.body.controller.INITDeviceAddressBody;
-import com.speakerz.model.network.Serializable.body.controller.PutNameChangeRequestBody;
 import com.speakerz.model.network.Serializable.body.controller.PutNameListInitRequestBody;
-import com.speakerz.model.network.Serializable.body.controller.content.NameItem;
-import com.speakerz.model.network.Serializable.enums.NET_EVT;
 import com.speakerz.model.network.Serializable.enums.TYPE;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs1;

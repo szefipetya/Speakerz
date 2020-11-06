@@ -12,11 +12,9 @@ import com.speakerz.model.event.EventHandler;
 import com.speakerz.model.event.UpdateEventManager;
 import com.speakerz.model.network.event.PermissionCheckEventArgs;
 import com.speakerz.model.network.event.TextChangedEventArgs;
-import com.speakerz.model.network.event.channel.ConnectionUpdatedEventArgs;
 import com.speakerz.util.Event;
 import com.speakerz.util.EventArgs;
 import com.speakerz.util.EventArgs1;
-import com.speakerz.util.EventListener;
 
 import java.util.ArrayList;
 import java.util.List;
