@@ -74,7 +74,6 @@ public class RecyclerView_FAB  {
                 @Override
                 public void run() {
                     if(mAdapter == null) return;
-                    //mAdapter.notifyItemRemoved(args.arg2());
                     mAdapter.notifyDataSetChanged();
                 }
             });
@@ -82,38 +81,6 @@ public class RecyclerView_FAB  {
         }
     };
 
-    public void insertItem(final int position,final String from,final int pic) {
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-                mAdapter.notifyItemInserted(position);
-            }
-        });
-
-    }
-
-    public void removeItem(final int position) {
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-                mAdapter.notifyItemRemoved(position);
-            }
-        });
-
-    }
-
-    public void changeItem(final int position,final String text) {
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-                mAdapter.notifyItemChanged(position);
-            }
-        });
-
-    }
 
     public void buildRecyclerView() {
         mRecyclerView = activity.findViewById(R.id.recyclerView);
