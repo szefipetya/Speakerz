@@ -268,7 +268,6 @@ public class MusicPlayerModel{
     }
 
     public void removeSong(Song song) {
-        // TODO: Ez ittt hibás emiatt törlődik rossz indexOf(song) nem jó értéket ad vissza hanem az első egyezőt  a listában
         int i = songQueue.indexOf(song);
         if(i >= 0) {
             D.log("index of song"+i);
@@ -277,8 +276,10 @@ public class MusicPlayerModel{
         }
     }
 
+
+
     public void removeSongByIndex(Song song, int i) {
-        //TODO : eza jomegoldás elvileg
+        //TODO : KÉPERNYŐLEZÁRÁS ESTÉN SOKSZOROZÓDIKA TÖRLÉS!!! (NEMITT VAN AHIBA DE IDE IROM)
         if(i >= 0) {
             D.log("index of song"+i);
             songQueue.remove(i);
