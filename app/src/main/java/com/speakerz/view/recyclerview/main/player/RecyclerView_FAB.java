@@ -34,7 +34,6 @@ import java.util.ArrayList;
 public class RecyclerView_FAB  {
     PlayerRecyclerActivity activity;
 
-    private ArrayList<Item> itemList;
 
     private RecyclerView mRecyclerView;
     private Adapter mAdapter;
@@ -50,7 +49,6 @@ public class RecyclerView_FAB  {
 
     public RecyclerView_FAB(PlayerRecyclerActivity activity){
         this.activity = activity;
-        itemList = new ArrayList<>();
         buildRecyclerView();
         //initButtons();
     }
@@ -76,7 +74,8 @@ public class RecyclerView_FAB  {
                 @Override
                 public void run() {
                     if(mAdapter == null) return;
-                    mAdapter.notifyItemRemoved(args.arg2());
+                    //mAdapter.notifyItemRemoved(args.arg2());
+                    mAdapter.notifyDataSetChanged();
                 }
             });
 
@@ -87,7 +86,7 @@ public class RecyclerView_FAB  {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                itemList.add(new Item(pic, from + ": New Item at position: " + (position), "Artist"));
+
                 mAdapter.notifyItemInserted(position);
             }
         });
@@ -98,7 +97,7 @@ public class RecyclerView_FAB  {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                itemList.remove(position);
+
                 mAdapter.notifyItemRemoved(position);
             }
         });
@@ -109,7 +108,7 @@ public class RecyclerView_FAB  {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                itemList.get(position).changeText1(text);
+
                 mAdapter.notifyItemChanged(position);
             }
         });
@@ -220,8 +219,8 @@ public class RecyclerView_FAB  {
         mYoutubeFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                int position = itemList.size();
-                insertItem(position, "Youtube", R.drawable.ic_youtube_bassline);
+                //int position = 1;
+                //insertItem(position, "Youtube", R.drawable.ic_youtube_bassline);
                 isFabOpen = false;
 
                 mLibraryFab.setVisibility(View.INVISIBLE);
@@ -235,6 +234,7 @@ public class RecyclerView_FAB  {
 
 
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void initModel(final MusicPlayerModel model) {
         mAdapter = new Adapter(model.getSongQueue());
         mRecyclerView.setAdapter(mAdapter);
