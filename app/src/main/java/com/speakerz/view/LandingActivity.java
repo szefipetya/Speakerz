@@ -18,6 +18,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.AnimationDrawable;
 import android.location.LocationManager;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -25,6 +26,7 @@ import android.os.StrictMode;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import com.speakerz.R;
 import com.speakerz.SpeakerzService;
@@ -56,11 +58,15 @@ public class LandingActivity extends AppCompatActivity {
         Button buttonJoin = (Button) findViewById(R.id.button_join);
         buttonJoin.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-
-                initAndStart(false);
-                Intent Act2 = new Intent(getApplicationContext(), JoinActivity.class);
-                startActivity(Act2);
-
+                WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                if (wifiManager.isWifiEnabled()) {
+                    initAndStart(false);
+                    Intent Act2 = new Intent(getApplicationContext(), JoinActivity.class);
+                    startActivity(Act2);
+                }
+                else{
+                    Toast.makeText( getApplicationContext(),"PLS ENABLE WIFI",Toast.LENGTH_SHORT).show();
+                }
             }
 
         });
@@ -69,11 +75,16 @@ public class LandingActivity extends AppCompatActivity {
         Button buttonCreate = (Button) findViewById(R.id.button_create);
         buttonCreate.setOnClickListener(new View.OnClickListener(){
             public void onClick(View view){
-                initAndStart(true);
-             /*   Intent Act2 = new Intent(getApplicationContext(),Create.class);
-                startActivity(Act2);*/
-                Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);
-                startActivity(Act2);
+                WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                if (wifiManager.isWifiEnabled()) {
+                    Toast.makeText( getApplicationContext(),"PLS ENABLE WIFI",Toast.LENGTH_SHORT).show();
+                    initAndStart(true);
+                    Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);
+                    startActivity(Act2);
+                }
+                else{
+                    Toast.makeText( getApplicationContext(),"PLS ENABLE WIFI",Toast.LENGTH_SHORT).show();
+                }
 
 
             }
