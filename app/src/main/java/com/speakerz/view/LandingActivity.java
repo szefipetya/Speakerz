@@ -77,7 +77,6 @@ public class LandingActivity extends AppCompatActivity {
             public void onClick(View view){
                 WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
                 if (wifiManager.isWifiEnabled()) {
-                    Toast.makeText( getApplicationContext(),"PLS ENABLE WIFI",Toast.LENGTH_SHORT).show();
                     initAndStart(true);
                     Intent Act2 = new Intent(getApplicationContext(), PlayerRecyclerActivity.class);
                     startActivity(Act2);

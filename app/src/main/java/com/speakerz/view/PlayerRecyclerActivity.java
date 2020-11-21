@@ -247,10 +247,12 @@ public class PlayerRecyclerActivity extends AppCompatActivity implements NameCha
             @Override
             public void action(TextChangedEventArgs args) {
                 if(args.event()== EVT.update_discovery_status){
+                    _service.getTextValueStorage().setTextValue(R.id.discover_status, args.text());
                     _service.getTextValueStorage().autoConfigureTexts(self);
                 }
                 if(args.event()==EVT.h_service_created){
                     _service.getTextValueStorage().autoConfigureTexts(self);
+                    _service.getTextValueStorage().setTextValue(R.id.discover_status, args.text());
                 }
             }
         },TextChanged_EVT_ID);
