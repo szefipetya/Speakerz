@@ -1,4 +1,4 @@
-# Speakerz [[galery + apk]](https://drive.google.com/drive/folders/1K9nHiKcPUwJsZKGAWlENkm2fvv8msO6J?usp=share_link)
+# Speakerz [[gallery + apk]](https://drive.google.com/drive/folders/1K9nHiKcPUwJsZKGAWlENkm2fvv8msO6J?usp=share_link)
 This is a Music player app, written with Java Android SDK.
 
 ## About
